@@ -5,7 +5,7 @@
   "type": "module",
   "description": "VOUZ core logic, backend schema and tests. No runtime dependencies.",
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "test:db": "bash supabase/tests/run.sh",
     "test:ui": "python3 e2e/run.py"
   }
