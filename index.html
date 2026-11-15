@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VOUZ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one phone-width column. A coral ring is the recurring object: the week on Home, the session in Replay, the clock in Insights. Cards are used only where content needs a container. Single dark theme by choice. */
+:root{
+  color-scheme:dark;
+  --bg:#0D0D12; --surface:#191820; --surface2:#22212C; --line:#2F2D3B;
+  --coral:#FF5C87; --pink:#FFA3BF; --text:#F8F5F7; --muted:#A9A1C6; --dim:#7A7494;
+  --ok:#7BE0B5; --warn:#FFC670; --danger:#FF7A6B;
+  --display:"Instrument Serif","Iowan Old Style",Georgia,serif;
+  --body:"Schibsted Grotesk","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --r:22px; --r-sm:14px;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:8px}
+.scroll:focus{outline:none}
+#app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;position:relative;background:var(--bg);overflow:hidden}
+@media(min-width:520px){body{background:#08080b}#app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 18px 28px;display:flex;flex-direction:column;gap:18px}
+.tabs{display:flex;border-top:1px solid var(--line);background:rgba(13,13,18,.96);padding:0 6px env(safe-area-inset-bottom)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;color:var(--dim);font-size:11px;font-weight:600;letter-spacing:.02em;position:relative;transition:color .15s}
+.tab::before{content:"";position:absolute;top:0;left:50%;width:28px;height:3px;margin-left:-14px;border-radius:0 0 3px 3px;background:var(--coral);transform:scaleX(0);transition:transform .2s}
+.tab[aria-current="page"]{color:var(--text)}
+.tab[aria-current="page"]::before{transform:scaleX(1)}
+.tab[aria-current="page"] svg{color:var(--coral)}
+.tab svg{width:23px;height:23px}
+svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mark{font-family:var(--display);font-style:italic;font-size:30px;line-height:1;letter-spacing:-.01em}
+.mark b{color:var(--coral);font-weight:400}
+h1{font-family:var(--display);font-weight:400;font-size:38px;line-height:1.02;letter-spacing:-.01em;text-wrap:balance}
+h1 em,h2 em{color:var(--pink)}
+h2{font-family:var(--display);font-weight:400;font-size:25px;line-height:1.12;text-wrap:balance}
+h3{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+p.sub,.sub{color:var(--muted)}
+.small{font-size:13px}.tiny{font-size:12px;color:var(--dim)}
+.row{display:flex;align-items:center;gap:10px}.between{justify-content:space-between}.wrap{flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.grow{flex:1;min-width:0}
+.card{background:var(--surface);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
+.card.line{background:none;border:1px solid var(--line)}
+.sec{display:flex;flex-direction:column;gap:12px}
+.sec>.row:first-child{align-items:baseline}
+.rule{height:1px;background:var(--line);border:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 20px;border-radius:999px;font-weight:700;background:var(--surface2);color:var(--text);transition:transform .12s,background .12s,opacity .12s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--coral);color:#1a0810}
+.btn.ghost{background:none;border:1px solid var(--line)}
+.btn.danger{background:none;border:1px solid rgba(255,122,107,.5);color:var(--danger)}
+.btn.sm{min-height:44px;padding:0 16px;font-size:13px}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.busy{opacity:.6;pointer-events:none}
+.link{color:var(--pink);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(255,163,191,.4);min-height:44px;display:inline-flex;align-items:center}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tiles.two{grid-template-columns:repeat(2,1fr)}
+.tile{background:var(--surface);border-radius:var(--r-sm);padding:14px 12px;min-width:0}
+.tile b{display:block;font-size:23px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile span{font-size:12px;color:var(--muted)}
+.trio{display:grid;grid-template-columns:repeat(3,1fr)}
+.trio div{padding:2px 14px;border-left:1px solid var(--line);min-width:0}
+.trio div:first-child{border-left:0;padding-left:0}
+.trio b{display:block;font-family:var(--display);font-weight:400;font-size:46px;line-height:1;font-variant-numeric:tabular-nums}
+.trio span{font-size:12px;color:var(--muted)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal span{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cal span.h{color:var(--dim);font-weight:700;aspect-ratio:auto;padding-bottom:2px}
+.cal span.on{background:rgba(255,92,135,.2);color:var(--text);font-weight:700}
+.cal span.on2{background:var(--coral);color:#1a0810;font-weight:700}
+.cal span.today{box-shadow:inset 0 0 0 1.5px var(--pink)}
+.sess{display:flex;align-items:center;gap:12px;padding:12px 0;min-height:60px;border-top:1px solid var(--line);width:100%;text-align:left}
+.sess:first-of-type{border-top:0}
+.sess .d{width:44px;text-align:center;flex:none}
+.sess .d b{display:block;font-family:var(--display);font-weight:400;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.sess .d span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.sess .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--surface2);color:var(--muted);white-space:nowrap}
+button.pill{min-height:44px;padding:0 14px}
+.pill.c{background:rgba(255,92,135,.16);color:var(--pink)}
+.pill.w{background:rgba(255,198,112,.14);color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;background:var(--surface2);color:var(--muted);font-weight:600;font-size:13px;transition:background .15s,color .15s}
+.chip[aria-pressed="true"]{background:var(--coral);color:#1a0810}
+.seg3{display:flex;background:var(--surface);border-radius:999px;padding:4px}
+.seg3 button{flex:1;min-height:40px;border-radius:999px;font-weight:700;font-size:13px;color:var(--muted)}
+.seg3 button[aria-pressed="true"]{background:var(--surface2);color:var(--text)}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--muted)}
+label.f em{font-style:normal;font-weight:500;color:var(--dim);letter-spacing:0}
+input[type=text],input[type=number],input[type=datetime-local],input[type=date],input[type=password],textarea{width:100%;min-height:48px;background:var(--surface2);border:1px solid transparent;border-radius:var(--r-sm);padding:12px 14px;font-size:16px;font-weight:500;color:var(--text);letter-spacing:0}
+input:focus,textarea:focus{outline:none;border-color:var(--coral)}
+textarea{min-height:84px;resize:vertical}
+.sw{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:8px 0;min-height:48px;width:100%;text-align:left}
+.sw .k{width:46px;height:28px;border-radius:999px;background:var(--surface2);position:relative;flex:none;transition:background .15s}
+.sw .k::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+.sw[aria-checked="true"] .k{background:var(--coral)}
+.sw[aria-checked="true"] .k::after{transform:translateX(18px);background:#1a0810}
+.sw[disabled]{opacity:.5;cursor:not-allowed}
+.top{display:flex;align-items:center;gap:8px;padding:10px 12px 2px}
+.ib{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:none}
+.ib.bare{background:none}
+.clock{font-size:54px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.stage{position:relative;width:min(100%,320px);aspect-ratio:1;margin:0 auto;display:grid;place-items:center}
+.stage>svg{position:absolute;inset:0;width:100%;height:100%}
+.stage .in{position:relative;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.stage [data-act]{cursor:pointer}
+.stage g:focus-visible{outline:none}
+.stage g:focus-visible path.vis{stroke:var(--text)}
+.orb{width:150px;height:150px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:radial-gradient(circle at 35% 30%,#FFA3BF,#FF5C87 70%);color:#1a0810;font-weight:800;box-shadow:0 0 0 10px rgba(255,92,135,.08),0 18px 50px rgba(255,92,135,.28);transition:transform .15s}
+.orb:active{transform:scale(.96)}
+.orb svg{width:38px;height:38px}
+.orb.dark{background:var(--surface);color:var(--text);box-shadow:0 0 0 10px rgba(255,92,135,.08)}
+.orb .mc{font-size:26px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.live .glow{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:.6}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+.enter .scroll>*,.enter .ob>*{animation:rise .45s cubic-bezier(.2,.7,.2,1) both}
+.enter .scroll>*:nth-child(2){animation-delay:.04s}.enter .scroll>*:nth-child(3){animation-delay:.08s}.enter .scroll>*:nth-child(4){animation-delay:.12s}.enter .scroll>*:nth-child(5){animation-delay:.16s}.enter .scroll>*:nth-child(n+6){animation-delay:.2s}
+.enter path.seg{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .9s .15s cubic-bezier(.3,.7,.2,1) forwards}
+.enter .badge.on.new{animation:pop .5s .5s both}
+.overlay.in{animation:fade .2s both}.overlay.in .sheet{animation:up .28s cubic-bezier(.2,.7,.2,1) both}
+.toast{animation:rise .25s both}
+.skel{border-radius:var(--r);height:150px;background:linear-gradient(90deg,var(--surface) 0,var(--surface2) 100px,var(--surface) 200px);background-size:400px 100%;animation:shimmer 1.3s linear infinite}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+.overlay{position:absolute;inset:0;background:rgba(5,5,8,.72);display:flex;align-items:flex-end;z-index:20}
+.sheet{background:var(--surface);border-radius:26px 26px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));width:100%;max-height:88%;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.sheet:focus{outline:none}
+.toast{position:absolute;left:16px;right:16px;bottom:84px;background:var(--text);color:#15131c;padding:12px 16px;border-radius:14px;font-weight:600;font-size:14px;z-index:30;text-align:center}
+.banner{background:rgba(255,198,112,.12);color:var(--warn);border-radius:var(--r-sm);padding:6px 14px;min-height:44px;font-size:13px;font-weight:600;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.banner.ok{background:rgba(123,224,181,.12);color:var(--ok)}
+.ob{flex:1;display:flex;flex-direction:column;padding:26px 24px calc(22px + env(safe-area-inset-bottom));gap:18px;overflow-y:auto}
+.ob .mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px}
+.steps{display:flex;gap:5px}.steps i{height:3px;flex:1;border-radius:3px;background:var(--surface2)}.steps i.on{background:var(--coral)}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:var(--r-sm);border:1.5px solid var(--line);text-align:left;width:100%}
+.opt[aria-pressed="true"]{border-color:var(--coral);background:rgba(255,92,135,.08)}
+.opt[disabled]{opacity:.45;cursor:not-allowed}
+.opt b{display:block}
+.share{position:relative;overflow:hidden;border-radius:var(--r);padding:22px;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;gap:20px;color:#1a0810}
+.share.s0{background:linear-gradient(140deg,#FF5C87,#FFA3BF)}
+.share.s1{background:linear-gradient(150deg,#2B1E33,#191820);color:var(--text);box-shadow:inset 0 0 0 1px #4a3350}
+.share.s2{background:linear-gradient(140deg,#FFA3BF,#F8F5F7)}
+.share.s3{background:#0D0D12;color:var(--pink);box-shadow:inset 0 0 0 1.5px var(--coral)}
+.share svg.deco{position:absolute;right:-46px;top:-46px;width:190px;height:190px;opacity:.28}
+.share .big{position:relative;font-family:var(--display);font-size:34px;line-height:1.02;overflow-wrap:anywhere;max-width:85%}
+.share .meta{display:flex;gap:8px;flex-wrap:wrap;font-weight:700;font-size:13px}
+.share .meta span{padding:4px 10px;border-radius:999px;background:rgba(26,8,16,.14)}
+.share.s1 .meta span,.share.s3 .meta span{background:rgba(255,163,191,.16);color:var(--pink)}
+.share .wm{font-family:var(--display);font-style:italic;font-size:20px;opacity:.8}
+.post{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px}
+.av{width:38px;height:38px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-weight:800;color:var(--pink);flex:none}
+.rx{display:flex;gap:6px;flex-wrap:wrap}
+.rx button{min-height:44px;min-width:52px;padding:0 12px;border-radius:999px;background:var(--surface2);font-size:14px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;transition:transform .12s,background .15s}
+.rx button:active{transform:scale(1.15)}
+.rx button[aria-pressed="true"]{background:rgba(255,92,135,.22);color:var(--text)}
+.cm{font-size:14px;padding:6px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.cm b{color:var(--pink)}
+.ach{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.ach:first-of-type{border-top:0}
+.badge{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:var(--dim);font-family:var(--display);font-style:italic;font-size:22px;flex:none}
+.badge.on{background:linear-gradient(140deg,#FF5C87,#FFA3BF);color:#1a0810}
+.hs{display:flex;gap:10px;overflow-x:auto;margin:0 -18px;padding:2px 18px 6px;scrollbar-width:none}
+.hs::-webkit-scrollbar{display:none}
+.hs .b{flex:none;width:104px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)}
+.hs .b.on{color:var(--text)}
+.hm{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px}
+.hm i{aspect-ratio:1;border-radius:4px;background:var(--surface2)}
+.hm i.l1{background:rgba(255,92,135,.35)}.hm i.l2{background:rgba(255,92,135,.65)}.hm i.l3{background:var(--coral)}.hm i.f{opacity:.25}
+.grid74{display:grid;grid-template-columns:auto repeat(7,1fr);gap:4px;align-items:center;font-size:11px;color:var(--dim);font-weight:600}
+.grid74 i{aspect-ratio:1.5;border-radius:6px;background:var(--surface2);display:grid;place-items:center;font-style:normal;font-size:11px;color:var(--text);font-variant-numeric:tabular-nums}
+.grid74 span{text-align:center}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface2)}
+.bar i{background:var(--coral)}.bar i.p{background:transparent}
+.tl{display:flex;height:44px;align-items:center}
+.tl button{height:44px;display:flex;align-items:center;padding:0;min-width:6px}
+.tl button i{display:block;width:100%;height:14px;border-radius:7px;background:var(--coral);opacity:.55;transition:opacity .15s,height .15s}
+.tl button[aria-pressed="true"] i{opacity:1;height:22px;border-radius:11px}
+.tl span{height:2px;background:var(--line)}
+.pair{display:flex;flex-direction:column;gap:5px}
+.pair .bar{height:8px}
+.hb{display:grid;grid-template-columns:86px 1fr auto;gap:10px;align-items:center;font-size:13px}
+.hb .bar{height:10px}
+.lg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted)}
+.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.err{color:var(--danger);font-size:13px;font-weight:600}
+.pin{letter-spacing:.5em;text-align:center;font-size:24px!important}
+ul.plain{list-style:none;padding:0;display:flex;flex-direction:column;gap:8px}
+ul.plain li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted)}
+ul.plain li svg{color:var(--coral);margin-top:2px}
+ul.plain li.p svg{color:var(--warn)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+/* ============ utilities ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const pad=n=>String(n).padStart(2,"0");
+const DAY=864e5, WD=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], WDL=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], MO=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const dayKey=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const startOfDay=t=>{const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()};
+const startOfWeek=t=>{const d=new Date(startOfDay(t));d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime()};
+const addDays=(t,n)=>{const d=new Date(t);d.setDate(d.getDate()+n);return d.getTime()};
+const fmtClock=s=>{s=Math.max(0,Math.floor(s));return pad(Math.floor(s/3600))+":"+pad(Math.floor(s%3600/60))+":"+pad(s%60)};
+const fmtDur=s=>{s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?h+"h "+pad(m)+"m":m?m+"m"+(x&&m<10?" "+x+"s":""):x+"s"};
+const fmtMin=s=>{const m=s/60;return m>=10?Math.round(m):Math.round(m*10)/10};
+const fmtDate=t=>{const d=new Date(t);return WD[d.getDay()]+" "+d.getDate()+" "+MO[d.getMonth()]};
+const fmtTime=t=>{const d=new Date(t);let h=d.getHours();const a=h<12?"am":"pm";h=h%12||12;return h+":"+pad(d.getMinutes())+a};
+const toLocalInput=t=>{const d=new Date(t);return dayKey(t)+"T"+pad(d.getHours())+":"+pad(d.getMinutes())};
+const ago=t=>{const s=(Date.now()-t)/1e3;return s<60?"now":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":Math.floor(s/86400)+"d"};
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+const reduced=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return true}};
+const PARTS=["Morning","Afternoon","Evening","Night"],PARTH=["5am to noon","noon to 5pm","5pm to 10pm","10pm to 5am"];
+const partOf=h=>h>=5&&h<12?0:h>=12&&h<17?1:h>=17&&h<22?2:3;
+const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',track:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.6 5.2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>',play:'<path d="M8 4.5v15l12-7.5z" fill="currentColor"/>',pause:'<path d="M8 5v14M16 5v14"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="M15 5l-7 7 7 7"/>',next:'<path d="M9 5l7 7-7 7"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',edit:'<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',share:'<path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',dots:'<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>',watch:'<rect x="6.5" y="6" width="11" height="12" rx="3"/><path d="M9 6l.6-3.5h4.8L15 6M9 18l.6 3.5h4.8L15 18"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'};
+const ic=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>';
+
+/* ============ private store (this device, not encrypted by VOUZ) ============ */
+const LS="vouz.v1"; let storageOK=true;
+const fresh=()=>({v:1,onboarded:false,stamp:0,lastSync:0,syncBase:0,user:{name:"",mode:"local",createdAt:Date.now()},settings:{social:false,privateProfile:true,defaultVis:"connections",regular:null,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0},sessions:[],deleted:{},active:null,draft:null,blocks:[],ignored:[],keys:null});
+function load(){try{const r=localStorage.getItem(LS);if(r){const o=JSON.parse(r);if(o&&o.v===1)return Object.assign(fresh(),o,{settings:Object.assign(fresh().settings,o.settings)})}}catch(e){storageOK=false}return fresh()}
+let S=load();
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){storageOK=false}}
+function save(){S.stamp=Date.now();saveLocal();Cloud.queueVault()}
+/* What sync and export carry: never demo rows, never social keys. */
+const vaultPayload=()=>({v:1,stamp:S.stamp,user:S.user,settings:S.settings,sessions:S.sessions.filter(s=>!s.demo),deleted:S.deleted,blocks:S.blocks,ignored:S.ignored});
+/* Two devices: keep the newer copy of each session, honour deletions from either side. */
+function mergeVault(v){const del=Object.assign({},v.deleted||{});for(const k in S.deleted)del[k]=Math.max(del[k]||0,S.deleted[k]);
+  const m={};for(const s of (v.sessions||[]).concat(S.sessions)){const c=m[s.id];if(!c||(s.updatedAt||0)>(c.updatedAt||0))m[s.id]=s}
+  S.sessions=Object.values(m).filter(s=>!(del[s.id]>=(s.updatedAt||0)));S.deleted=del;
+  if((v.stamp||0)>S.stamp){S.settings=Object.assign(fresh().settings,v.settings);S.blocks=v.blocks||[];S.ignored=v.ignored||[];S.user=Object.assign({},v.user,{mode:"account"})}}
+
+/* ============ optional cloud: private account space ============ */
+const Cloud={db:null,user:null,uid:null,state:"checking",t:null,busy:false,dirty:false,
+  async init(){try{if(!window.claude||!window.claude.use){this.state="none";return}
+      const [db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);
+      const id=user?await user.id():null;
+      if(!db||!id){this.state="none";return}
+      this.db=db;this.user=user;this.uid=id;this.state="ready";
+    }catch(e){this.state="none"}},
+  priv(name){return this.db.doc("data/users/"+this.uid+"/"+name)},
+  queueVault(){if(this.state!=="ready"||S.user.mode!=="account"||!S.onboarded)return;clearTimeout(this.t);this.t=setTimeout(()=>this.pushVault(),1200)},
+  async pushVault(){if(this.busy){this.dirty=true;return}this.busy=true;
+    try{const json=JSON.stringify(vaultPayload());
+      if(json.length>240000)toast("Account sync is full. Your data is still saved on this device.");
+      else{const v=await this.readVault();
+        if(v&&v.stamp!==S.syncBase){mergeVault(v);S.stamp=Date.now();saveLocal();if(!typing()&&!ui.sheet)render()}
+        await this.priv("vault").set({json:JSON.stringify(vaultPayload()),stamp:S.stamp});S.syncBase=S.stamp;S.lastSync=Date.now();saveLocal()}}
+    catch(e){toast("Account sync failed. Your data is still saved on this device.")}
+    this.busy=false;if(this.dirty){this.dirty=false;this.pushVault()}},
+  async readVault(){try{const s=await this.priv("vault").get();if(s.exists){const o=JSON.parse(s.data().json);if(o&&o.v===1)return o}}catch(e){}return null},
+  async deleteAll(){if(this.state!=="ready")return;const ps=["vault","keys","stash"].map(n=>this.priv(n).delete());
+    for(const c of ["profiles","posts","reactions","comments","links","invites","reports"])ps.push(this.db.doc(c+"/"+this.uid).delete());
+    await Promise.allSettled(ps)}
+};
+
+/* ============ keys: connections-only content is encrypted in the browser ============ */
+const te=new TextEncoder(),td=new TextDecoder();
+const b64=u=>{let s="";new Uint8Array(u).forEach(b=>s+=String.fromCharCode(b));return btoa(s)};
+const ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const hex=u=>Array.from(new Uint8Array(u)).map(b=>b.toString(16).padStart(2,"0")).join("");
+const cat=(a,s)=>{const t=te.encode(s),o=new Uint8Array(a.length+t.length);o.set(a);o.set(t,a.length);return o};
+const K={ok:!!(window.crypto&&crypto.subtle),priv:null,self:null,pairs:{},
+  async gen(){const kp=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveBits"]);
+    return{pub:await crypto.subtle.exportKey("jwk",kp.publicKey),priv:await crypto.subtle.exportKey("jwk",kp.privateKey),self:b64(crypto.getRandomValues(new Uint8Array(32)))}},
+  async load(k){this.priv=await crypto.subtle.importKey("jwk",k.priv,{name:"ECDH",namedCurve:"P-256"},false,["deriveBits"]);this.self=await this.aes(ub64(k.self));this.pairs={}},
+  reset(){this.priv=null;this.self=null;this.pairs={}},
+  aes(raw){return crypto.subtle.importKey("raw",raw,"AES-GCM",false,["encrypt","decrypt"])},
+  /* A shared secret with one other person. out/in are one-way labels only the two of us can compute, so stored lists don't reveal who is connected to whom. */
+  async pair(id,pubJwk){const ck=id+"|"+pubJwk.x+pubJwk.y;if(this.pairs[ck])return this.pairs[ck];
+    const pub=await crypto.subtle.importKey("jwk",pubJwk,{name:"ECDH",namedCurve:"P-256"},false,[]);
+    const bits=new Uint8Array(await crypto.subtle.deriveBits({name:"ECDH",public:pub},this.priv,256));
+    const h=async l=>new Uint8Array(await crypto.subtle.digest("SHA-256",cat(bits,l)));
+    return this.pairs[ck]={out:hex(await h("|"+Cloud.uid+">"+id)).slice(0,32),in:hex(await h("|"+id+">"+Cloud.uid)).slice(0,32),key:await this.aes(await h("|vouz-wrap"))}},
+  async enc(key,bytes){const iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,bytes)),o=new Uint8Array(12+ct.length);o.set(iv);o.set(ct,12);return b64(o)},
+  async dec(key,s){const u=ub64(s);return new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:u.slice(0,12)},key,u.slice(12)))},
+  encJ(key,o){return this.enc(key,te.encode(JSON.stringify(o)))},
+  async decJ(key,s){return JSON.parse(td.decode(await this.dec(key,s)))},
+  async thread(raw){return hex(await crypto.subtle.digest("SHA-256",cat(raw,"|vouz-thread"))).slice(0,24)}
+};
+
+/* ============ social data-access layer ============
+   Shared storage holds: profiles (handle + public key), posts, reactions, comments, links.
+   "Everyone" cards are stored readable. Connections-only cards are stored as ciphertext with one wrapped key per
+   permitted recipient; reconcile() is the single place that decides who gets a key. No key, no card. */
+const SHARED=["profiles","posts","reactions","comments","links","invites"];
+const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
+  async ensureKeys(){if(!S.keys){const d=await Cloud.priv("keys").get();if(d.exists)S.keys=JSON.parse(d.data().json);else{S.keys=await K.gen();await Cloud.priv("keys").set({json:JSON.stringify(S.keys)})}saveLocal()}
+    if(!K.priv)await K.load(S.keys)},
+  async start(){if(this.subs.length||Cloud.state!=="ready"||!K.ok)return;this.status="loading";
+    try{await this.ensureKeys()}catch(e){this.status="error";return}
+    const timer=setTimeout(()=>{if(this.status==="loading"){this.status="slow";render()}},10000);
+    for(const c of SHARED)this.subs.push(Cloud.db.collection(c).onSnapshot(q=>{const m={};q.docs.forEach(d=>{m[d.id]=d.data()||{}});this[c]=m;if(c==="posts")clearTimeout(timer);this.sched()},()=>{clearTimeout(timer);this.status="error";render()}))},
+  stop(){this.subs.forEach(u=>{try{u()}catch(e){}});this.subs=[];this.status="off";clearTimeout(this.t);for(const c of SHARED)this[c]={};this.inbox=[];this.inv={};this.invSig="";this.rel={};this.items=[];this.cm={};this.perms={};this.cache={};this.au={}},
+  sched(){clearTimeout(this.t);this.t=setTimeout(async()=>{if(this.busy){this.again=true;return}this.busy=true;
+    try{await this.recompute()}catch(e){}this.busy=false;if(this.status==="loading"||this.status==="slow")this.status="ready";
+    const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv]),moved=sig!==this.invSig;this.invSig=sig;
+    if((ui.tab==="social"||ui.tab==="profile"||ui.page&&ui.page.type==="compose"||moved)&&!typing())render();
+    if(this.again){this.again=false;this.sched()}},40)},
+  write(coll,data){this[coll]=Object.assign({},this[coll]);if(data===null)delete this[coll][Cloud.uid];else this[coll][Cloud.uid]=data;
+    const ref=Cloud.db.doc(coll+"/"+Cloud.uid);
+    this.wq[coll]=(this.wq[coll]||Promise.resolve()).then(()=>data===null?ref.delete():ref.set(data)).catch(e=>{toast(e&&e.code==="invalid_argument"?"You have view-only access here, so Social can't save.":"Social couldn't save that. Try again.")});
+    this.sched();return this.wq[coll]},
+  me(){return this.profiles[Cloud.uid]},
+  handle(id){const p=this.profiles[id];return p&&p.handle?p.handle:"Someone"},
+  conns(){return Object.keys(this.rel).filter(i=>this.rel[i].mutual&&!S.blocks.includes(i))},
+  allowed(id,kind){const p=this.perms[id]||{};return kind==="recap"?p.recaps!==false:p.achievements!==false},
+  async recompute(){if(!K.priv)return;const me=Cloud.uid,rel={};
+    for(const id in this.profiles){if(id===me)continue;const p=this.profiles[id];if(!p||!p.pub)continue;
+      try{const pr=await K.pair(id,p.pub),mine=!!((this.links[me]||{}).out||{})[pr.out],theirs=!!((this.links[id]||{}).out||{})[pr.in];rel[id]={out:pr.out,in:pr.in,key:pr.key,mine,theirs,mutual:mine&&theirs}}catch(e){}}
+    this.rel=rel;
+    const lp=(this.links[me]||{}).p;if(lp){if(!this.au[lp]){try{this.au[lp]=await K.decJ(K.self,lp)}catch(e){this.au[lp]={}}}this.perms=this.au[lp]}else this.perms={};
+    const items=[];
+    for(const a in this.posts){if(a!==me&&(!this.profiles[a]||S.blocks.includes(a)))continue;
+      for(const it of (this.posts[a].items||[])){if(!it)continue;
+        if(it.c){const wk=it.wk||{},w=a===me?wk.self:(rel[a]&&rel[a].mutual?wk[rel[a].in]:null);if(!w)continue;
+          try{let e=this.cache[it.c+w];if(!e){const raw=await K.dec(a===me?K.self:rel[a].key,w),ck=await K.aes(raw);e=this.cache[it.c+w]={raw,ck,body:await K.decJ(ck,it.c),thread:await K.thread(raw)}}
+            let aud="all";if(a===me&&it.au){if(!this.au[it.au]){try{this.au[it.au]=await K.decJ(K.self,it.au)}catch(x){this.au[it.au]={aud:[]}}}aud=this.au[it.au].aud}
+            items.push({a,key:e.thread,ck:e.ck,raw:e.raw,aud,sealed:true,n:Object.keys(wk).length-1,it:{id:it.id,vis:"connections",postedAt:it.postedAt,kind:e.body.kind,caption:e.body.caption,card:e.body.card}})}catch(e){}}
+        else if(it.vis==="everyone")items.push({a,key:a+"_"+it.id,it})}}
+    items.sort((x,y)=>(y.it.postedAt||0)-(x.it.postedAt||0));this.items=items;
+    const byKey={};items.forEach(x=>byKey[x.key]=x);const cm={};
+    for(const u in this.comments){if(u!==me&&(!this.profiles[u]||S.blocks.includes(u)))continue;
+      for(const c of (this.comments[u].items||[])){const p=byKey[c&&c.post];if(!p)continue;let text;
+        if(c.c){if(!p.ck)continue;try{text=this.cache["c"+c.c]||(this.cache["c"+c.c]=(await K.decJ(p.ck,c.c)).text)}catch(e){continue}}else if(!p.sealed)text=c.text;else continue;
+        (cm[c.post]=cm[c.post]||[]).push({u,id:c.id,text:String(text||""),at:c.at})}}
+    for(const k in cm)cm[k].sort((x,y)=>x.at-y.at);this.cm=cm;
+    await this.readInvites();
+    await this.reconcile()},
+  /* Session invites. One sealed note per invited connection, readable only by that person, carrying date, time, duration and category and nothing else.
+     Only mutual, unblocked connections are read, and nothing is added to anyone's log until they accept. */
+  async readInvites(){const me=Cloud.uid,inbox=[],out={},mine=this.invites[me]||{};
+    const open=async(key,c)=>this.cache["i"+c]||(this.cache["i"+c]=await K.decJ(key,c));
+    for(const id in this.rel){const r=this.rel[id];if(!r.mutual||S.blocks.includes(id))continue;const done={},d=this.invites[id]||{};
+      for(const x of (mine.resp||[]))if(x&&x.k===r.out)done[x.i]=1;
+      for(const x of (d.items||[])){if(!x||x.k!==r.in||done[x.i])continue;
+        try{const b=await open(r.key,x.c),st=+b.start,du=Math.round(+b.dur);if(b.i!==x.i||!(st>0)||st>Date.now()+6e4||!(du>=1&&du<=86400))continue;
+          inbox.push({a:id,i:String(x.i),start:st,dur:du,cat:CAT_PICK.includes(b.cat)?b.cat:null})}catch(e){}}
+      for(const x of (d.resp||[])){if(!x||x.k!==r.in)continue;try{const b=await open(r.key,x.c);if(b.i===x.i)out[id+"|"+x.i]=b.ok?"yes":"no"}catch(e){}}}
+    this.inbox=inbox.sort((a,b)=>b.start-a.start);this.inv=out},
+  ready(){return S.settings.social&&Cloud.state==="ready"&&K.ok&&!!K.priv&&this.status==="ready"},
+  async invite(sess,id){const r=this.rel[id];if(!r||!r.mutual)throw 0;const i=uid(),cur=this.invites[Cloud.uid]||{};
+    const c=await K.encJ(r.key,{i,start:sess.start,dur:sess.durationSec,cat:CAT_PICK.includes(sess.category)?sess.category:null});
+    await this.write("invites",{items:(cur.items||[]).concat([{i,k:r.out,c}]),resp:cur.resp||[]});return i},
+  uninvite(ids){const cur=this.invites[Cloud.uid];if(!cur||!(cur.items||[]).some(x=>ids.includes(x.i)))return Promise.resolve();
+    return this.write("invites",{items:cur.items.filter(x=>!ids.includes(x.i)),resp:cur.resp||[]})},
+  async respond(id,i,ok){const r=this.rel[id];if(!r)throw 0;const cur=this.invites[Cloud.uid]||{};
+    const c=await K.encJ(r.key,{i,ok:!!ok});
+    await this.write("invites",{items:cur.items||[],resp:(cur.resp||[]).filter(x=>!(x.k===r.out&&x.i===i)).concat([{i,k:r.out,c}])})},
+  /* Called when a session is deleted or a person is taken off it: withdraw what I sent, or tell the sender I'm out. */
+  async drop(people){if(!this.ready()||!people||!people.length)return;const sent=people.filter(p=>!p.from).map(p=>p.i);
+    try{if(sent.length)await this.uninvite(sent);for(const p of people)if(p.from&&this.rel[p.id])await this.respond(p.id,p.i,false)}catch(e){}},
+  /* Seal a card: random content key, body encrypted with it, key wrapped for me only. Recipients are added by reconcile(). */
+  async seal(id,body,aud,postedAt){const raw=crypto.getRandomValues(new Uint8Array(32)),ck=await K.aes(raw),c=await K.encJ(ck,body),self=await K.enc(K.self,raw),au=await K.encJ(K.self,{aud});
+    this.cache[c+self]={raw,ck,body,thread:await K.thread(raw)};this.au[au]={aud};return{id,vis:"connections",postedAt,c,au,wk:{self}}},
+  /* The only place recipient keys are granted or withdrawn. Runs after every change to connections, permissions, blocks or audiences. */
+  async reconcile(){const me=Cloud.uid,cur=this.posts[me];if(!cur||!cur.items||this.reconciling)return;let changed=false;const out=[],conns=this.conns();
+    for(let it of cur.items){if(!it)continue;
+      if(!it.c){if(it.vis==="connections"){it=await this.seal(it.id,{kind:it.kind,caption:it.caption||"",card:it.card||{}},"all",it.postedAt);changed=true}else{out.push(it);continue}}
+      const e=this.cache[it.c+(it.wk||{}).self];if(!e){out.push(it);continue}
+      const aud=it.au&&this.au[it.au]?this.au[it.au].aud:"all",want={self:it.wk.self};
+      for(const i of conns){if(!this.allowed(i,e.body.kind))continue;if(aud!=="all"&&!(Array.isArray(aud)&&aud.includes(i)))continue;const t=this.rel[i].out;want[t]=it.wk[t]||await K.enc(this.rel[i].key,e.raw)}
+      if(Object.keys(want).sort().join()!==Object.keys(it.wk).sort().join())changed=true;
+      out.push(Object.assign({},it,{wk:want}))}
+    if(changed){this.reconciling=true;await this.write("posts",{items:out,hidden:cur.hidden||[]});this.reconciling=false}},
+  async saveLinks(out,perms){return this.write("links",{out,p:await K.encJ(K.self,perms)})},
+  setLink(id,on){const out=Object.assign({},(this.links[Cloud.uid]||{}).out),t=this.rel[id]&&this.rel[id].out;if(!t)return Promise.resolve();if(on)out[t]=1;else delete out[t];
+    const perms=Object.assign({},this.perms);if(!on)delete perms[id];return this.saveLinks(out,perms)},
+  setPerm(id,p){return this.saveLinks(Object.assign({},(this.links[Cloud.uid]||{}).out),Object.assign({},this.perms,{[id]:p}))},
+  /* Social off without deleting: move my shared documents into my private space, so nothing of mine is left readable. */
+  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
+  async unstash(){try{const s=await Cloud.priv("stash").get();if(!s.exists)return;const o=JSON.parse(s.data().json);for(const c in o)if(SHARED.includes(c))await Cloud.db.doc(c+"/"+Cloud.uid).set(o[c]);await Cloud.priv("stash").delete()}catch(e){}}
+};
+
+/* ============ sanitized share card: a whitelist, never a copy of the session ============ */
+function buildCard(o,sess){
+  const c={style:[0,1,2,3].includes(o.style)?o.style:0,title:String(o.title||"").slice(0,60)};
+  if(o.kind==="recap"&&sess){
+    if(o.showDuration){c.duration="About "+Math.max(5,Math.round(sess.durationSec/300)*5)+" min";c.arc=Math.min(60,Math.max(5,Math.round(sess.durationSec/300)*5))}
+    if(o.showCategory&&CATS[sess.category])c.category=CATS[sess.category];
+  }
+  if(o.badge)c.badge=String(o.badge).slice(0,40);
+  return c;
+}
+
+/* ============ derived data ============ */
+const sessions=()=>S.sessions.slice().sort((a,b)=>b.start-a.start);
+const hasDemo=()=>S.sessions.some(s=>s.demo);
+function stats(list){const n=list.length,tot=list.reduce((a,s)=>a+s.durationSec,0);return{n,tot,avg:n?tot/n:0,longest:list.reduce((a,s)=>Math.max(a,s.durationSec),0),days:new Set(list.map(s=>dayKey(s.start))).size}}
+const countByDay=list=>{const m={};list.forEach(s=>{const k=dayKey(s.start);m[k]=(m[k]||0)+1});return m};
+const ACH=[
+ {id:"first",name:"First Round",desc:"Your first tracked session.",g:"1"},
+ {id:"double",name:"Double Take",desc:"A second session in the books.",g:"2"},
+ {id:"owl",name:"Night Owl",desc:"A session that started after 10pm.",g:"N"},
+ {id:"early",name:"Early Riser",desc:"A session that started before 9am.",g:"E"},
+ {id:"weekend",name:"Weekend Energy",desc:"A Saturday or Sunday session.",g:"W"},
+ {id:"century",name:"Century Club",desc:"100 tracked minutes, all told.",g:"C"},
+ {id:"ten",name:"Ten Down",desc:"Ten sessions tracked.",g:"X"},
+ {id:"story",name:"Dear Diary",desc:"A session with a private note or reflection.",g:"D"},
+ {id:"regular",name:"The Regular",desc:"A rhythm you set for yourself.",g:"R"}
+];
+function achievements(){
+  const ss=S.sessions.slice().sort((a,b)=>a.start-b.start),u={};
+  const first=f=>ss.find(f);
+  if(ss[0])u.first=ss[0]; if(ss[1])u.double=ss[1]; if(ss[9])u.ten=ss[9];
+  u.owl=first(s=>{const h=new Date(s.start).getHours();return h>=22||h<4});
+  u.early=first(s=>{const h=new Date(s.start).getHours();return h>=5&&h<9});
+  u.weekend=first(s=>[0,6].includes(new Date(s.start).getDay()));
+  u.story=first(s=>(s.notes&&s.notes.trim())||(s.reflection&&s.reflection.trim()));
+  let cum=0;for(const s of ss){cum+=s.durationSec;if(cum>=6000){u.century=s;break}}
+  const g=S.settings.regular;
+  if(g){const wk={};ss.forEach(s=>{const k=startOfWeek(s.start);(wk[k]=wk[k]||[]).push(s)});
+    const keys=Object.keys(wk).map(Number).sort((a,b)=>a-b);let run=0,prev=null;
+    for(const k of keys){const ok=wk[k].length>=g.perWeek;
+      if(ok){run=(prev!==null&&Math.round((k-prev)/DAY)===7)?run+1:1;prev=k;if(run>=g.weeks){u.regular=wk[k][g.perWeek-1];break}}else{run=0;prev=null}}}
+  return ACH.map(a=>({...a,desc:a.id==="regular"&&g?g.perWeek+" or more a week, "+g.weeks+" weeks running.":a.desc,at:u[a.id]||null}));
+}
+function milestonesFor(s){const out=[];achievements().forEach(a=>{if(a.at&&a.at.id===s.id)out.push({t:a.name,d:a.desc,g:a.g})});
+  const before=S.sessions.filter(x=>x.start<s.start);
+  if(before.length&&s.durationSec>Math.max(...before.map(x=>x.durationSec)))out.push({t:"Longest so far",d:"Your longest tracked session up to that day.",g:"L"});
+  const n=before.length+1;if([5,25,50,100,250].includes(n))out.push({t:"Session "+n,d:n+" sessions tracked.",g:"#"});
+  return out}
+function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"night":h<12?"morning":h<17?"afternoon":h<22?"evening":"night";
+  const m=Math.round(s.durationSec/60);return (m<1?"Under a minute":m+" minute"+(m===1?"":"s"))+" on a "+WDL[d.getDay()]+" "+part+"."}
+
+/* ============ ui state ============ */
+const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
+  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},soc:{seg:"feed"},compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
+const TABS=()=>[["home","Home","home"],["track","Track","track"],["insights","Insights","chart"],...(S.settings.social?[["social","Social","people"]]:[]),["profile","Profile","user"]];
+function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
+function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
+function paintToast(){let t=$(".toast");if(!ui.toast){t&&t.remove();return}if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");$("#app").appendChild(t)}t.textContent=ui.toast}
+function go(tab){ui.tab=tab;ui.page=null;ui.sheet=null;try{if(location.hash!=="#"+tab)location.hash=tab}catch(e){}render(true)}
+function openPage(page){ui.page=page;ui.sheet=null;ui.err="";render(true)}
+function sheet(s){ui.sheet=s;render()}
+
+/* ============ timer ============ */
+const elapsed=a=>a?a.segments.reduce((t,[s,e])=>t+((e||Date.now())-s),0)/1e3:0;
+const running=()=>S.active&&S.active.segments[S.active.segments.length-1][1]===null;
+setInterval(()=>{const c=$("#clock");if(c&&S.active){const e=elapsed(S.active);c.textContent=fmtClock(e);const h=$("#hand");if(h)h.setAttribute("stroke-dashoffset",String(741.4*(1-(e%60)/60)))}
+  const m=$("#miniclock");if(m&&S.active)m.textContent=fmtClock(elapsed(S.active))},500);
+function draftFromActive(){const a=S.active,segs=a.segments.map(([s,e])=>[s,e||Date.now()]);const d=Math.max(1,Math.round(elapsed({segments:segs})));
+  return{editing:null,fromTimer:true,title:"",startLocal:toLocalInput(segs[0][0]),start:segs[0][0],durMin:Math.floor(d/60),durSec:d%60,category:CAT_PICK.includes(a.category)?a.category:null,tags:[],mood:"",notes:"",hrAvg:"",hrPeak:"",segments:segs}}
+const blankDraft=()=>({editing:null,fromTimer:false,title:"",startLocal:toLocalInput(Date.now()-30*6e4),durMin:20,durSec:0,category:null,tags:[],mood:"",notes:"",hrAvg:"",hrPeak:"",segments:null});
+
+/* ============ charts ============ */
+const polar=(cx,cy,r,a)=>[cx+r*Math.cos((a-90)*Math.PI/180),cy+r*Math.sin((a-90)*Math.PI/180)];
+function arc(cx,cy,r,a0,a1){const [x0,y0]=polar(cx,cy,r,a0),[x1,y1]=polar(cx,cy,r,a1);return`M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`}
+const arcLen=(r,a0,a1)=>(r*(a1-a0)*Math.PI/180+2).toFixed(1);
+const GRAD='<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF5C87"/><stop offset="1" stop-color="#FFA3BF"/></linearGradient></defs>';
+/* Home: the week as a ring of seven arcs, Monday at the top. */
+function weekRing(ws,cd,sel){const cx=160,cy=160,r=114,gap=7,step=360/7,today=dayKey(Date.now());let g="";
+  for(let i=0;i<7;i++){const t=addDays(ws,i),k=dayKey(t),c=cd[k]||0,a0=i*step+gap/2,a1=(i+1)*step-gap/2,[lx,ly]=polar(cx,cy,r+27,(a0+a1)/2),d=arc(cx,cy,r,a0,a1);
+    g+=`<g data-act="pickDay" data-i="${i}" tabindex="0" role="button" aria-pressed="${sel===i}" aria-label="${fmtDate(t)}, ${c} session${c===1?"":"s"}"><path d="${d}" stroke="transparent" stroke-width="46" fill="none" pointer-events="stroke"/><path class="vis${c?" seg":""}" d="${d}" stroke="${c?"url(#rg)":"#22212C"}" stroke-width="${sel===i?22:14}" fill="none" stroke-linecap="round" style="--len:${arcLen(r,a0,a1)}"/>${c>1?`<circle cx="${polar(cx,cy,r,(a0+a1)/2)[0].toFixed(1)}" cy="${polar(cx,cy,r,(a0+a1)/2)[1].toFixed(1)}" r="3.5" fill="#1a0810"/>`:""}</g><text x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="${k===today?"#FFA3BF":"#7A7494"}">${WD[new Date(t).getDay()][0]}</text>`}
+  return`<svg viewBox="0 0 320 320">${GRAD}${g}</svg>`}
+/* Replay: the session as one 300-degree ring, active stretches drawn, pauses left open. */
+function replayRing(s,sel){const segs=s.segments&&s.segments.length?s.segments:[[0,1]],t0=segs[0][0],t1=segs[segs.length-1][1],span=Math.max(1,t1-t0),A=300,off=-150,cx=160,cy=160,r=124;
+  let p=`<path d="${arc(cx,cy,r,off,off+A)}" stroke="#22212C" stroke-width="14" fill="none" stroke-linecap="round"/>`;
+  segs.forEach(([a,b],i)=>{const x0=off+A*(a-t0)/span,x1=Math.max(off+A*(b-t0)/span,x0+.6);p+=`<path class="seg" d="${arc(cx,cy,r,x0,x1)}" stroke="url(#rg)" stroke-width="${sel===i?20:14}" opacity="${sel===null||sel===undefined||sel===i?1:.45}" fill="none" stroke-linecap="round" style="--len:${arcLen(r,x0,x1)}"/>`});
+  return`<svg viewBox="0 0 320 320" role="img" aria-label="Session timeline ring">${GRAD}${p}</svg>`}
+function trackRing(live){return`<svg viewBox="0 0 260 260" aria-hidden="true"><circle class="glow" cx="130" cy="130" r="124" fill="none" stroke="#FF5C87" stroke-width="2" opacity="${live?.4:.12}"/><circle cx="130" cy="130" r="118" fill="none" stroke="#22212C" stroke-width="12"/><circle id="hand" cx="130" cy="130" r="118" fill="none" stroke="#FF5C87" stroke-width="12" stroke-linecap="round" stroke-dasharray="741.4" stroke-dashoffset="${S.active?741.4*(1-(elapsed(S.active)%60)/60):741.4}" transform="rotate(-90 130 130)"/></svg>`}
+function bars(vals,labels,unit,color){const W=320,H=150,L=26,B=22,T=10,max=Math.max(1,...vals),n=vals.length,bw=(W-L-4)/n,ticks=max<=4?Math.ceil(max):4;let g="";
+  for(let i=0;i<=ticks;i++){const v=max*i/ticks,y=T+(H-T-B)*(1-i/ticks);g+=`<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="#2F2D3B" stroke-width="1"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#7A7494">${Number.isInteger(v)?v:v.toFixed(1)}</text>`}
+  vals.forEach((v,i)=>{const h=(H-T-B)*v/max,x=L+i*bw+bw*.18,w=bw*.64;if(v>0)g+=`<rect x="${x.toFixed(1)}" y="${(H-B-h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${Math.min(4,w/2).toFixed(1)}" fill="${color||"#FF5C87"}"><title>${esc(labels[i].full)}: ${v} ${unit}</title></rect>`;
+    if(labels[i].s)g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="10" fill="#A9A1C6">${esc(labels[i].s)}</text>`});
+  return`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(unit)} chart">${g}</svg>`}
+function line(vals,labels){const W=320,H=120,L=30,B=18,T=10,mn=Math.min(...vals)-5,mx=Math.max(...vals)+5,n=vals.length;const X=i=>L+(W-L-8)*(n===1?.5:i/(n-1)),Y=v=>T+(H-T-B)*(1-(v-mn)/(mx-mn));
+  let g=`<line x1="${L}" x2="${W}" y1="${Y(mx)}" y2="${Y(mx)}" stroke="#2F2D3B"/><line x1="${L}" x2="${W}" y1="${Y(mn)}" y2="${Y(mn)}" stroke="#2F2D3B"/><text x="${L-6}" y="${Y(mx)+4}" text-anchor="end" font-size="10" fill="#7A7494">${mx}</text><text x="${L-6}" y="${Y(mn)+4}" text-anchor="end" font-size="10" fill="#7A7494">${mn}</text>`;
+  g+=`<polyline fill="none" stroke="#FFA3BF" stroke-width="2" points="${vals.map((v,i)=>X(i).toFixed(1)+","+Y(v).toFixed(1)).join(" ")}"/>`;
+  vals.forEach((v,i)=>{g+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${i===n-1?4.5:3}" fill="${i===n-1?"#FF5C87":"#FFA3BF"}"><title>${esc(labels[i])}: ${v} bpm</title></circle>`});
+  return`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Average heart rate by session">${g}</svg>`}
+function heatmap(list,weeks){const m=countByDay(list),end=addDays(startOfWeek(Date.now()),6),start=addDays(end,-(weeks*7-1));let h="";
+  for(let t=start,i=0;i<weeks*7;i++,t=addDays(t,1)){const c=m[dayKey(t)]||0;h+=`<i class="${c?"l"+Math.min(3,c):""}${t>Date.now()?" f":""}" title="${fmtDate(t)}: ${c} session${c===1?"":"s"}"></i>`}
+  return`<div class="hm" style="grid-template-columns:repeat(${weeks},1fr)">${h}</div>`}
+/* Insights: a 24-hour dial, midnight at the top, one spoke per starting hour. */
+function dial(list){const cx=150,cy=150,r0=50,r1=112,by=Array(24).fill(0);list.forEach(s=>by[new Date(s.start).getHours()]++);const max=Math.max(1,...by);
+  let g=`<circle cx="${cx}" cy="${cy}" r="${r0-8}" fill="none" stroke="#2F2D3B"/><circle cx="${cx}" cy="${cy}" r="${r1+4}" fill="none" stroke="#2F2D3B" stroke-dasharray="2 5"/>`;
+  by.forEach((c,h)=>{const a=h*15+7.5,[x0,y0]=polar(cx,cy,r0,a),[x1,y1]=polar(cx,cy,r0+(r1-r0)*(c/max),a);
+    g+=c?`<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="url(#rg)" stroke-width="9" stroke-linecap="round"><title>${h%12||12}${h<12?"am":"pm"}: ${c} session${c===1?"":"s"}</title></line>`:`<circle cx="${x0.toFixed(1)}" cy="${y0.toFixed(1)}" r="2" fill="#2F2D3B"/>`});
+  [["12am",0],["6am",90],["12pm",180],["6pm",270]].forEach(([l,a])=>{const [x,y]=polar(cx,cy,r1+24,a);g+=`<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="#A9A1C6">${l}</text>`});
+  return`<svg viewBox="0 0 300 300" width="100%" style="max-width:300px;align-self:center" role="img" aria-label="Sessions by starting hour">${GRAD}${g}</svg>`}
+const MC={Playful:"#FF5C87",Tender:"#FFA3BF",Electric:"#FFC670",Relaxed:"#7BE0B5",Connected:"#B79CFF",Curious:"#7CC4FF"};
+
+/* ============ render ============ */
+let lastKey="",lastSheet=null;
+function render(resetScroll){
+  const app=$("#app"),sc=$(".scroll"),key=(ui.locked?"lock":S.onboarded?ui.tab:"ob"+ui.ob.step)+"|"+(ui.page?ui.page.type+(ui.page.id||""):"");
+  const changed=key!==lastKey,keep=sc&&!resetScroll&&!changed?sc.scrollTop:0;lastKey=key;
+  let h;
+  if(ui.locked)h=vLock();
+  else if(!S.onboarded)h=vOnboard();
+  else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear})[ui.page.type]();
+  else h=({home:vHome,track:vTrack,insights:vInsights,social:vSocial,profile:vProfile})[ui.tab]()+vTabs();
+  const sheetNew=ui.sheet&&ui.sheet!==lastSheet;lastSheet=ui.sheet;
+  app.classList.toggle("enter",changed);
+  app.innerHTML=h+(ui.sheet?vSheet(sheetNew):"");
+  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();
+  if(sheetNew){const f=$(".sheet input,.sheet textarea")||$(".sheet");f&&f.focus({preventScroll:true})}
+  else if(changed&&!ui.sheet){if(ns){ns.setAttribute("tabindex","-1");if(!typing())ns.focus({preventScroll:true})}countUp()}
+}
+function countUp(){if(reduced())return;document.querySelectorAll("[data-count]").forEach(el=>{const to=+el.dataset.count;if(!(to>0))return;const t0=performance.now();
+  const f=t=>{const p=Math.min(1,(t-t0)/700),e=1-Math.pow(1-p,3);el.textContent=Number.isInteger(to)?Math.round(to*e):(to*e).toFixed(1);if(p<1&&el.isConnected)requestAnimationFrame(f);else el.textContent=to};requestAnimationFrame(f)})}
+const vTabs=()=>`<nav class="tabs" aria-label="Primary">${TABS().map(([id,l,i])=>`<button class="tab" data-act="tab" data-tab="${id}" ${ui.tab===id?'aria-current="page"':""}>${ic(i)}${l}</button>`).join("")}</nav>`;
+const hdr=(title,right="")=>`<div class="top"><button class="ib" data-act="back" aria-label="Back">${ic("back")}</button><div class="grow" style="font-weight:700;text-align:center">${esc(title)}</div>${right||'<span style="width:44px"></span>'}</div>`;
+const sw=(act,on,label,sub="",extra="")=>`<button class="sw" role="switch" aria-checked="${!!on}" data-act="${act}" ${extra}><span class="grow"><b>${label}</b>${sub?`<span class="sub small" style="display:block">${sub}</span>`:""}</span><span class="k"></span></button>`;
+const sessRow=s=>{const d=new Date(s.start);return`<button class="sess" data-act="openReplay" data-id="${s.id}"><span class="d"><b>${d.getDate()}</b><span>${MO[d.getMonth()]}</span></span><span class="grow"><span class="t" style="display:block">${esc(s.title||"Session")}</span><span class="sub small">${WD[d.getDay()]} ${fmtTime(s.start)}${catLabel(s)?" · "+esc(catLabel(s)):""}${s.mood?" · "+esc(s.mood):""}${s.demo?" · demo":""}</span></span><span class="pill c">${fmtDur(s.durationSec)}</span></button>`};
+const demoBanner=()=>hasDemo()?`<div class="banner"><span>Demo data is showing. None of it is yours.</span><button class="link" data-act="removeDemo">Remove</button></div>`:"";
+
+/* ---- onboarding: three steps ---- */
+function vOnboard(){const o=ui.ob,n=3,i=o.step;
+  const nav=(label="Continue",dis=false)=>`<div class="row">${i>0?`<button class="btn ghost" data-act="obBack" aria-label="Back">${ic("back")}</button>`:""}<button class="btn primary grow" data-act="obNext" ${dis?"disabled":""}>${label}</button></div>`;
+  const pages=[
+   ()=>`<div class="mid"><div class="mark" style="font-size:84px">vouz<b>.</b></div><h1>Your other <em>cardio.</em></h1><p class="sub">A private tracker for the workouts that don't need sneakers. Time it, log it, look back on it.</p><ul class="plain"><li>${ic("check")}<span><b style="color:var(--text)">Track privately.</b> No location, contacts, ads or analytics.</span></li><li>${ic("check")}<span><b style="color:var(--text)">Celebrate personally.</b> No rankings and no targets handed to you.</span></li><li>${ic("check")}<span><b style="color:var(--text)">Share optionally.</b> Social is off until you turn it on, and nothing ever posts by itself.</span></li></ul></div>${nav("Get started")}`,
+   ()=>`<div class="mid"><h3>Before you come in</h3><h1>Adults only, and <em>private by default.</em></h1><p class="sub">VOUZ is for people aged 18 and over. Your sessions, notes and moods are yours: you can edit, export or permanently delete them whenever you like.</p><div class="card">${sw("obAdult",o.adult,"I confirm I'm 18 or older")}</div><p class="tiny">If you're under 18, VOUZ isn't for you, and you can close this page.</p></div>${nav("Continue",!o.adult)}`,
+   ()=>`<div class="mid"><h3>Set it up your way</h3><h1>Your moments, <em>your rules.</em></h1>
+     <div class="col"><button class="opt" data-act="obMode" data-mode="local" aria-pressed="${o.mode==="local"}"><span class="grow"><b>Keep it on this device</b><span class="sub small">Stored in this browser only. Export a backup when you like.</span></span></button>
+     <button class="opt" data-act="obMode" data-mode="account" aria-pressed="${o.mode==="account"}" ${Cloud.state!=="ready"?"disabled":""}><span class="grow"><b>Private account sync</b><span class="sub small">${Cloud.state==="ready"?"Also kept in a private space tied to your signed-in Claude account, so it follows you between devices. Other VOUZ users can't read it.":Cloud.state==="checking"?"Checking whether sync is available…":"Not available in this view. It needs a signed-in account with contributor access."}</span></span></button></div>
+     ${o.restore?`<div class="banner ok"><span>Found ${o.restore.sessions.length} synced session${o.restore.sessions.length===1?"":"s"} on your account.</span><button class="link" data-act="obRestore">Restore</button></div>`:""}
+     ${sw("obSocial",o.social,"Turn on Social",Cloud.state==="ready"?"Off by default. Everything else works the same without it.":"Not available in this view, so it stays off.",Cloud.state!=="ready"?"disabled":"")}
+     <label class="f" for="ob-name">What should we call you? <em>Optional</em><input type="text" id="ob-name" data-bind="ob.name" maxlength="30" value="${esc(o.name)}" autocomplete="off"></label>
+     <p class="tiny">You can change all of this later in Profile, and add a passcode lock there.</p></div>${nav("Enter VOUZ")}`];
+  return`<div class="ob"><div class="steps" role="progressbar" aria-valuemin="1" aria-valuemax="${n}" aria-valuenow="${i+1}" aria-label="Step ${i+1} of ${n}">${Array.from({length:n},(_,k)=>`<i class="${k<=i?"on":""}"></i>`).join("")}</div>${pages[i]()}</div>`}
+
+/* ---- home ---- */
+function vHome(){const all=sessions(),st=stats(all),h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning":h<18?"Afternoon":"Evening";
+  const ws=startOfWeek(Date.now()),cd=countByDay(all),todayI=(new Date().getDay()+6)%7,sel=ui.homeDay===null?todayI:ui.homeDay;
+  const head=`<div class="row between"><div class="mark">vouz<b>.</b></div><button class="pill" data-act="tab" data-tab="profile" aria-label="Privacy settings">${ic("lock")} Private</button></div>`;
+  const orb=S.active?`<button class="orb dark" data-act="tab" data-tab="track" aria-label="Return to your running session">${ic(running()?"pause":"play")}<span class="mc" id="miniclock">${fmtClock(elapsed(S.active))}</span><span class="small">${running()?"Running":"Paused"}</span></button>`
+    :S.draft&&S.draft.fromTimer?`<button class="orb" data-act="resumeDraft">${ic("edit")}<span>Finish saving</span></button>`
+    :`<button class="orb" data-act="start" aria-label="Start session">${ic("play")}<span>Start</span></button>`;
+  const hero=`<div class="sec"><div><h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1><p class="sub">${all.length?"Ready for another round?":"Some workouts don't need sneakers."}</p></div><div class="stage" style="margin-top:4px">${weekRing(ws,cd,sel)}<div class="in">${orb}</div></div></div>`;
+  if(!all.length)return`<div class="scroll">${head}${invitesCard()}${hero}<div class="sec" style="text-align:center;align-items:center"><h2>Nothing logged yet. <em>Good.</em></h2><p class="sub">This page starts blank and fills in from what you save, and only from that. The ring is your week: each arc is a day.</p><div class="row wrap" style="justify-content:center"><button class="btn sm" data-act="manual">${ic("plus")} Log a past session</button><button class="btn sm ghost" data-act="loadDemo">See it with demo data</button></div></div></div>`;
+  const dayT=addDays(ws,sel),dayS=all.filter(s=>dayKey(s.start)===dayKey(dayT)),wk=all.filter(s=>s.start>=ws),wst=stats(wk);
+  const dayBox=`<div class="sec" aria-live="polite"><div class="row between"><h3>${sel===todayI?"Today":fmtDate(dayT)}</h3><span class="sub small">This week: ${wst.n} session${wst.n===1?"":"s"}, ${fmtDur(wst.tot)}</span></div>${dayS.length?`<div>${dayS.map(sessRow).join("")}</div>`:`<p class="sub small">${dayT>Date.now()?"Still ahead.":"Nothing logged for this day."} Tap any arc on the ring to look at another day.</p>`}</div>`;
+  const trio=`<div class="trio"><div><b data-count="${st.n}">${st.n}</b><span>sessions</span></div><div><b data-count="${fmtMin(st.tot)}">${fmtMin(st.tot)}</b><span>minutes tracked</span></div><div><b data-count="${fmtMin(st.avg)}">${fmtMin(st.avg)}</b><span>avg minutes</span></div></div>`;
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth(),first=new Date(y,m,1),lead=(first.getDay()+6)%7,dim=new Date(y,m+1,0).getDate(),today=dayKey(Date.now());
+  let cal="MTWTFSS".split("").map(c=>`<span class="h">${c}</span>`).join("")+"<span></span>".repeat(lead);
+  for(let d=1;d<=dim;d++){const k=y+"-"+pad(m+1)+"-"+pad(d),c=cd[k]||0;cal+=`<span class="${c>1?"on2":c?"on":""}${k===today?" today":""}" title="${c} session${c===1?"":"s"}">${d}</span>`}
+  const w8=Array.from({length:8},(_,i)=>{const a=addDays(ws,-7*(7-i));return all.filter(s=>s.start>=a&&s.start<addDays(a,7)).length});
+  const hr=all.filter(s=>s.hrAvg),ach=achievements(),got=ach.filter(a=>a.at).sort((a,b)=>b.at.start-a.at.start),rest=ach.filter(a=>!a.at);
+  return`<div class="scroll">${head}${demoBanner()}${invitesCard()}${hero}${dayBox}<hr class="rule">${trio}
+   <div class="card"><div class="row between"><h3>${MO[m]} ${y}</h3><span class="sub small">${Object.keys(cd).filter(k=>k.startsWith(y+"-"+pad(m+1))).length} active days</span></div><div class="cal">${cal}</div></div>
+   <div class="sec"><div class="row between"><h3>Your last 8 weeks</h3><button class="link small" data-act="tab" data-tab="insights">Insights</button></div>${bars(w8,w8.map((_,i)=>{const a=addDays(ws,-7*(7-i)),d=new Date(a);return{s:i%2?"":d.getDate()+" "+MO[d.getMonth()],full:"Week of "+fmtDate(a)}}),"sessions")}</div>
+   ${hr.length?`<div class="card"><h3>Heart rate, as you entered it</h3><div class="trio"><div><b>${Math.round(hr.reduce((a,s)=>a+ +s.hrAvg,0)/hr.length)}</b><span>avg bpm</span></div><div><b>${Math.max(...hr.map(s=>+s.hrPeak||+s.hrAvg))}</b><span>highest peak</span></div><div><b>${hr.length}</b><span>sessions with a value</span></div></div></div>`:""}
+   <div class="sec"><div class="row between"><h3>Recent</h3><button class="link small" data-act="page" data-page="history">All ${all.length}</button></div><div>${all.slice(0,3).map(sessRow).join("")}</div></div>
+   <div class="sec"><div class="row between"><h3>Achievements</h3><button class="link small" data-act="page" data-page="achievements">${got.length} of ${ach.length}</button></div><div class="hs">${got.concat(rest).map(a=>`<div class="b ${a.at?"on":""}"><span class="badge ${a.at?"on":""}">${a.g}</span>${a.name}</div>`).join("")}</div><p class="tiny">Private to you unless you choose to share one.</p></div></div>`}
+
+/* ---- track ---- */
+function trackCats(){const c=S.active?S.active.category:ui.trackCat;return`<div class="col" style="align-items:center"><h3>Category <span class="tiny" style="text-transform:none;letter-spacing:0">Optional</span></h3><div class="chips" style="justify-content:center" role="group" aria-label="Session category">${CAT_PICK.map(v=>`<button class="chip" data-act="tCat" data-v="${v}" aria-pressed="${c===v}">${CATS[v]}</button>`).join("")}</div></div>`}
+/* People on a session. Added by hand after it's saved, and only ever from your own connections. */
+const PST={yes:"Confirmed",no:"Declined",wait:"Invited"};
+function peopleCard(s){const pp=s.people||[],on=Soc.ready();if(s.demo)return"";
+  return`<div class="card"><h3>Who was there <span class="tiny" style="text-transform:none;letter-spacing:0">Optional, private</span></h3>
+   ${pp.length?`<div>${pp.map(p=>{const st=p.from?"Added you":on?PST[Soc.inv[p.id+"|"+p.i]||"wait"]:"Social is off";return`<div class="ach"><span class="av" aria-hidden="true">${esc((p.h||"?")[0].toUpperCase())}</span><span class="grow"><b>${esc(on?Soc.handle(p.id)==="Someone"?p.h:Soc.handle(p.id):p.h)}</b><span class="sub small" style="display:block">${st}</span></span><button class="btn sm ghost" data-act="personOff" data-sid="${s.id}" data-i="${esc(p.i)}" aria-label="Remove ${esc(p.h)} from this session">Remove</button></div>`}).join("")}</div>`:`<p class="sub small">Nobody added. Nothing is detected: you choose who to add, and they choose whether to accept.</p>`}
+   <button class="btn sm" style="align-self:flex-start" data-act="addPeople" data-id="${s.id}">${ic("plus")} Add someone</button>
+   <p class="tiny">They'd see the date, time, length and category. Never your notes, mood, tags, heart rate or title. This stays out of shared cards.</p></div>`}
+function invitesCard(){if(!S.settings.social||!Soc.inbox.length)return"";
+  return`<div class="card line" role="region" aria-label="Session invites"><h3>Session invites</h3><div>${Soc.inbox.map(v=>`<div class="col" style="gap:8px;padding:8px 0"><span><b>${esc(Soc.handle(v.a))}</b> added you to a session<span class="sub small" style="display:block">${fmtDate(v.start)} · ${fmtTime(v.start)} · ${fmtDur(v.dur)}${v.cat?" · "+CATS[v.cat]:""}</span></span><div class="row"><button class="btn sm primary grow" data-act="invYes" data-a="${esc(v.a)}" data-i="${esc(v.i)}">Add to my log</button><button class="btn sm ghost grow" data-act="invNo" data-a="${esc(v.a)}" data-i="${esc(v.i)}">Decline</button></div></div>`).join("")}</div><p class="tiny">Accepting saves your own private copy. Declining saves nothing.</p></div>`}
+function vTrack(){const a=S.active;
+  if(!a)return`<div class="scroll"><div><h3>Track</h3><h1>${S.sessions.length?"Ready for <em>another round?</em>":"Some workouts don't need <em>sneakers.</em>"}</h1></div>
+    <div class="stage" style="max-width:300px">${trackRing(false)}<div class="in"><div class="clock">00:00:00</div><span class="sub small">Nothing running</span></div></div>
+    ${S.draft&&S.draft.fromTimer?"":trackCats()}
+    ${S.draft&&S.draft.fromTimer?`<button class="btn primary block" data-act="resumeDraft">Finish saving your last session</button>`:`<button class="btn primary block" data-act="start">${ic("play")} Start session</button>`}
+    <button class="btn ghost block" data-act="manual">${ic("plus")} Log a past session</button>
+    <p class="tiny" style="text-align:center">Pick a category now, during, or after. Only you start the timer.</p></div>`;
+  const live=running();
+  return`<div class="scroll"><div><h3>${live?"In session":"Paused"}</h3><h1>${live?"Take your <em>time.</em>":"Catching your <em>breath.</em>"}</h1></div>
+    <div class="stage ${live?"live":""}" style="max-width:300px">${trackRing(live)}<div class="in"><div class="clock" id="clock" role="timer" aria-live="off">${fmtClock(elapsed(a))}</div><span class="sub small">Started ${fmtTime(a.segments[0][0])}${a.segments.length>1?" · "+(a.segments.length-1)+" pause"+(a.segments.length>2?"s":""):""}</span></div></div>
+    ${trackCats()}
+    <div class="row">${live?`<button class="btn grow" data-act="pause">${ic("pause")} Pause</button>`:`<button class="btn grow" data-act="resume">${ic("play")} Resume</button>`}<button class="btn primary grow" data-act="finish">${ic("stop")} Finish</button></div>
+    <button class="btn danger block" data-act="askCancel">Cancel session</button>
+    <p class="tiny" style="text-align:center">Safe to lock your phone or close this tab. The clock picks up where it should.</p></div>`}
+
+/* ---- session details (new, manual, edit) ---- */
+const MOODS=Object.keys(MC);
+/* Session categories. "partnered" is the earlier value: still valid, still shown, never converted automatically. */
+const CATS={solo:"Solo",duo:"Duo",trio:"Trio",group:"Group",partnered:"Partnered"},CAT_PICK=["solo","duo","trio","group"],CAT_ALL=["solo","duo","trio","group","partnered"];
+const CATC={solo:"var(--pink)",duo:"#B79CFF",trio:"#7CC4FF",group:"#FFC670",partnered:"var(--coral)"};
+const catLabel=s=>s.category==="group"&&s.groupSize?"Group of "+s.groupSize:CATS[s.category]||"";
+function vDetails(){const d=S.draft;if(!d)return vHome()+vTabs();
+  return hdr(d.editing?"Edit session":d.fromTimer?"Save session":"Log a session")+`<div class="scroll">
+   ${d.fromTimer?`<div class="card" style="text-align:center"><span class="sub small">Tracked time</span><div class="clock" style="font-size:44px">${fmtClock(d.durMin*60+ +d.durSec)}</div></div>`:""}
+   <p class="sub small">Only the time and duration are needed. Everything else is optional and stays private.</p>
+   <div class="col"><h3>Category <span class="tiny" style="text-transform:none;letter-spacing:0">Optional</span></h3><div class="chips">${CAT_PICK.concat(d.category==="partnered"?["partnered"]:[]).map(v=>`<button class="chip" data-act="dCat" data-v="${v}" aria-pressed="${d.category===v}">${CATS[v]}${v==="partnered"?" (earlier entry)":""}</button>`).join("")}</div>${d.category==="group"?`<label class="f" for="d-gsize">How many people? <em>Optional. 4 or more.</em><input type="number" id="d-gsize" data-bind="draft.groupSize" min="4" max="99" inputmode="numeric" value="${esc(d.groupSize??"")}"></label>`:""}<p class="tiny">${d.category==="partnered"?"This session was saved as Partnered before Duo, Trio and Group existed. It stays that way unless you pick a new one.":"Solo is just you. Duo is two people, Trio is three, Group is four or more."}</p></div>
+   <label class="f" for="d-title">Title <em>Optional</em><input type="text" id="d-title" data-bind="draft.title" maxlength="60" value="${esc(d.title)}" placeholder="Session" autocomplete="off"></label>
+   <label class="f" for="d-start">Date and time<input type="datetime-local" id="d-start" data-bind="draft.startLocal" value="${esc(d.startLocal)}"></label>
+   <div class="row"><label class="f grow" for="d-min">Minutes<input type="number" id="d-min" data-bind="draft.durMin" min="0" max="1440" inputmode="numeric" value="${esc(d.durMin)}"></label><label class="f grow" for="d-sec">Seconds<input type="number" id="d-sec" data-bind="draft.durSec" min="0" max="59" inputmode="numeric" value="${esc(d.durSec)}"></label></div>
+   <div class="col"><h3>Mood <span class="tiny" style="text-transform:none;letter-spacing:0">Optional</span></h3><div class="chips">${MOODS.map(m=>`<button class="chip" data-act="dMood" data-v="${m}" aria-pressed="${d.mood===m}">${m}</button>`).join("")}</div></div>
+   <div class="col"><label class="f" for="d-tag">Tags <em>Optional. Press Enter to add.</em><input type="text" id="d-tag" maxlength="24" placeholder="e.g. morning, weekend away" autocomplete="off"></label>${d.tags.length?`<div class="chips">${d.tags.map((t,i)=>`<button class="chip" data-act="dTagDel" data-i="${i}" aria-label="Remove tag ${esc(t)}">${esc(t)} ×</button>`).join("")}</div>`:""}</div>
+   <label class="f" for="d-notes">Private notes <em>Optional. Never shared.</em><textarea id="d-notes" data-bind="draft.notes" maxlength="2000">${esc(d.notes)}</textarea></label>
+   <div class="card line"><h3>Heart rate <span class="tiny" style="text-transform:none;letter-spacing:0">Optional, typed in by you</span></h3><div class="row"><label class="f grow" for="d-hra">Average bpm<input type="number" id="d-hra" data-bind="draft.hrAvg" min="30" max="240" inputmode="numeric" value="${esc(d.hrAvg)}"></label><label class="f grow" for="d-hrp">Peak bpm<input type="number" id="d-hrp" data-bind="draft.hrPeak" min="30" max="240" inputmode="numeric" value="${esc(d.hrPeak)}"></label></div><p class="tiny">No wearable is connected in the web build. VOUZ shows these numbers back to you and reads nothing into them.</p></div>
+   ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}
+   <button class="btn primary block" data-act="saveSession">${d.editing?"Save changes":"Save session"}</button>
+   ${d.editing?`<button class="btn danger block" data-act="askDelete" data-id="${d.editing}">${ic("trash")} Delete session</button>`:d.fromTimer?`<button class="btn danger block" data-act="askCancel">Discard session</button>`:""}</div>`}
+
+/* ---- replay ---- */
+const RPROMPT=["What do you want to remember about this one?","What made this one what it was?","Anything you'd tell your future self?"];
+function vReplay(){const s=S.sessions.find(x=>x.id===ui.page.id);if(!s){ui.page=null;return vHome()+vTabs()}
+  const ms=milestonesFor(s),segs=s.segments||[],span=segs.length?segs[segs.length-1][1]-segs[0][0]:0,pauses=Math.max(0,segs.length-1),sel=segs.length>1?ui.rp.seg:null;
+  const order=S.sessions.slice().sort((a,b)=>a.start-b.start),idx=order.findIndex(x=>x.id===s.id),older=order[idx-1],newer=order[idx+1];
+  const tl=segs.length?`<div class="tl" role="group" aria-label="Session timeline">${segs.map(([a,b],i)=>(i?`<span style="width:${((a-segs[i-1][1])/span*100).toFixed(2)}%"></span>`:"")+`<button style="width:${((b-a)/span*100).toFixed(2)}%" data-act="rSeg" data-i="${i}" aria-pressed="${sel===i}" aria-label="Part ${i+1}, ${fmtDur((b-a)/1e3)}"><i></i></button>`).join("")}</div>
+     <div class="row between tiny"><span>${fmtTime(segs[0][0])}</span><span>${fmtTime(segs[segs.length-1][1])}</span></div>
+     <p class="sub small" aria-live="polite">${sel!==null&&segs[sel]?`Part ${sel+1} of ${segs.length}: ${fmtTime(segs[sel][0])} to ${fmtTime(segs[sel][1])}, ${fmtDur((segs[sel][1]-segs[sel][0])/1e3)}.`:pauses?`${pauses} pause${pauses>1?"s":""}, ${fmtDur(span/1e3-s.durationSec)} paused in all. Tap a part to look closer.`:"One unbroken stretch, start to finish."}</p>`
+    :`<p class="sub small">Logged by hand, so there's no timeline. Sessions you time get one.</p>`;
+  /* comparisons: against your own history only */
+  const sc=ui.rp.scope,pool=S.sessions.filter(x=>x.id!==s.id&&(sc==="all"||(sc==="cat"?x.category===s.category:x.start>=s.start-90*DAY&&x.start<=s.start+90*DAY)));
+  const pst=stats(pool),wdPool=pool.filter(x=>new Date(x.start).getDay()===new Date(s.start).getDay()),wst=stats(wdPool);
+  const pair=(label,a,b,bl)=>{const mx=Math.max(a,b,1);return`<div class="pair"><div class="row between small"><span class="sub">${label}</span><span><b>${fmtDur(a)}</b> <span class="sub">· ${bl} ${fmtDur(b)}</span></span></div><div class="bar"><i style="width:${a/mx*100}%"></i></div><div class="bar"><i style="width:${b/mx*100}%;background:var(--dim)"></i></div></div>`};
+  const diff=s.durationSec-pst.avg,parts=[0,0,0,0];pool.forEach(x=>parts[partOf(new Date(x.start).getHours())]++);const usual=parts.indexOf(Math.max(...parts)),mine=partOf(new Date(s.start).getHours());
+  const facts=[];if(older){const gap=Math.max(0,Math.round((startOfDay(s.start)-startOfDay(older.start))/DAY));facts.push(gap===0?"The same day as the one before":gap+" day"+(gap===1?"":"s")+" after the one before")}
+  facts.push(`Session ${idx+1} of ${order.length}`);if(pool.length>=3)facts.push(usual===mine?`${PARTS[mine]} is when you most often start`:`You most often start in the ${PARTS[usual].toLowerCase()}; this was ${PARTS[mine].toLowerCase()}`);
+  const cmp=pool.length?`${pair("This session",s.durationSec,pst.avg,"your average")}${wdPool.length>=2?pair("Against your "+WDL[new Date(s.start).getDay()]+"s",s.durationSec,wst.avg,"typical"):""}<p class="sub small">${Math.abs(diff)<45?"Right around your average.":fmtDur(Math.abs(diff))+(diff>0?" longer":" shorter")+" than your average. Neither is better; it's just where this one sat."}</p>`:`<p class="sub small">${sc==="all"?"Nothing to compare with yet. This fills in once you have more than one session.":"No other sessions match this filter."}</p>`;
+  return hdr("Replay",`<button class="ib" data-act="editSession" data-id="${s.id}" aria-label="Edit session">${ic("edit")}</button>`)+`<div class="scroll">
+   ${ui.page.fresh?`<div class="banner ok" role="status"><span>Saved privately.</span></div>`:""}${s.demo?`<div class="banner"><span>This is a demo session.</span></div>`:""}
+   <div><h3>${fmtDate(s.start)} · ${fmtTime(s.start)}</h3><h1>${esc(s.title||"Session")}</h1></div>
+   <div class="stage">${replayRing(s,sel)}<div class="in"><span class="sub small">Duration</span><div class="clock" style="font-size:48px">${fmtClock(s.durationSec)}</div><div class="row" style="gap:6px">${s.category?`<span class="pill c">${esc(catLabel(s))}</span>`:""}${s.mood?`<span class="pill" style="color:${MC[s.mood]||"var(--muted)"}">${esc(s.mood)}</span>`:""}</div></div></div>
+   <h2>${esc(summaryFor(s))}</h2>
+   <div class="sec"><h3>Timeline</h3>${tl}</div>
+   ${ms.length?`<div class="card"><h3>Milestones from this one</h3><div>${ms.map(m=>`<div class="ach"><span class="badge on new">${m.g}</span><span class="grow"><b>${esc(m.t)}</b><span class="sub small" style="display:block">${esc(m.d)}</span></span></div>`).join("")}</div></div>`:""}
+   <div class="card"><div class="row between"><h3>How it sits in your history</h3></div><div class="seg3" role="group" aria-label="Compare against">${[["all","All time"],["near","Around then"],["cat","Same category"]].map(([v,l])=>`<button data-act="rScope" data-v="${v}" aria-pressed="${sc===v}" ${v==="cat"&&!s.category?"disabled":""}>${l}</button>`).join("")}</div>${cmp}<ul class="plain">${facts.map(f=>`<li>${ic("clock")}<span>${esc(f)}.</span></li>`).join("")}</ul></div>
+   ${peopleCard(s)}
+   <div class="card"><h3>Reflection <span class="tiny" style="text-transform:none;letter-spacing:0">Optional, private</span></h3><div class="chips" role="group" aria-label="Mood">${MOODS.map(m=>`<button class="chip" data-act="rMood" data-v="${m}" aria-pressed="${s.mood===m}">${m}</button>`).join("")}</div><label class="f" for="rf-text">${RPROMPT[idx%3]}<textarea id="rf-text" maxlength="600" placeholder="A line or two, just for you.">${esc(s.reflection||"")}</textarea></label><button class="btn sm" style="align-self:flex-start" data-act="rSave">Save reflection</button></div>
+   ${s.hrAvg||s.hrPeak?`<div class="card"><h3>Heart rate, as you entered it</h3><div class="trio">${s.hrAvg?`<div><b>${esc(s.hrAvg)}</b><span>average bpm</span></div>`:""}${s.hrPeak?`<div><b>${esc(s.hrPeak)}</b><span>peak bpm</span></div>`:""}</div><p class="tiny">A chart needs readings from a wearable, which the web build doesn't have.</p></div>`:""}
+   ${s.tags.length||s.notes?`<div class="card line"><h3>Notes and tags</h3>${s.tags.length?`<div class="chips">${s.tags.map(t=>`<span class="pill">${esc(t)}</span>`).join("")}</div>`:""}${s.notes?`<p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(s.notes)}</p>`:""}</div>`:""}
+   <button class="btn ghost block" data-act="composeRecap" data-id="${s.id}">${ic("share")} Make a shareable card</button>
+   <p class="tiny" style="text-align:center">A shareable card is a separate thing you build. It never carries your notes, reflection, mood, tags, heart rate or exact time.</p>
+   <div class="row"><button class="btn sm ghost grow" data-act="openReplay" data-id="${older?older.id:""}" data-keep="1" ${older?"":"disabled"}>${ic("back")} Earlier</button><button class="btn sm ghost grow" data-act="openReplay" data-id="${newer?newer.id:""}" data-keep="1" ${newer?"":"disabled"}>Later ${ic("next")}</button></div></div>`}
+
+function vHistory(){const all=sessions();return hdr("All sessions",`<button class="ib" data-act="manual" aria-label="Log a past session">${ic("plus")}</button>`)+`<div class="scroll">${demoBanner()}${all.length?`<div class="card"><div>${all.map(sessRow).join("")}</div></div>`:`<div class="card"><h2>No sessions yet.</h2><p class="sub">Start the timer or log one from memory.</p></div>`}</div>`}
+
+function vAch(){const a=achievements(),g=S.settings.regular;return hdr("Achievements")+`<div class="scroll"><div><h1>Small wins, <em>kept quiet.</em></h1><p class="sub">These mark things that happened. They aren't targets, and nobody else sees them unless you share one.</p></div>
+  <div class="card"><div>${a.map(x=>`<div class="ach"><span class="badge ${x.at?"on":""}">${x.g}</span><span class="grow"><b>${x.name}</b><span class="sub small" style="display:block">${esc(x.desc)}</span>${x.at?`<span class="tiny">Earned ${fmtDate(x.at.start)}</span>`:""}</span>${x.at&&S.settings.social?`<button class="btn sm ghost" data-act="composeAch" data-id="${x.id}">Share</button>`:""}</div>`).join("")}</div></div>
+  <div class="card"><h3>The Regular</h3><p class="sub small">${g?"You set this one: "+g.perWeek+" or more sessions a week for "+g.weeks+" weeks in a row.":"This one is yours to define, or to skip. VOUZ never suggests a number."}</p><div class="row"><label class="f grow" for="rg-n">Sessions a week<input type="number" id="rg-n" min="1" max="14" value="${g?g.perWeek:""}" inputmode="numeric"></label><label class="f grow" for="rg-w">Weeks in a row<input type="number" id="rg-w" min="2" max="26" value="${g?g.weeks:""}" inputmode="numeric"></label></div><div class="row"><button class="btn sm primary" data-act="setRegular">Save</button>${g?`<button class="btn sm ghost" data-act="clearRegular">Remove it</button>`:""}</div></div></div>`}
+
+/* ---- insights ---- */
+function insRange(){const r=ui.ins,now=Date.now();
+  if(r.range==="week")return[startOfWeek(now),addDays(startOfWeek(now),7)];
+  if(r.range==="month"){const d=new Date();return[new Date(d.getFullYear(),d.getMonth(),1).getTime(),new Date(d.getFullYear(),d.getMonth()+1,1).getTime()]}
+  if(r.range==="year"){const y=new Date().getFullYear();return[new Date(y,0,1).getTime(),new Date(y+1,0,1).getTime()]}
+  const f=r.from?new Date(r.from+"T00:00").getTime():NaN,t=r.to?new Date(r.to+"T00:00").getTime():NaN;
+  if(isNaN(f)||isNaN(t)||t<f)return null;return[f,addDays(t,1)]}
+function prevRange(rg){const r=ui.ins.range,d=new Date(rg[0]);if(r==="month")return[new Date(d.getFullYear(),d.getMonth()-1,1).getTime(),rg[0]];if(r==="year")return[new Date(d.getFullYear()-1,0,1).getTime(),rg[0]];return[addDays(rg[0],-Math.round((rg[1]-rg[0])/DAY)),rg[0]]}
+function vInsights(){const r=ui.ins,inCat=s=>r.cat==="all"||s.category===r.cat,base=S.sessions.filter(inCat),rg=insRange();
+  const list=rg?base.filter(s=>s.start>=rg[0]&&s.start<rg[1]):[],st=stats(list),rl={week:"this week",month:"this month",year:"this year",custom:"this range"}[r.range];
+  const head=`<div><h3>Insights</h3><h1>Patterns, <em>not goals.</em></h1><p class="sub small">A description of what you logged. There's no right amount, and nothing here is advice.</p></div>${demoBanner()}
+   <div class="chips" role="group" aria-label="Time range">${[["week","Week"],["month","Month"],["year","Year"],["custom","Custom"]].map(([v,l])=>`<button class="chip" data-act="insRange" data-v="${v}" aria-pressed="${r.range===v}">${l}</button>`).join("")}</div>
+   ${r.range==="custom"?`<div class="row"><label class="f grow" for="i-from">From<input type="date" id="i-from" data-bind="ins.from" data-live="1" value="${esc(r.from)}"></label><label class="f grow" for="i-to">To<input type="date" id="i-to" data-bind="ins.to" data-live="1" value="${esc(r.to)}"></label></div>${rg?"":`<p class="sub small">Pick a start and end date.</p>`}`:""}
+   <div class="chips" role="group" aria-label="Category">${[["all","All"]].concat(CAT_PICK.concat(S.sessions.some(x=>x.category==="partnered")?["partnered"]:[]).map(v=>[v,CATS[v]])).map(([v,l])=>`<button class="chip" data-act="insCat" data-v="${v}" aria-pressed="${r.cat===v}">${l}</button>`).join("")}</div>`;
+  if(!S.sessions.length)return`<div class="scroll">${head}<div class="card"><h2>Nothing to chart yet.</h2><p class="sub">Save a session and this page fills in from your own records.</p><button class="btn sm primary" data-act="tab" data-tab="track" style="align-self:flex-start">Go to Track</button></div></div>`;
+  const tabs=`<div class="seg3" role="group" aria-label="Insights section">${[["overview","Overview"],["patterns","Patterns"],["mood","Mood"]].map(([v,l])=>`<button data-act="insTab" data-v="${v}" aria-pressed="${r.tab===v}">${l}</button>`).join("")}</div>`;
+  const none=`<div class="card line"><p class="sub small">No sessions ${rl}${r.cat!=="all"?" in this category":""}. Try a wider range.</p></div>`;
+  let body="";
+  if(r.tab==="overview"){let chart="";
+    if(rg){const days=Math.round((rg[1]-rg[0])/DAY);let vals=[],labs=[];
+      if(r.range==="year"){for(let m=0;m<12;m++){vals.push(list.filter(s=>new Date(s.start).getMonth()===m).length);labs.push({s:MO[m][0],full:MO[m]})}}
+      else if(days<=62){const cd=countByDay(list);for(let i=0;i<days;i++){const t=addDays(rg[0],i),d=new Date(t);vals.push(cd[dayKey(t)]||0);labs.push({s:days<=7?WD[d.getDay()]:(d.getDate()===1||d.getDate()%5===0?String(d.getDate()):""),full:fmtDate(t)})}}
+      else{for(let t=startOfWeek(rg[0]);t<rg[1];t=addDays(t,7)){vals.push(list.filter(s=>s.start>=t&&s.start<addDays(t,7)).length);labs.push({s:"",full:"Week of "+fmtDate(t)})}}
+      chart=bars(vals,labs,"sessions")}
+    const weeks=rg?Math.max(1,(Math.min(rg[1],Date.now())-rg[0])/(7*DAY)):1,pr=rg?prevRange(rg):null,pst=pr?stats(base.filter(s=>s.start>=pr[0]&&s.start<pr[1])):null;
+    const cmp=(a,b,l,f)=>{const mx=Math.max(a,b,1);return`<div class="pair"><div class="row between small"><span class="sub">${l}</span><span><b>${f(a)}</b> <span class="sub">· before ${f(b)}</span></span></div><div class="bar"><i style="width:${a/mx*100}%"></i></div><div class="bar"><i style="width:${b/mx*100}%;background:var(--dim)"></i></div></div>`};
+    const allSt=stats(base),wkCounts={};base.forEach(s=>{const k=startOfWeek(s.start);wkCounts[k]=(wkCounts[k]||0)+1});const firstS=base.slice().sort((a,b)=>a.start-b.start)[0];
+    body=`<div class="tiles"><div class="tile"><b>${st.n}</b><span>sessions</span></div><div class="tile"><b>${fmtDur(st.tot)}</b><span>total time</span></div><div class="tile"><b>${fmtDur(st.avg)}</b><span>average</span></div><div class="tile"><b>${fmtDur(st.longest)}</b><span>longest</span></div><div class="tile"><b>${st.days}</b><span>active days</span></div><div class="tile"><b>${(st.n/weeks).toFixed(1)}</b><span>per week</span></div></div>
+     ${rg?`<div class="sec"><h3>Sessions ${r.range==="year"?"per month":r.range==="custom"&&Math.round((rg[1]-rg[0])/DAY)>62?"per week":"per day"}</h3>${st.n?chart:`<p class="sub small">No sessions ${rl}${r.cat!=="all"?" in this category":""}.</p>`}</div>`:""}
+     ${pst?`<div class="card"><h3>${rl[0].toUpperCase()+rl.slice(1)} and the one before</h3>${cmp(st.n,pst.n,"Sessions",v=>v)}${cmp(st.tot,pst.tot,"Time",fmtDur)}${cmp(st.avg,pst.avg,"Average length",fmtDur)}<p class="tiny">Coral is ${rl}, grey is the period before. Different isn't better or worse.</p></div>`:""}
+     <div class="sec"><div class="row between"><h3>Last 18 weeks</h3><span class="row tiny" style="gap:4px">0 <i style="width:10px;height:10px;border-radius:3px;background:var(--surface2)"></i><i style="width:10px;height:10px;border-radius:3px;background:rgba(255,92,135,.35)"></i><i style="width:10px;height:10px;border-radius:3px;background:var(--coral)"></i> 3+</span></div>${heatmap(base,18)}</div>
+     <div class="card"><h3>Personal milestones</h3><div class="tiles two"><div class="tile"><b>${fmtDur(allSt.longest)}</b><span>longest session</span></div><div class="tile"><b>${Math.max(0,...Object.values(wkCounts))}</b><span>most in one week</span></div><div class="tile"><b>${allSt.n}</b><span>sessions all time</span></div><div class="tile"><b>${firstS?new Date(firstS.start).getDate()+" "+MO[new Date(firstS.start).getMonth()]:"–"}</b><span>first tracked</span></div></div></div>`}
+  else if(r.tab==="patterns"){if(!list.length)body=none;else{
+    const parts=[0,0,0,0],grid=Array.from({length:4},()=>Array(7).fill(0)),wdN=Array(7).fill(0),wdT=Array(7).fill(0);
+    list.forEach(s=>{const d=new Date(s.start),p=partOf(d.getHours()),w=(d.getDay()+6)%7;parts[p]++;grid[p][w]++;wdN[w]++;wdT[w]+=s.durationSec});
+    const top=parts.indexOf(Math.max(...parts)),gmax=Math.max(1,...grid.flat()),cats=CAT_ALL.map(k=>[k,list.filter(s=>s.category===k)]).filter(x=>x[1].length),un=list.length-cats.reduce((a,x)=>a+x[1].length,0);
+    body=`<div class="card"><h3>Time of day</h3>${dial(list)}<h2>Most often in the <em>${PARTS[top].toLowerCase()}.</em></h2><p class="sub small">${parts[top]} of ${list.length} session${list.length===1?"":"s"} ${rl} started between ${PARTH[top]}.</p></div>
+     <div class="card"><h3>Day and time</h3><div class="grid74"><span></span>${"MTWTFSS".split("").map(c=>`<span>${c}</span>`).join("")}${grid.map((row,p)=>`<span style="text-align:left;padding-right:6px">${PARTS[p]}</span>${row.map((c,w)=>`<i style="${c?`background:rgba(255,92,135,${(.25+.75*c/gmax).toFixed(2)});${c/gmax>.6?"color:#1a0810;font-weight:700":""}`:""}" title="${WD[(w+1)%7]} ${PARTS[p].toLowerCase()}: ${c}">${c||""}</i>`).join("")}`).join("")}</div></div>
+     <div class="sec"><h3>Average length by weekday</h3>${bars(wdN.map((n,i)=>n?Math.round(wdT[i]/n/60):0),["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>({s:d,full:d})),"minutes","#FFA3BF")}</div>
+     ${r.cat==="all"?`<div class="card"><h3>Categories</h3><div class="bar" style="height:18px;border-radius:9px" role="img" aria-label="${cats.map(([k,l])=>l.length+" "+CATS[k]).join(", ")}, ${un} not set">${cats.map(([k,l])=>`<i style="width:${l.length/list.length*100}%;background:${CATC[k]}"></i>`).join("")}</div><div class="lg">${cats.map(([k,l])=>`<span><i style="background:${CATC[k]}"></i>${CATS[k]} ${l.length}, avg ${fmtDur(stats(l).avg)}</span>`).join("")}${un?`<span><i style="background:var(--surface2)"></i>Not set ${un}</span>`:""}</div>${cats.some(x=>x[0]==="partnered")?`<p class="tiny">Partnered is the earlier category. Those sessions stay as they are unless you edit them.</p>`:""}</div>`:""}`}}
+  else{const withMood=list.filter(s=>s.mood&&MC[s.mood]),cnt={};withMood.forEach(s=>cnt[s.mood]=(cnt[s.mood]||0)+1);const ord=MOODS.filter(m=>cnt[m]).sort((a,b)=>cnt[b]-cnt[a]),mmax=Math.max(1,...Object.values(cnt));
+    const months=Array.from({length:6},(_,i)=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth()-5+i,1)}),hr=base.filter(s=>s.hrAvg).sort((a,b)=>a.start-b.start).slice(-12),refl=list.filter(s=>s.reflection&&s.reflection.trim()).sort((a,b)=>b.start-a.start);
+    const mm=months.map(d=>{const a=d.getTime(),b=new Date(d.getFullYear(),d.getMonth()+1,1).getTime(),ms=base.filter(s=>s.start>=a&&s.start<b&&s.mood&&MC[s.mood]),c={};ms.forEach(s=>c[s.mood]=(c[s.mood]||0)+1);return{l:MO[d.getMonth()],n:ms.length,c}});
+    body=`${withMood.length?`<div class="card"><h3>Moods you logged ${rl}</h3><div class="col">${ord.map(m=>`<div class="hb"><span>${m}</span><div class="bar"><i style="width:${cnt[m]/mmax*100}%;background:${MC[m]}"></i></div><span class="sub">${cnt[m]}</span></div>`).join("")}</div><p class="tiny">${withMood.length} of ${list.length} session${list.length===1?"":"s"} ${rl} have a mood.</p></div>`:`<div class="card line"><h3>Moods</h3><p class="sub small">No moods logged ${rl}. Add one from a session's Replay, if you like. It's optional.</p></div>`}
+     ${mm.some(x=>x.n)?`<div class="card"><h3>Mood mix, last six months</h3><div class="col">${mm.map(x=>`<div class="hb"><span>${x.l}</span><div class="bar" style="height:14px">${MOODS.filter(m=>x.c[m]).map(m=>`<i style="width:${x.c[m]/x.n*100}%;background:${MC[m]}" title="${m}: ${x.c[m]}"></i>`).join("")}</div><span class="sub">${x.n||"–"}</span></div>`).join("")}</div><div class="lg">${MOODS.filter(m=>mm.some(x=>x.c[m])).map(m=>`<span><i style="background:${MC[m]}"></i>${m}</span>`).join("")}</div><p class="tiny">Each bar is that month's sessions with a mood, split by mood. The number is how many.</p></div>`:""}
+     ${refl.length?`<div class="card"><h3>Your reflections ${rl}</h3><div>${refl.slice(0,5).map(s=>`<button class="sess" data-act="openReplay" data-id="${s.id}"><span class="grow"><span class="sub small" style="display:block">${fmtDate(s.start)}</span><span style="display:block;font-family:var(--display);font-size:19px;line-height:1.25;overflow-wrap:anywhere">${esc(s.reflection.length>110?s.reflection.slice(0,110)+"…":s.reflection)}</span></span></button>`).join("")}</div></div>`:""}
+     ${hr.length>=2?`<div class="card"><h3>Average heart rate, as entered</h3>${line(hr.map(s=>+s.hrAvg),hr.map(s=>fmtDate(s.start)))}<p class="tiny">Last ${hr.length} sessions with a value. Shown as recorded, with no interpretation.</p></div>`:`<div class="card line"><h3>Heart-rate trends</h3><p class="sub small">Appears once two or more sessions have an average bpm. No wearable is connected in the web build.</p></div>`}`}
+  return`<div class="scroll">${head}${tabs}${body}</div>`}
+
+/* ---- social ---- */
+const RX=["🔥","❤️","👏","✨"];
+function cardHTML(c){const a=c.arc?Math.min(60,+c.arc||0):0;return`<div class="share s${[0,1,2,3].includes(c.style)?c.style:0}">${a?`<svg class="deco" viewBox="0 0 100 100" aria-hidden="true"><path d="${arc(50,50,40,0,Math.min(359.9,a*6))}" stroke="currentColor" stroke-width="9" fill="none" stroke-linecap="round"/></svg>`:""}<div class="big">${esc(c.title||"Your other cardio.")}</div><div><div class="meta">${c.duration?`<span>${esc(c.duration)}</span>`:""}${c.category?`<span>${esc(c.category)}</span>`:""}${c.badge?`<span>${esc(c.badge)}</span>`:""}</div><div class="wm" style="margin-top:10px">vouz.</div></div></div>`}
+const names=ids=>ids.map(i=>Soc.handle(i)).join(", ");
+function vSocial(){if(!S.settings.social)return vProfile();
+  if(Cloud.state!=="ready"||!K.ok)return`<div class="scroll"><div class="card"><h2>Social can't connect here.</h2><p class="sub">It needs a signed-in account and a browser that supports encryption. Your private tracking is unaffected.</p></div></div>`;
+  const seg=ui.soc.seg,me=Cloud.uid,head=`<div class="row between"><div><h3>Social</h3><h1>Good <em>company.</em></h1></div><button class="pill" data-act="sheet" data-s="guidelines">Guidelines</button></div><div class="seg3" role="group" aria-label="Social section">${[["feed","Feed"],["people","People"],["mine","My cards"]].map(([v,l])=>`<button data-act="socSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
+  if(Soc.status==="loading")return`<div class="scroll" aria-busy="true">${head}<div class="skel"></div><div class="skel"></div><span class="tiny" role="status">Loading the feed…</span></div>`;
+  if(Soc.status==="error"||Soc.status==="slow")return`<div class="scroll">${head}<div class="card"><p class="sub">The feed can't be reached right now. Nothing of yours has been shared in the meantime.</p></div></div>`;
+  let body=seg==="feed"?invitesCard():"";
+  if(seg==="feed"||seg==="mine"){const f=Soc.items.filter(x=>seg==="mine"?x.a===me:true);
+    body+=f.length?f.map(({a,it,key,sealed,aud,n})=>{const counts={};let mine=null;for(const u in Soc.reactions){if(u!==me&&(!Soc.profiles[u]||S.blocks.includes(u)))continue;const e=(Soc.reactions[u].r||{})[key];if(e&&RX.includes(e)){counts[e]=(counts[e]||0)+1;if(u===me)mine=e}}
+      const hidden=(Soc.posts[a]||{}).hidden||[],cms=(Soc.cm[key]||[]).filter(c=>!hidden.includes(c.id));
+      const who=!sealed?"Everyone on VOUZ":a!==me?"Shared with you":aud==="all"?`All connections (${n})`:`${n} chosen ${n===1?"person":"people"}`;
+      return`<article class="post"><div class="row"><span class="av" aria-hidden="true">${esc(Soc.handle(a)[0].toUpperCase())}</span><span class="grow"><b>${esc(Soc.handle(a))}</b>${a===me?' <span class="pill">you</span>':""}<span class="sub small" style="display:block">${ago(it.postedAt)} · ${sealed?ic("lock").replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')+" ":""}${who}</span></span><button class="ib bare" data-act="postMenu" data-a="${esc(a)}" data-id="${esc(it.id)}" aria-label="Card options">${ic("dots")}</button></div>
+       ${cardHTML(it.card||{})}${it.caption?`<p style="overflow-wrap:anywhere">${esc(it.caption)}</p>`:""}
+       <div class="rx" role="group" aria-label="Reactions">${RX.map(e=>`<button data-act="react" data-k="${esc(key)}" data-e="${e}" aria-pressed="${mine===e}" aria-label="React ${e}${counts[e]?", "+counts[e]:""}">${e}${counts[e]?" "+counts[e]:""}</button>`).join("")}</div>
+       ${cms.map(c=>`<div class="cm row between"><span><b>${esc(Soc.handle(c.u))}</b> ${esc(c.text)}</span>${c.u===me||a===me?`<button class="tiny link" data-act="${c.u===me?"delComment":"hideComment"}" data-id="${esc(c.id)}">${c.u===me?"Delete":"Hide"}</button>`:`<button class="tiny link" data-act="report" data-a="${esc(c.u)}" data-id="${esc(c.id)}" data-kind="comment">Report</button>`}</div>`).join("")}
+       <div class="row"><input type="text" id="c-${esc(key)}" maxlength="200" placeholder="Say something kind" autocomplete="off" aria-label="Add a comment"><button class="btn sm" data-act="comment" data-k="${esc(key)}">Send</button></div></article>`}).join("")
+     :`<div class="card"><h2>${seg==="mine"?"You haven't shared anything.":"Quiet in here."}</h2><p class="sub">${seg==="mine"?"Nothing posts by itself. Build a card from any Replay or achievement when you feel like it.":"Cards from you and the people you connect with show up here, newest first. There are no rankings and nothing is posted automatically, by anyone."}</p><button class="btn sm primary" style="align-self:flex-start" data-act="page" data-page="history">Pick a session to share</button></div>`}
+  else{const ids=Object.keys(Soc.rel).filter(i=>!S.blocks.includes(i)),R=Soc.rel;
+    const conn=ids.filter(i=>R[i].mutual),req=ids.filter(i=>R[i].theirs&&!R[i].mine&&!S.ignored.includes(i)),sent=ids.filter(i=>R[i].mine&&!R[i].theirs),disc=ids.filter(i=>!R[i].mine&&!R[i].theirs&&Soc.profiles[i].discoverable);
+    const person=(i,btn)=>`<div class="ach"><span class="av" aria-hidden="true">${esc(Soc.handle(i)[0].toUpperCase())}</span><span class="grow"><b>${esc(Soc.handle(i))}</b></span>${btn}</div>`;
+    body=`<div class="card"><h3>Your connect code</h3><p class="sub small">Connections only happen when both of you approve. VOUZ never looks at your contacts. Share this code yourself, with someone you trust.</p><div class="row"><input type="text" readonly value="${esc(me)}" id="mycode" aria-label="Your connect code"><button class="btn sm" data-act="copyCode">Copy</button></div><div class="row"><input type="text" id="addcode" placeholder="Paste someone's code" autocomplete="off" aria-label="Connect code to add"><button class="btn sm primary" data-act="addCode">Request</button></div></div>
+     ${req.length?`<div class="card"><h3>Requests</h3><div>${req.map(i=>person(i,`<button class="btn sm primary" data-act="approve" data-id="${esc(i)}">Approve</button><button class="btn sm ghost" data-act="ignore" data-id="${esc(i)}">Ignore</button>`)).join("")}</div></div>`:""}
+     <div class="card"><h3>Connected</h3><div>${conn.map(i=>person(i,`<button class="btn sm ghost" data-act="sheet" data-s="conn" data-id="${esc(i)}">Manage</button>`)).join("")||'<p class="sub small">No connections yet.</p>'}</div></div>
+     ${sent.length?`<div class="card"><h3>Waiting on them</h3><div>${sent.map(i=>person(i,`<button class="btn sm ghost" data-act="disconnect" data-id="${esc(i)}">Withdraw</button>`)).join("")}</div></div>`:""}
+     ${disc.length?`<div class="card"><h3>Open to connecting</h3><div>${disc.map(i=>person(i,`<button class="btn sm" data-act="request" data-id="${esc(i)}">Request</button>`)).join("")}</div></div>`:""}
+     ${S.blocks.length?`<div class="card"><h3>Blocked</h3><div>${S.blocks.map(i=>`<div class="ach"><span class="grow sub">${esc(Soc.handle(i))}</span><button class="btn sm ghost" data-act="unblock" data-id="${esc(i)}">Unblock</button></div>`).join("")}</div></div>`:""}`}
+  return`<div class="scroll">${head}${body}</div>`}
+
+function audienceLine(c){const conns=Soc.conns();if(c.aud==="everyone")return"Everyone using this VOUZ space";
+  const kindOk=conns.filter(i=>Soc.allowed(i,c.kind));
+  if(c.aud==="pick"){const p=c.picks.filter(i=>kindOk.includes(i));return p.length?"Only "+names(p):"Nobody yet. Pick at least one person."}
+  return kindOk.length?`Your ${kindOk.length} approved connection${kindOk.length===1?"":"s"} (${names(kindOk)}), plus any you approve later`:"Only you for now. Connections you approve later will see it."}
+function vCompose(){const c=ui.compose,sess=c.sid?S.sessions.find(s=>s.id===c.sid):null,card=buildCard(c,sess),conns=Soc.conns().filter(i=>Soc.allowed(i,c.kind)),canPost=S.settings.social&&Soc.me()&&K.priv;
+  if(c.step==="preview")return hdr("Preview")+`<div class="scroll"><p class="sub">This is exactly what other people will see. Nothing else goes with it.</p>${cardHTML(card)}${c.caption?`<p style="overflow-wrap:anywhere">${esc(c.caption)}</p>`:""}
+    <div class="card"><h3>On the card</h3><ul class="plain">${[card.title?"Title: "+card.title:"Default title",card.duration?"Duration, rounded: "+card.duration:null,card.category?"Category: "+card.category:null,card.badge?"Badge: "+card.badge:null,c.caption?"Your caption":null].filter(Boolean).map(t=>`<li>${ic("check")}<span>${esc(t)}</span></li>`).join("")}</ul></div>
+    <div class="card"><h3>Who will see it</h3><p>${esc(canPost?audienceLine(c):"Nobody. Social is off.")}</p>${c.aud!=="everyone"?`<p class="tiny">${ic("lock").replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')} Encrypted in your browser before it's stored. Only you and those people hold a key.</p>`:`<p class="tiny">Stored readable by anyone who can open this VOUZ space.</p>`}</div>
+    <div class="card line"><h3>Never on the card</h3><p class="sub small">Notes, reflection, mood, tags, heart rate, exact date and time, partner details, and your session title unless you typed it above.</p></div>
+    ${canPost?`<button class="btn primary block ${ui.busy?"busy":""}" data-act="publish" ${c.aud==="pick"&&!c.picks.length?"disabled":""}>${ui.busy?"Sharing…":"Share this card"}</button>`:`<div class="banner"><span>Social is off, so this can't be posted.</span><button class="link" data-act="tab" data-tab="profile">Settings</button></div>`}
+    <button class="btn ghost block" data-act="composeStep" data-v="edit">Keep editing</button></div>`;
+  return hdr("Shareable card")+`<div class="scroll">${cardHTML(card)}
+    <label class="f" for="c-title">Card title <em>Your private session title is not used</em><input type="text" id="c-title" data-bind="compose.title" maxlength="60" value="${esc(c.title)}" placeholder="Your other cardio." autocomplete="off"></label>
+    <label class="f" for="c-cap">Caption <em>Optional</em><textarea id="c-cap" data-bind="compose.caption" maxlength="280">${esc(c.caption)}</textarea></label>
+    ${c.kind==="recap"?`<div class="card">${sw("cDur",c.showDuration,"Show duration","Rounded to the nearest 5 minutes.")}${sess&&sess.category?sw("cCat",c.showCategory,"Show category",(CATS[sess.category]||"")+(sess.category==="group"?". The number of people is never shown.":"")):""}</div>`:""}
+    <div class="col"><h3>Style</h3><div class="chips">${["Coral","Midnight","Blush","Outline"].map((l,i)=>`<button class="chip" data-act="cStyle" data-v="${i}" aria-pressed="${c.style===i}">${l}</button>`).join("")}</div></div>
+    <div class="col"><h3>Who can see it</h3><div class="chips">${[["all","All connections"],["pick","Choose people"],["everyone","Everyone on VOUZ"]].map(([v,l])=>`<button class="chip" data-act="cAud" data-v="${v}" aria-pressed="${c.aud===v}">${l}</button>`).join("")}</div>
+      ${c.aud==="pick"?(conns.length?`<div class="chips" role="group" aria-label="People">${conns.map(i=>`<button class="chip" data-act="cPick" data-id="${esc(i)}" aria-pressed="${c.picks.includes(i)}">${esc(Soc.handle(i))}</button>`).join("")}</div>`:`<p class="sub small">You have no approved connections to choose from yet.</p>`):""}</div>
+    <button class="btn primary block" data-act="composeStep" data-v="preview">Preview</button></div>`}
+
+/* ---- profile ---- */
+function vProfile(){const s=S.settings,p=Soc.me();
+  return`<div class="scroll"><div><h3>Profile</h3><h1>Your moments, <em>your rules.</em></h1></div>${storageOK?"":`<div class="banner"><span>This browser is blocking storage, so nothing will be kept after you close the page.</span></div>`}
+   <div class="card"><label class="f" for="p-name">Name <em>Only shown to you</em><input type="text" id="p-name" data-bind="user.name" data-save="1" maxlength="30" value="${esc(S.user.name)}" autocomplete="off"></label>
+     <div class="row between"><span class="grow"><b>Storage</b><span class="sub small" style="display:block">${S.user.mode==="account"?"This device, plus private account sync"+(S.lastSync?". Last synced "+ago(S.lastSync)+(ago(S.lastSync)==="now"?"":" ago"):""):"This device only"}</span></span>${Cloud.state==="ready"?`<button class="btn sm ghost" data-act="toggleMode">${S.user.mode==="account"?"Turn sync off":"Turn sync on"}</button>`:`<span class="pill">${Cloud.state==="checking"?"Checking…":"Sync unavailable"}</span>`}</div></div>
+   <div class="card"><h3>Privacy</h3>
+     ${sw("toggleSocial",s.social,"Social",s.social?"On. Nothing posts unless you build and confirm a card.":"Off. The Social tab is hidden and nothing can be shared.",(Cloud.state!=="ready"||!K.ok)&&!s.social?"disabled":"")}
+     ${(Cloud.state!=="ready"||!K.ok)&&!s.social?`<p class="tiny">Social needs a signed-in account with contributor access, which this view doesn't have.</p>`:""}
+     ${s.social&&p?`<div class="row between"><span><b>Handle</b><span class="sub small" style="display:block">${esc(p.handle)}</span></span><button class="btn sm ghost" data-act="sheet" data-s="handle">Change</button></div>${sw("togglePrivate",s.privateProfile,"Private profile","Hidden from the list of people open to connecting. Others need your code.")}
+       <div class="col"><span><b>Default audience for new cards</b></span><div class="chips">${[["connections","All connections"],["everyone","Everyone on VOUZ"]].map(([v,l])=>`<button class="chip" data-act="defVis" data-v="${v}" aria-pressed="${s.defaultVis===v}">${l}</button>`).join("")}</div></div><button class="btn sm danger" style="align-self:flex-start" data-act="sheet" data-s="wipeShared">Delete everything I've shared</button>`:""}
+     ${sw("togglePin",!!s.pinHash,"Passcode lock",s.pinHash?"On. Asked for when you open or return to VOUZ.":"Ask for a 4-digit code when VOUZ opens.")}
+     <p class="tiny">The passcode is a screen lock. It keeps the app closed to someone holding your unlocked phone; it does not encrypt what's stored in this browser, and a 4-digit code is not strong protection against someone with technical access to the device. Face ID and fingerprint unlock aren't available to a web page here.</p></div>
+   <div class="card"><h3>Your data</h3><div class="row wrap"><button class="btn sm" data-act="exportData">Export</button><button class="btn sm" data-act="sheet" data-s="import">Import</button>${hasDemo()?`<button class="btn sm ghost" data-act="removeDemo">Remove demo data</button>`:`<button class="btn sm ghost" data-act="loadDemo">Load demo data</button>`}</div><p class="tiny">${S.sessions.filter(x=>!x.demo).length} of your own sessions stored. Export gives you everything as one JSON file.</p></div>
+   <div class="card"><h3>More</h3><div>${[["achievements","Achievements"],["wearables","Wearables and Apple Watch"],["plus","VOUZ Plus"],["policy","Privacy, and what's built vs planned"]].map(([pg,l])=>`<button class="sess" data-act="page" data-page="${pg}"><span class="grow t">${l}</span>${ic("next")}</button>`).join("")}</div></div>
+   <button class="btn danger block" data-act="sheet" data-s="deleteAccount">${ic("trash")} Delete account and all data</button>
+   <p class="tiny" style="text-align:center">VOUZ web preview. For adults 18+.</p></div>`}
+
+function vWear(){return hdr("Wearables")+`<div class="scroll"><div><h1>Honest answer: <em>not on the web.</em></h1><p class="sub">A web page can't reach an Apple Watch or HealthKit, so nothing here is connected and nothing is simulated.</p></div>
+  <div class="card"><div class="row">${ic("watch")}<b>Apple Watch companion</b><span class="pill w">Planned</span></div><ul class="plain">${["watchOS app in SwiftUI: start, pause, resume, end, elapsed time.","Heart rate through an HKWorkoutSession the wearer starts by hand, only after a HealthKit permission prompt shown at that moment.","WatchConnectivity to send the finished session to the iPhone, which stores it with SwiftData.","No background monitoring, no automatic start, and no session ever inferred from a raised heart rate.","Open question for App Review: which HealthKit workout type Apple will accept for this use."].map(t=>`<li class="p">${ic("flag")}<span>${t}</span></li>`).join("")}</ul></div>
+  <div class="card line"><h3>What works today</h3><p class="sub small">Type an average and peak bpm on any session. They appear in Replay and Insights exactly as entered.</p></div></div>`}
+function vPlus(){return hdr("VOUZ Plus")+`<div class="scroll"><div><h1>Free does the <em>real work.</em></h1><p class="sub">Privacy, safety, deletion, export and tracking are never paid features.</p></div>
+  <div class="card"><div class="row between"><b>VOUZ Free</b><span class="pill c">Your plan</span></div><ul class="plain">${["Unlimited sessions and history","Insights: overview, patterns and mood","Replay, reflections and core achievements","Optional Social with encrypted connections-only cards","Export, delete, passcode lock"].map(t=>`<li>${ic("check")}<span>${t}</span></li>`).join("")}</ul></div>
+  <div class="card line"><div class="row between"><b>VOUZ Plus</b><span class="pill w">Planned</span></div><p class="sub small">Proposed at $4.99 a month.</p><ul class="plain">${["Longer comparisons, year over year","Custom Replay designs","Extra card styles and themes","Deeper private insights"].map(t=>`<li class="p">${ic("flag")}<span>${t}</span></li>`).join("")}</ul><button class="btn block" disabled>Payments aren't built</button><p class="tiny">Nothing here can charge you. Billing waits until the core app has earned it.</p></div></div>`}
+function vPolicy(){const li=(a,cls="")=>a.map(t=>`<li class="${cls}">${ic(cls?"flag":"check")}<span>${t}</span></li>`).join("");
+  return hdr("Privacy and this build")+`<div class="scroll">
+  <div class="card"><h3>What is stored, and where</h3><ul class="plain">${li(["<b style='color:var(--text)'>Sessions, notes, reflections, moods, tags, heart rate, settings:</b> this browser's storage, as plain data. With account sync on, one extra copy in a private space only your signed-in account can read.","<b style='color:var(--text)'>Social, readable by people in this space:</b> your handle, a public key, cards you marked for everyone, reactions and comments on those, and when you posted.","<b style='color:var(--text)'>Social, encrypted:</b> connections-only cards, their comments, who each card is for, your connection permissions. Your connection list is stored as labels only you and the other person can match.","<b style='color:var(--text)'>Never collected:</b> location, contacts, device identifiers, advertising or analytics events. VOUZ sends no notifications and has no widgets."])}</ul></div>
+  <div class="card"><h3>Retention and deletion</h3><p class="sub small">Data stays until you delete it. Deleting a session removes it at once and the deletion carries to your other synced devices. Turning Social off deletes your profile and moves your cards, comments, reactions and connections out of shared storage into your private space, so nothing of yours is left for others to read; turning it back on restores them, or you can delete them instead. Deleting your account erases this device's data, your synced copy, your keys and everything you shared.</p></div>
+  <div class="card"><h3>Built and working</h3><ul class="plain">${li(["Timer, manual logging, edit, delete, history","Adding connections to a saved session, by invite they accept or decline","Home week ring, calendar, totals","Replay with timeline, history comparisons and private reflections","Insights: overview, time-of-day and weekday patterns, mood","Achievements, including one you define","Optional Social: two-sided connections, per-card audiences, reactions, comments, block, report","Connections-only cards encrypted per recipient; access removed when you disconnect, block or change a permission","Private account sync with merge across devices","Export, import, passcode screen lock, account deletion"])}</ul></div>
+  <div class="card line"><h3>Planned, not built</h3><ul class="plain">${li(["Native iOS app, Apple Watch and HealthKit heart rate","Face ID or fingerprint unlock","Encryption of data stored on the device","Public-scale Social with automated moderation","Payments and VOUZ Plus","Offline install as an app"],"p")}</ul></div>
+  <div class="card line"><h3>Limits worth knowing</h3><ul class="plain">${li(["Social runs among the people this page has been shared with, not the public.","Encryption hides what a connections-only card says and who it's for. It doesn't hide that you posted something, when, or how many people can open it.","Someone who could already open a card may have kept a copy before you removed their access.","Your keys live in this browser and in your private account space. Whoever controls this page's code is trusted not to change it.","The space owner can remove shared content and reads reports. That is the moderation path.","A browser can clear its storage. Export a backup, or use account sync."],"p")}</ul></div></div>`}
+
+/* ---- lock ---- */
+function vLock(){const wait=Math.ceil((S.settings.pinUntil-Date.now())/1e3);return`<div class="ob"><div class="mid" style="align-items:center;text-align:center"><div class="mark" style="font-size:56px">vouz<b>.</b></div><p class="sub">Enter your passcode</p><input class="pin" type="password" id="pin-in" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Passcode" style="max-width:200px" ${wait>0?"disabled":""}>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary" data-act="unlock">Unlock</button><button class="link small" data-act="sheet" data-s="forgot">Forgot it?</button></div></div>`}
+
+/* ---- sheets ---- */
+function vSheet(isNew){const s=ui.sheet,close=`<button class="btn ghost block" data-act="closeSheet">Cancel</button>`;let b="";
+  if(s.type==="confirm")b=`<h2>${esc(s.title)}</h2><p class="sub">${esc(s.body)}</p><button class="btn ${s.danger?"danger":"primary"} block" data-act="confirmYes">${esc(s.yes)}</button>${close}`;
+  else if(s.type==="people"){const ss=S.sessions.find(x=>x.id===s.id)||{},have=(ss.people||[]).map(p=>p.id),list=Soc.ready()?Soc.conns().filter(i=>!have.includes(i)):[];
+    b=`<h2>Add someone</h2>${!Soc.ready()?`<p class="sub">${S.settings.social?"Social can't be reached right now, so invites can't be sent. Try again in a moment.":"Adding people works through Social, which is off. Turn it on in Profile, connect with someone, and they'll show up here."}</p>`:list.length?`<p class="sub">Pick from your connections. They get an invite and nothing is linked until they accept.</p><div>${list.map(i=>`<button class="ach" style="width:100%;text-align:left;min-height:52px" data-act="inviteAsk" data-id="${esc(i)}"><span class="av" aria-hidden="true">${esc(Soc.handle(i)[0].toUpperCase())}</span><span class="grow"><b>${esc(Soc.handle(i))}</b></span>${ic("plus")}</button>`).join("")}</div>`:`<p class="sub">${Soc.conns().length?"Everyone you're connected with is already on this session.":"You have no connections yet. Connect with someone under Social, People, and they'll show up here."}</p>`}${close}`}
+  else if(s.type==="socialOn")b=`<h2>Turn on Social</h2><p class="sub">You'll get a Social tab. Nothing is shared until you build a card, preview it and confirm. You can turn this off again at any time.</p><label class="f" for="s-handle">Pick a handle <em>A nickname is fine. Your real name isn't used.</em><input type="text" id="s-handle" maxlength="24" autocomplete="off" value="${esc(s.handle||"")}"></label>${sw("sheetPrivate",s.priv,"Private profile","Stay out of the list of people open to connecting.")}${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block ${ui.busy?"busy":""}" data-act="socialOnYes">${ui.busy?"Setting up…":"Turn on Social"}</button>${close}`;
+  else if(s.type==="handle")b=`<h2>Change handle</h2><label class="f" for="s-handle">Handle<input type="text" id="s-handle" maxlength="24" autocomplete="off" value="${esc((Soc.me()||{}).handle||"")}"></label>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="handleSave">Save</button>${close}`;
+  else if(s.type==="socialOff")b=`<h2>Turn off Social?</h2><p class="sub">Right away: your profile is deleted, nothing new can be shared, and your cards, comments, reactions and connections are taken out of shared storage. Tracking carries on exactly as before.</p>${sw("sheetWipe",s.wipe,"Delete them instead of keeping them","Off: they're kept in your private space and come back if you turn Social on again. On: they're gone for good.")}<button class="btn primary block ${ui.busy?"busy":""}" data-act="socialOffYes">Turn off Social</button>${close}`;
+  else if(s.type==="wipeShared")b=`<h2>Delete everything you've shared?</h2><p class="sub">Removes all your cards, reactions and comments for everyone. Your private sessions aren't touched. This can't be undone.</p><button class="btn danger block" data-act="wipeSharedYes">Delete shared content</button>${close}`;
+  else if(s.type==="deleteAccount")b=`<h2>Delete your account?</h2><p class="sub">This permanently erases every session, note and setting on this device${Cloud.state==="ready"?", your synced copy, your keys and everything you shared in Social":""}. There's no undo and no backup kept.</p><label class="f" for="del-in">Type DELETE to confirm<input type="text" id="del-in" autocomplete="off"></label>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn danger block ${ui.busy?"busy":""}" data-act="deleteAccountYes">${ui.busy?"Erasing…":"Erase everything"}</button>${close}`;
+  else if(s.type==="pinSet")b=`<h2>Set a passcode</h2><label class="f" for="pin-new">4 digits<input class="pin" type="password" id="pin-new" inputmode="numeric" maxlength="4" autocomplete="off"></label><p class="tiny">A screen lock, not encryption. If you forget it, the only way back in is erasing this device's VOUZ data.</p>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="pinSave">Turn on lock</button>${close}`;
+  else if(s.type==="forgot")b=`<h2>Forgot your passcode?</h2><p class="sub">VOUZ can't recover it. You can erase the data on this device and start again.${S.user.mode==="account"?" Your synced copy can be restored afterwards.":""}</p><button class="btn danger block" data-act="forgotErase">Erase this device's data</button>${close}`;
+  else if(s.type==="import")b=`<h2>Import a backup</h2><p class="sub">Choose a VOUZ export file. Its sessions are added to what's here; duplicates are skipped.</p><input type="file" id="imp-file" accept="application/json,.json" aria-label="Backup file">${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="importYes">Import</button>${close}`;
+  else if(s.type==="export")b=`<h2>Your export</h2><p class="sub">Downloads aren't available in this view, so here is the file's contents to copy.</p><textarea id="exp-out" readonly style="min-height:160px;font-size:12px">${esc(s.json)}</textarea><button class="btn primary block" data-act="copyExport">Copy</button>${close}`;
+  else if(s.type==="postMenu"){const mine=s.a===Cloud.uid,x=Soc.items.find(i=>i.a===s.a&&i.it.id===s.id);b=`<h2>${mine?"Your card":esc(Soc.handle(s.a))}</h2>${mine?`${x&&x.sealed?`<button class="btn block" data-act="audOpen" data-id="${esc(s.id)}">${ic("people")} Change who sees it</button>`:""}<button class="btn danger block" data-act="delPost" data-id="${esc(s.id)}">${ic("trash")} Delete this card</button>`:`<button class="btn block" data-act="report" data-a="${esc(s.a)}" data-id="${esc(s.id)}" data-kind="post">${ic("flag")} Report</button><button class="btn danger block" data-act="block" data-id="${esc(s.a)}">Block ${esc(Soc.handle(s.a))}</button>`}${close}`}
+  else if(s.type==="aud"){const conns=Soc.conns();b=`<h2>Who sees this card</h2><div class="chips">${[["all","All connections"],["pick","Choose people"]].map(([v,l])=>`<button class="chip" data-act="audMode" data-v="${v}" aria-pressed="${s.aud===v}">${l}</button>`).join("")}</div>${s.aud==="pick"?`<div class="chips">${conns.map(i=>`<button class="chip" data-act="audPick" data-id="${esc(i)}" aria-pressed="${s.picks.includes(i)}">${esc(Soc.handle(i))}</button>`).join("")||'<span class="sub small">No approved connections yet.</span>'}</div>`:""}<p class="tiny">People you remove lose their key to this card straight away.</p><button class="btn primary block" data-act="audSave">Save</button>${close}`}
+  else if(s.type==="report")b=`<h2>Report</h2><p class="sub">Goes to the people who moderate this space. The person isn't told who reported them.</p><div class="chips">${["Harassment","Pressure or coercion","Explicit imagery or detail","Shares someone without consent","Something else"].map(r=>`<button class="chip" data-act="reportWhy" data-v="${r}" aria-pressed="${s.why===r}">${r}</button>`).join("")}</div><button class="btn primary block" data-act="reportSend" ${s.why?"":"disabled"}>Send report</button>${close}`;
+  else if(s.type==="conn"){const l=Soc.perms[s.id]||{};b=`<h2>${esc(Soc.handle(s.id))}</h2><p class="sub small">Choose what this connection can open of yours. Turning one off removes their key to those cards.</p>${sw("permRecaps",l.recaps!==false,"Recap cards","Connections-only recap cards you post.",`data-id="${esc(s.id)}"`)}${sw("permAch",l.achievements!==false,"Achievement cards","Connections-only achievement cards you post.",`data-id="${esc(s.id)}"`)}<button class="btn danger block" data-act="disconnect" data-id="${esc(s.id)}">Disconnect</button><button class="btn danger block" data-act="block" data-id="${esc(s.id)}">Block</button><button class="btn ghost block" data-act="closeSheet">Done</button>`}
+  else if(s.type==="guidelines")b=`<h2>Community guidelines</h2><ul class="plain">${["Be kind. Comments are for support, not scorekeeping.","No explicit images or graphic detail. Cards are text only.","Never share or hint at another person's involvement without their say-so.","No pressure, dares or comparisons. Nobody owes anyone a number.","No harassment. Block freely and report what crosses the line.","Adults only."].map(t=>`<li>${ic("check")}<span>${t}</span></li>`).join("")}</ul><button class="btn ghost block" data-act="closeSheet">Close</button>`;
+  return`<div class="overlay${isNew?" in":""}" data-act="overlay"><div class="sheet" role="dialog" aria-modal="true" tabindex="-1">${b}</div></div>`}
+
+/* ============ actions ============ */
+async function hashPin(pin,salt,alg){try{if(alg==="pbkdf2"){const k=await crypto.subtle.importKey("raw",te.encode(pin),"PBKDF2",false,["deriveBits"]);return hex(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:te.encode(salt),iterations:150000},k,256))}
+    return hex(await crypto.subtle.digest("SHA-256",te.encode(salt+":"+pin)))}catch(e){let x=5381;for(const c of te.encode(salt+":"+pin))x=((x<<5)+x+c)>>>0;return "f"+x.toString(16)}}
+function demoSessions(){const out=[],base=startOfDay(Date.now()),plan=[[1,21,40,34,"partnered","Tender"],[3,7,15,18,"solo","Relaxed"],[6,22,30,41,"partnered","Electric"],[9,20,5,27,"partnered","Playful"],[12,23,10,22,"solo",""],[15,8,20,31,"partnered","Connected"],[19,21,0,48,"partnered","Tender"],[23,22,45,16,"solo","Curious"],[27,19,30,36,"partnered","Playful"],[33,10,0,29,"partnered","Relaxed"],[38,23,20,24,"solo",""],[45,21,15,39,"partnered","Electric"]];
+  plan.forEach(([back,h,m,dur,cat,mood],i)=>{const st=addDays(base,-back)+h*36e5+m*6e4,d=dur*60+((i*17)%50);out.push({id:"demo"+i,demo:true,title:"",start:st,durationSec:d,segments:i%3?[[st,st+d*1e3]]:[[st,st+d*400],[st+d*400+18e4,st+d*1e3+18e4]],category:cat,tags:i%4===0?["weekend"]:[],mood,notes:"",reflection:i===0?"Demo reflection: an unhurried evening.":"",hrAvg:i%2?"":String(96+i*2),hrPeak:i%2?"":String(128+i*3),createdAt:st,updatedAt:st})});return out}
+function compose(o){ui.compose=Object.assign({kind:"recap",sid:null,title:"",caption:"",showDuration:true,showCategory:false,badge:"",style:0,aud:S.settings.defaultVis==="everyone"?"everyone":"all",picks:[],step:"edit"},o);openPage({type:"compose"})}
+const setProfile=h=>Soc.write("profiles",{handle:h||Soc.me().handle,discoverable:!S.settings.privateProfile,pub:S.keys.pub,at:Date.now()});
+const myPosts=()=>Soc.posts[Cloud.uid]||{};
+const busy=async f=>{if(ui.busy)return;ui.busy=true;render();try{await f()}finally{ui.busy=false;render()}};
+const A={
+  tab(e){go(e.dataset.tab)},
+  back(){const p=ui.page;if(p&&p.type==="details"&&S.draft&&!S.draft.fromTimer){S.draft=null;save()}
+    if(p&&p.type==="compose")ui.compose=null;
+    ui.page=p&&p.from?p.from:null;ui.err="";render(true)},
+  page(e){openPage({type:e.dataset.page})},
+  sheet(e){ui.err="";sheet({type:e.dataset.s,id:e.dataset.id})},
+  closeSheet(){ui.err="";sheet(null)},
+  overlay(e,ev){if(ev.target===e)A.closeSheet()},
+  confirmYes(){const f=ui.sheet.fn;ui.sheet=null;f()},
+  /* onboarding */
+  obNext(){const o=ui.ob;if(o.step===1&&!o.adult)return;
+    if(o.step<2){o.step++;render(true);return}
+    S.onboarded=true;S.user.name=o.name.trim();S.user.mode=o.mode==="account"&&Cloud.state==="ready"?"account":"local";S.user.createdAt=Date.now();save();ui.tab="home";render(true);
+    try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(e){}
+    if(o.social&&Cloud.state==="ready"&&K.ok){ui.err="";sheet({type:"socialOn",priv:true})}},
+  obBack(){ui.ob.step=Math.max(0,ui.ob.step-1);render(true)},
+  obAdult(){ui.ob.adult=!ui.ob.adult;render()},
+  async obMode(e){ui.ob.mode=e.dataset.mode;ui.ob.restore=null;render();if(e.dataset.mode==="account"){const v=await Cloud.readVault();if(v&&ui.ob.mode==="account"&&!S.onboarded){ui.ob.restore=v;render()}}},
+  obRestore(){const v=ui.ob.restore;S=Object.assign(fresh(),{onboarded:true,stamp:v.stamp||0,user:Object.assign({},v.user,{mode:"account"}),settings:Object.assign(fresh().settings,v.settings),sessions:v.sessions||[],deleted:v.deleted||{},blocks:v.blocks||[],ignored:v.ignored||[]});saveLocal();ui.tab="home";if(S.settings.social)Soc.start();render(true);toast("Restored from your account.")},
+  obSocial(){ui.ob.social=!ui.ob.social;render()},
+  /* home + replay interactions */
+  pickDay(e){ui.homeDay=+e.dataset.i;buzz(8);render();const g=document.querySelector(`.stage g[data-i="${e.dataset.i}"]`);g&&g.focus({preventScroll:true})},
+  rSeg(e){const i=+e.dataset.i;ui.rp.seg=ui.rp.seg===i?null:i;render()},
+  rScope(e){ui.rp.scope=e.dataset.v;render()},
+  rMood(e){const s=S.sessions.find(x=>x.id===ui.page.id);if(!s)return;const t=$("#rf-text");if(t)s.reflection=t.value.trim().slice(0,600);s.mood=s.mood===e.dataset.v?"":e.dataset.v;s.updatedAt=Date.now();save();render()},
+  rSave(){const s=S.sessions.find(x=>x.id===ui.page.id);if(!s)return;s.reflection=($("#rf-text").value||"").trim().slice(0,600);s.updatedAt=Date.now();save();render();toast(s.reflection?"Reflection saved, privately.":"Reflection cleared.")},
+  /* timer */
+  start(){if(S.active)return go("track");S.active={segments:[[Date.now(),null]],category:ui.trackCat||null};ui.trackCat=null;S.draft=null;save();buzz(20);go("track")},
+  pause(){const s=S.active.segments;s[s.length-1][1]=Date.now();save();buzz(10);render()},
+  resume(){S.active.segments.push([Date.now(),null]);save();buzz(10);render()},
+  finish(){S.draft=draftFromActive();S.active=null;save();buzz([15,40,15]);openPage({type:"details"})},
+  resumeDraft(){openPage({type:"details"})},
+  askCancel(){sheet({type:"confirm",title:"Discard this session?",body:"The time you tracked won't be saved.",yes:"Discard",danger:true,fn(){S.active=null;S.draft=null;save();ui.page=null;go("track");toast("Session discarded.")}})},
+  manual(){S.draft=blankDraft();openPage({type:"details",from:ui.page})},
+  /* session form */
+  addPeople(e){ui.err="";sheet({type:"people",id:e.dataset.id})},
+  inviteAsk(e){const sid=ui.sheet.id,id=e.dataset.id,s=S.sessions.find(x=>x.id===sid);if(!s)return A.closeSheet();const h=Soc.handle(id);
+    sheet({type:"confirm",title:"Add "+h+" to this session?",body:h+" will get an invite showing the date, time, length"+(CAT_PICK.includes(s.category)?" and category ("+CATS[s.category]+")":"")+". Not your notes, mood, tags, heart rate or title. Nothing is added to their log unless they accept.",yes:"Send invite",fn(){busy(async()=>{
+      if((s.people||[]).length>=20)return toast("That's the most people one session can hold.");
+      try{const i=await Soc.invite(s,id);s.people=(s.people||[]).concat([{id,h,i}]);s.updatedAt=Date.now();save();toast("Invite sent to "+h+".")}catch(x){toast("That invite couldn't be sent. Nothing was shared.")}})}})},
+  personOff(e){const s=S.sessions.find(x=>x.id===e.dataset.sid);if(!s)return;const p=(s.people||[]).find(x=>x.i===e.dataset.i);if(!p)return;
+    s.people=s.people.filter(x=>x!==p);s.updatedAt=Date.now();save();Soc.drop([p]);render();toast(p.from?"Removed. "+p.h+" will see you're no longer on it.":"Removed, and the invite is withdrawn.")},
+  invYes(e){const v=Soc.inbox.find(x=>x.a===e.dataset.a&&x.i===e.dataset.i);if(!v)return;const h=Soc.handle(v.a);busy(async()=>{
+    try{await Soc.respond(v.a,v.i,true)}catch(x){return toast("That couldn't be saved. Try again.")}
+    const id=uid();S.sessions.push({id,title:"",start:v.start,durationSec:v.dur,segments:null,category:v.cat,groupSize:null,tags:[],mood:"",notes:"",reflection:"",hrAvg:"",hrPeak:"",people:[{id:v.a,h,i:v.i,from:true}],createdAt:Date.now(),updatedAt:Date.now()});
+    save();ui.rp.seg=null;openPage({type:"replay",id,from:ui.page});toast("Added to your log.")})},
+  invNo(e){const a=e.dataset.a,i=e.dataset.i;busy(async()=>{try{await Soc.respond(a,i,false);toast("Declined. Nothing was saved.")}catch(x){toast("That couldn't be saved. Try again.")}})},
+  tCat(e){const v=e.dataset.v;if(S.active){S.active.category=S.active.category===v?null:v;save()}else ui.trackCat=ui.trackCat===v?null:v;buzz(8);render()},
+  dCat(e){S.draft.category=S.draft.category===e.dataset.v?null:e.dataset.v;if(S.draft.category!=="group")S.draft.groupSize="";save();render()},
+  dMood(e){S.draft.mood=S.draft.mood===e.dataset.v?"":e.dataset.v;save();render()},
+  dTagDel(e){S.draft.tags.splice(+e.dataset.i,1);save();render()},
+  editSession(e){const s=S.sessions.find(x=>x.id===e.dataset.id);if(!s)return;S.draft={editing:s.id,fromTimer:false,title:s.title,startLocal:toLocalInput(s.start),origStart:s.start,durMin:Math.floor(s.durationSec/60),durSec:s.durationSec%60,category:s.category,groupSize:s.groupSize||"",tags:s.tags.slice(),mood:s.mood,notes:s.notes,hrAvg:s.hrAvg,hrPeak:s.hrPeak,segments:s.segments};openPage({type:"details",from:ui.page})},
+  saveSession(){const d=S.draft,dur=Math.round((+d.durMin||0)*60+(+d.durSec||0));let start=new Date(d.startLocal).getTime();
+    if(isNaN(start)){ui.err="Pick a date and time.";return render()}
+    if(dur<1||dur>86400){ui.err="Duration needs to be between 1 second and 24 hours.";return render()}
+    if(start>Date.now()+6e4){ui.err="That's in the future. Pick a time that has already happened.";return render()}
+    for(const k of ["hrAvg","hrPeak"]){if(d[k]!==""&&(+d[k]<30||+d[k]>240)){ui.err="Heart rate should be between 30 and 240 bpm, or left blank.";return render()}}
+    const gs=d.category==="group"&&d.groupSize!==""&&d.groupSize!=null?+d.groupSize:null;
+    if(gs!==null&&!(Number.isInteger(gs)&&gs>=4&&gs<=99)){ui.err="A group is 4 or more people. Enter a whole number from 4 to 99, or leave it blank.";return render()}
+    const pending=($("#d-tag")||{}).value;if(pending&&pending.trim()&&d.tags.length<8)d.tags.push(pending.trim().slice(0,24));
+    let segs=d.segments;
+    if(segs){const segDur=Math.round(segs.reduce((t,[a,b])=>t+(b-a),0)/1e3);const orig=d.fromTimer?toLocalInput(segs[0][0]):toLocalInput(d.origStart);
+      if(Math.abs(segDur-dur)>1||d.startLocal!==orig)segs=null;else start=d.fromTimer?segs[0][0]:d.origStart}
+    const rec={title:d.title.trim(),start,durationSec:dur,segments:segs,category:d.category,groupSize:gs,tags:d.tags,mood:d.mood,notes:d.notes.trim(),hrAvg:d.hrAvg===""?"":String(Math.round(+d.hrAvg)),hrPeak:d.hrPeak===""?"":String(Math.round(+d.hrPeak)),updatedAt:Date.now()};
+    let id=d.editing;
+    if(id){const s=S.sessions.find(x=>x.id===id);Object.assign(s,rec)}else{id=uid();S.sessions.push(Object.assign({id,createdAt:Date.now(),reflection:""},rec))}
+    const wasEdit=!!d.editing;S.draft=null;ui.err="";ui.rp.seg=null;save();buzz(25);openPage({type:"replay",id,fresh:!wasEdit});if(wasEdit)toast("Changes saved.")},
+  askDelete(e){const id=e.dataset.id;sheet({type:"confirm",title:"Delete this session?",body:"It's removed permanently, and your stats update straight away. Any card you shared from it is separate and stays until you delete that too.",yes:"Delete permanently",danger:true,fn(){Soc.drop((S.sessions.find(s=>s.id===id)||{}).people);S.sessions=S.sessions.filter(s=>s.id!==id);S.deleted[id]=Date.now();S.draft=null;save();ui.page=null;render(true);toast("Session deleted.")}})},
+  openReplay(e){if(!e.dataset.id)return;ui.rp.seg=null;openPage({type:"replay",id:e.dataset.id,from:e.dataset.keep?ui.page.from:ui.page})},
+  setRegular(){const n=Math.round(+$("#rg-n").value),w=Math.round(+$("#rg-w").value);if(!(n>=1&&n<=14&&w>=2&&w<=26))return toast("Enter 1 to 14 a week, for 2 to 26 weeks.");S.settings.regular={perWeek:n,weeks:w};save();render();toast("The Regular is set.")},
+  clearRegular(){S.settings.regular=null;save();render()},
+  loadDemo(){S.sessions=S.sessions.filter(s=>!s.demo).concat(demoSessions());save();render(true);toast("Demo data loaded. It's clearly marked.")},
+  removeDemo(){S.sessions=S.sessions.filter(s=>!s.demo);save();render();toast("Demo data removed.")},
+  /* insights */
+  insRange(e){ui.ins.range=e.dataset.v;render()}, insCat(e){ui.ins.cat=e.dataset.v;render()}, insTab(e){ui.ins.tab=e.dataset.v;render()},
+  /* compose + share */
+  composeRecap(e){compose({kind:"recap",sid:e.dataset.id});ui.page.from={type:"replay",id:e.dataset.id}},
+  composeAch(e){const a=ACH.find(x=>x.id===e.dataset.id);compose({kind:"achievement",title:a.name,badge:"Achievement",showDuration:false});ui.page.from={type:"achievements"}},
+  cDur(){ui.compose.showDuration=!ui.compose.showDuration;render()}, cCat(){ui.compose.showCategory=!ui.compose.showCategory;render()},
+  cStyle(e){ui.compose.style=+e.dataset.v;render()}, cAud(e){ui.compose.aud=e.dataset.v;render()},
+  cPick(e){const p=ui.compose.picks,i=p.indexOf(e.dataset.id);if(i>=0)p.splice(i,1);else p.push(e.dataset.id);render()},
+  composeStep(e){ui.compose.step=e.dataset.v;render(true)},
+  publish(){return busy(async()=>{const c=ui.compose;if(!c||!S.settings.social||!Soc.me()||!K.priv)return;const sess=c.sid?S.sessions.find(s=>s.id===c.sid):null;
+    const caption=String(c.caption||"").slice(0,280),card=buildCard(c,sess),at=Date.now();
+    const item=c.aud==="everyone"?{id:uid(),kind:c.kind,vis:"everyone",caption,card,postedAt:at}:await Soc.seal(uid(),{kind:c.kind,caption,card},c.aud==="pick"?c.picks.slice():"all",at);
+    const cur=myPosts();await Soc.write("posts",{items:[item].concat(cur.items||[]).slice(0,60),hidden:cur.hidden||[]});
+    ui.compose=null;ui.soc.seg="mine";ui.busy=false;go("social");toast("Card shared.")})},
+  /* social */
+  socSeg(e){ui.soc.seg=e.dataset.v;render(true)},
+  toggleSocial(){ui.err="";if(S.settings.social)sheet({type:"socialOff",wipe:false});else sheet({type:"socialOn",priv:S.settings.privateProfile})},
+  sheetPrivate(){ui.sheet.handle=($("#s-handle")||{}).value;ui.sheet.priv=!ui.sheet.priv;render()},
+  sheetWipe(){ui.sheet.wipe=!ui.sheet.wipe;render()},
+  socialOnYes(){const h=($("#s-handle").value||"").trim();if(h.length<2){ui.err="Pick a handle of at least 2 characters.";ui.sheet.handle=h;return render()}
+    const priv=!!ui.sheet.priv;ui.sheet.handle=h;return busy(async()=>{try{await Soc.ensureKeys();await Soc.unstash()}catch(e){ui.err="Social couldn't be set up here. Nothing was shared.";return}
+      S.settings.social=true;S.settings.privateProfile=priv;save();await Soc.start();await setProfile(h.slice(0,24));ui.sheet=null;ui.err="";ui.busy=false;go("social");toast("Social is on. Nothing is shared yet.")})},
+  async handleSave(){const h=($("#s-handle").value||"").trim();if(h.length<2){ui.err="Pick a handle of at least 2 characters.";return render()}ui.sheet=null;ui.err="";await setProfile(h.slice(0,24));render()},
+  socialOffYes(){const wipe=ui.sheet.wipe;return busy(async()=>{ui.sheet=null;
+    if(Cloud.state==="ready"){if(!wipe)await Soc.stash();for(const c of SHARED)await Soc.write(c,null);
+      if(wipe){await Promise.allSettled([Cloud.priv("stash").delete(),Cloud.priv("keys").delete()]);S.keys=null;K.reset()}}
+    S.settings.social=false;save();Soc.stop();if(ui.tab==="social")ui.tab="profile";ui.page=null;ui.busy=false;render(true);toast(wipe?"Social is off and your shared content is deleted.":"Social is off. Your cards are stored privately.")})},
+  async wipeSharedYes(){ui.sheet=null;for(const c of ["posts","reactions","comments"])await Soc.write(c,null);render();toast("Everything you shared is deleted.")},
+  async togglePrivate(){S.settings.privateProfile=!S.settings.privateProfile;save();render();await setProfile()},
+  defVis(e){S.settings.defaultVis=e.dataset.v;save();render()},
+  react(e){const cur=Object.assign({},(Soc.reactions[Cloud.uid]||{}).r),k=e.dataset.k;if(cur[k]===e.dataset.e)delete cur[k];else cur[k]=e.dataset.e;buzz(8);Soc.write("reactions",{r:cur});render()},
+  async comment(e){const k=e.dataset.k,inp=document.getElementById("c-"+k),t=(inp.value||"").trim().slice(0,200),p=Soc.items.find(x=>x.key===k);if(!t||!p)return;inp.value="";
+    const c=p.sealed?{id:uid(),post:k,c:await K.encJ(p.ck,{text:t}),at:Date.now()}:{id:uid(),post:k,text:t,at:Date.now()};
+    Soc.write("comments",{items:((Soc.comments[Cloud.uid]||{}).items||[]).concat([c]).slice(-300)})},
+  delComment(e){Soc.write("comments",{items:((Soc.comments[Cloud.uid]||{}).items||[]).filter(c=>c.id!==e.dataset.id)})},
+  hideComment(e){const cur=myPosts();Soc.write("posts",{items:cur.items||[],hidden:(cur.hidden||[]).concat([e.dataset.id]).slice(-500)})},
+  postMenu(e){sheet({type:"postMenu",a:e.dataset.a,id:e.dataset.id})},
+  delPost(e){const id=e.dataset.id;sheet({type:"confirm",title:"Delete this card?",body:"It disappears from every feed. Your private session isn't affected.",yes:"Delete card",danger:true,fn(){const cur=myPosts();Soc.write("posts",{items:(cur.items||[]).filter(i=>i.id!==id),hidden:cur.hidden||[]});render();toast("Card deleted.")}})},
+  audOpen(e){const x=Soc.items.find(i=>i.a===Cloud.uid&&i.it.id===e.dataset.id);if(!x)return;sheet({type:"aud",id:e.dataset.id,aud:x.aud==="all"?"all":"pick",picks:Array.isArray(x.aud)?x.aud.slice():[]})},
+  audMode(e){ui.sheet.aud=e.dataset.v;render()},
+  audPick(e){const p=ui.sheet.picks,i=p.indexOf(e.dataset.id);if(i>=0)p.splice(i,1);else p.push(e.dataset.id);render()},
+  async audSave(){const s=ui.sheet,cur=myPosts(),aud=s.aud==="all"?"all":s.picks.slice(),au=await K.encJ(K.self,{aud});Soc.au[au]={aud};ui.sheet=null;
+    await Soc.write("posts",{items:(cur.items||[]).map(i=>i.id===s.id?Object.assign({},i,{au}):i),hidden:cur.hidden||[]});render();toast("Audience updated.")},
+  report(e){sheet({type:"report",a:e.dataset.a,id:e.dataset.id,kind:e.dataset.kind,why:""})},
+  reportWhy(e){ui.sheet.why=e.dataset.v;render()},
+  async reportSend(){const s=ui.sheet;ui.sheet=null;render();try{const ref=Cloud.db.doc("reports/"+Cloud.uid),snap=await ref.get();const items=((snap.exists&&snap.data().items)||[]).concat([{id:uid(),about:s.a,ref:s.id,kind:s.kind,why:s.why,at:Date.now()}]).slice(-100);await ref.set({items});toast("Report sent. Thank you.")}catch(err){toast("Couldn't send the report. Try again.")}},
+  async block(e){const id=e.dataset.id;ui.sheet=null;await Soc.setLink(id,false);if(!S.blocks.includes(id))S.blocks.push(id);save();Soc.sched();render();toast("Blocked. Their access to your connections-only cards is removed.")},
+  unblock(e){S.blocks=S.blocks.filter(i=>i!==e.dataset.id);save();Soc.sched();render()},
+  async request(e){await Soc.setLink(e.dataset.id,true);toast("Request sent. They need to approve it.")},
+  async approve(e){await Soc.setLink(e.dataset.id,true);toast("Connected.")},
+  ignore(e){S.ignored.push(e.dataset.id);save();render()},
+  async disconnect(e){ui.sheet=null;await Soc.setLink(e.dataset.id,false);toast("Disconnected. Their access is removed.")},
+  async addCode(){const v=($("#addcode").value||"").trim();if(!v||v===Cloud.uid)return toast("Paste the other person's code.");if(!Soc.rel[v])return toast("No one with Social on has that code.");if(S.blocks.includes(v))return toast("You've blocked that person.");await Soc.setLink(v,true);toast("Request sent. They need to approve it.")},
+  async copyCode(){try{await navigator.clipboard.writeText(Cloud.uid);toast("Code copied.")}catch(e){$("#mycode").select();toast("Select and copy the code.")}},
+  async permRecaps(e){const l=Soc.perms[e.dataset.id]||{};await Soc.setPerm(e.dataset.id,{recaps:l.recaps===false,achievements:l.achievements!==false})},
+  async permAch(e){const l=Soc.perms[e.dataset.id]||{};await Soc.setPerm(e.dataset.id,{recaps:l.recaps!==false,achievements:l.achievements===false})},
+  /* profile */
+  async toggleMode(){if(S.user.mode==="account"){sheet({type:"confirm",title:"Turn account sync off?",body:"Your synced copy is deleted. Everything stays on this device.",yes:"Turn sync off",fn:async()=>{S.user.mode="local";S.lastSync=0;save();clearTimeout(Cloud.t);try{await Cloud.priv("vault").delete()}catch(e){}render();toast("Sync is off. Synced copy deleted.")}})}
+    else{const v=await Cloud.readVault();if(v)mergeVault(v);S.user.mode="account";save();render();toast("Private account sync is on.")}},
+  togglePin(){ui.err="";if(S.settings.pinHash){Object.assign(S.settings,{pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0});save();render();toast("Passcode lock is off.")}else sheet({type:"pinSet"})},
+  async pinSave(){const p=$("#pin-new").value;if(!/^\d{4}$/.test(p)){ui.err="Use exactly 4 digits.";return render()}const salt=uid()+uid();Object.assign(S.settings,{pinSalt:salt,pinAlg:"pbkdf2",pinHash:await hashPin(p,salt,"pbkdf2"),pinFails:0,pinUntil:0});save();ui.sheet=null;ui.err="";render();toast("Passcode lock is on.")},
+  async unlock(){const st=S.settings,wait=Math.ceil((st.pinUntil-Date.now())/1e3);if(wait>0){ui.err="Too many tries. Wait "+wait+" seconds.";return render()}
+    const p=($("#pin-in")||{}).value||"";if(await hashPin(p,st.pinSalt,st.pinAlg||"sha")===st.pinHash){st.pinFails=0;st.pinUntil=0;saveLocal();ui.locked=false;ui.err="";render(true)}
+    else{st.pinFails=(st.pinFails||0)+1;if(st.pinFails>=5){st.pinFails=0;st.pinUntil=Date.now()+30000;ui.err="Too many tries. Wait 30 seconds."}else ui.err="That's not it. Try again.";saveLocal();render();buzz([30,40,30])}},
+  forgotErase(){try{localStorage.removeItem(LS)}catch(e){}S=fresh();K.reset();ui.locked=false;ui.sheet=null;ui.ob.step=0;Soc.stop();render(true)},
+  async exportData(){const json=JSON.stringify({app:"vouz",exportedAt:new Date().toISOString(),...vaultPayload(),settings:{...S.settings,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0}},null,2);
+    try{const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;if(dl){await dl.save({filename:"vouz-export-"+dayKey(Date.now())+".json",data:json});return toast("Export ready.")}}catch(e){}
+    sheet({type:"export",json})},
+  async copyExport(){try{await navigator.clipboard.writeText(ui.sheet.json);toast("Copied.")}catch(e){$("#exp-out").select();toast("Select all and copy.")}},
+  async importYes(){const f=$("#imp-file").files[0];if(!f){ui.err="Choose a file first.";return render()}
+    try{const o=JSON.parse(await f.text());if(!o||!Array.isArray(o.sessions))throw 0;const have=new Set(S.sessions.map(s=>s.id));let n=0;
+      for(const s of o.sessions){if(!s||have.has(s.id)||s.demo||typeof s.start!=="number"||!(s.durationSec>0))continue;const id=String(s.id||uid());delete S.deleted[id];
+        S.sessions.push({id,title:String(s.title||"").slice(0,60),start:s.start,durationSec:Math.round(s.durationSec),segments:Array.isArray(s.segments)?s.segments:null,category:CATS[s.category]?s.category:null,groupSize:s.category==="group"&&+s.groupSize>=4?Math.min(99,Math.round(+s.groupSize)):null,tags:Array.isArray(s.tags)?s.tags.map(String).slice(0,8):[],mood:MC[s.mood]?s.mood:"",notes:String(s.notes||"").slice(0,2000),reflection:String(s.reflection||"").slice(0,600),hrAvg:String(s.hrAvg||""),hrPeak:String(s.hrPeak||""),people:Array.isArray(s.people)?s.people.filter(p=>p&&p.id&&p.i).slice(0,20).map(p=>({id:String(p.id),h:String(p.h||"Someone").slice(0,24),i:String(p.i),...(p.from?{from:true}:{})})):[],createdAt:s.createdAt||Date.now(),updatedAt:Date.now()});n++}
+      save();ui.sheet=null;ui.err="";render();toast(n+" session"+(n===1?"":"s")+" imported.")}catch(e){ui.err="That file isn't a VOUZ export.";render()}},
+  deleteAccountYes(){if(($("#del-in").value||"").trim()!=="DELETE"){ui.err="Type DELETE in capitals to confirm.";return render()}
+    return busy(async()=>{clearTimeout(Cloud.t);Soc.stop();await Cloud.deleteAll();try{localStorage.removeItem(LS)}catch(e){}
+      S=fresh();K.reset();ui.sheet=null;ui.page=null;ui.tab="home";ui.err="";ui.homeDay=null;ui.ob={step:0,adult:false,mode:"local",name:"",social:false,restore:null};ui.busy=false;render(true);toast("Everything is erased.")})}
+};
+document.addEventListener("click",ev=>{const e=ev.target.closest("[data-act]");if(!e||e.disabled||e.hasAttribute("disabled"))return;const f=A[e.dataset.act];if(f)f(e,ev)});
+function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user}[o];if(!tgt)return;tgt[k]=e.value;
+  if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
+document.addEventListener("input",ev=>{bind(ev.target);if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Your other cardio."}});
+document.addEventListener("change",ev=>{if(ev.target.dataset&&ev.target.dataset.live&&ev.target.type==="date"){bind(ev.target);render()}});
+document.addEventListener("keydown",ev=>{const t=ev.target;
+  if(ev.key==="Escape"&&ui.sheet){ev.preventDefault();return A.closeSheet()}
+  if((ev.key==="Enter"||ev.key===" ")&&t.tagName==="g"&&t.dataset.act){ev.preventDefault();return A[t.dataset.act](t,ev)}
+  if(ev.key==="Tab"&&ui.sheet){const f=Array.from(document.querySelectorAll(".sheet button:not([disabled]),.sheet input,.sheet textarea"));if(f.length){const a=document.activeElement,i=f.indexOf(a);if(ev.shiftKey&&i<=0){ev.preventDefault();f[f.length-1].focus()}else if(!ev.shiftKey&&(i===f.length-1||i<0)){ev.preventDefault();f[0].focus()}}return}
+  if(ev.key!=="Enter"||t.tagName!=="INPUT")return;
+  if(t.id==="d-tag"){ev.preventDefault();const v=t.value.trim();if(v&&S.draft.tags.length<8&&!S.draft.tags.includes(v)){S.draft.tags.push(v.slice(0,24));save();render();const n=$("#d-tag");n&&n.focus()}}
+  else if(t.id==="pin-in")A.unlock(); else if(t.id==="addcode")A.addCode(); else if(t.id&&t.id.startsWith("c-")&&t.id!=="c-title")A.comment({dataset:{k:t.id.slice(2)}})});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&S.onboarded&&S.settings.pinHash&&!ui.locked){ui.locked=true;ui.sheet=null;ui.err="";render()}});
+window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.onboarded&&!ui.locked&&TABS().some(x=>x[0]===t)&&(t!==ui.tab||ui.page)){ui.tab=t;ui.page=null;ui.sheet=null;render(true)}});
+
+/* ============ boot ============ */
+(function boot(){const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
+  if(S.onboarded&&S.settings.pinHash)ui.locked=true;
+  if(S.active)ui.tab="track";
+  render();
+  Cloud.init().then(async()=>{
+    if(Cloud.state==="ready"&&S.onboarded&&S.user.mode==="account"&&!S.draft){const v=await Cloud.readVault();if(v){mergeVault(v);saveLocal()}Cloud.queueVault()}
+    if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
+    if(!typing())render()});
+})();
+window.__vouz={buildCard,get S(){return S},Soc,Cloud,K};
+</script>
+</body>
+</html>
