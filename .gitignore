@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+node_modules/
+*.keystore
+*.p8
+*.mobileprovision
+ios/App/Pods/
+android/.gradle/
+android/app/build/
+e2e/shots/
