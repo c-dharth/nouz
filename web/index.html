@@ -10,9 +10,10 @@
 /* Layout idea: one phone-width column. A coral ring is the recurring object: the week on Home, the session in Replay, the clock in Insights. Cards are used only where content needs a container. Single dark theme by choice. */
 :root{
   color-scheme:dark;
-  --bg:#0D0D12; --surface:#191820; --surface2:#22212C; --line:#2F2D3B;
-  --coral:#FF5C87; --pink:#FFA3BF; --text:#F8F5F7; --muted:#A9A1C6; --dim:#7A7494;
-  --ok:#7BE0B5; --warn:#FFC670; --danger:#FF7A6B;
+  --bg:#0E0B0C; --surface:#1B1718; --surface2:#272123; --line:#3A3133;
+  --coral:#C9939B; --pink:#E8CBC6; --text:#F3ECE3; --muted:#BCAFA9; --dim:#988A86;
+  --wine:#8C2A43; --burgundy:#561727; --ink:#1C1114;
+  --ok:#93C9AA; --warn:#E2BA7C; --danger:#E5867A;
   --display:"Instrument Serif","Iowan Old Style",Georgia,serif;
   --body:"Schibsted Grotesk","Avenir Next","Segoe UI",system-ui,sans-serif;
   --r:22px; --r-sm:14px;
@@ -27,7 +28,7 @@ button{cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:trans
 #app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;position:relative;background:var(--bg);overflow:hidden}
 @media(min-width:520px){body{background:#08080b}#app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 18px 28px;display:flex;flex-direction:column;gap:18px}
-.tabs{display:flex;border-top:1px solid var(--line);background:rgba(13,13,18,.96);padding:0 6px env(safe-area-inset-bottom)}
+.tabs{display:flex;border-top:1px solid var(--line);background:rgba(14,11,12,.96);padding:0 6px env(safe-area-inset-bottom)}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;color:var(--dim);font-size:11px;font-weight:600;letter-spacing:.02em;position:relative;transition:color .15s}
 .tab::before{content:"";position:absolute;top:0;left:50%;width:28px;height:3px;margin-left:-14px;border-radius:0 0 3px 3px;background:var(--coral);transform:scaleX(0);transition:transform .2s}
 .tab[aria-current="page"]{color:var(--text)}
@@ -53,14 +54,14 @@ p.sub,.sub{color:var(--muted)}
 .rule{height:1px;background:var(--line);border:0}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 20px;border-radius:999px;font-weight:700;background:var(--surface2);color:var(--text);transition:transform .12s,background .12s,opacity .12s}
 .btn:active{transform:scale(.97)}
-.btn.primary{background:var(--coral);color:#1a0810}
+.btn.primary{background:linear-gradient(135deg,#9E3550,var(--burgundy));color:var(--text);box-shadow:inset 0 0 0 1px rgba(232,203,198,.14)}
 .btn.ghost{background:none;border:1px solid var(--line)}
-.btn.danger{background:none;border:1px solid rgba(255,122,107,.5);color:var(--danger)}
+.btn.danger{background:none;border:1px solid rgba(229,134,122,.5);color:var(--danger)}
 .btn.sm{min-height:44px;padding:0 16px;font-size:13px}
 .btn.block{width:100%}
 .btn[disabled]{opacity:.4;cursor:not-allowed}
 .btn.busy{opacity:.6;pointer-events:none}
-.link{color:var(--pink);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(255,163,191,.4);min-height:44px;display:inline-flex;align-items:center}
+.link{color:var(--pink);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(232,203,198,.4);min-height:44px;display:inline-flex;align-items:center}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tiles.two{grid-template-columns:repeat(2,1fr)}
 .tile{background:var(--surface);border-radius:var(--r-sm);padding:14px 12px;min-width:0}
@@ -74,8 +75,8 @@ p.sub,.sub{color:var(--muted)}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .cal span{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .cal span.h{color:var(--dim);font-weight:700;aspect-ratio:auto;padding-bottom:2px}
-.cal span.on{background:rgba(255,92,135,.2);color:var(--text);font-weight:700}
-.cal span.on2{background:var(--coral);color:#1a0810;font-weight:700}
+.cal span.on{background:rgba(201,147,155,.2);color:var(--text);font-weight:700}
+.cal span.on2{background:var(--coral);color:#1C1114;font-weight:700}
 .cal span.today{box-shadow:inset 0 0 0 1.5px var(--pink)}
 .sess{display:flex;align-items:center;gap:12px;padding:12px 0;min-height:60px;border-top:1px solid var(--line);width:100%;text-align:left}
 .sess:first-of-type{border-top:0}
@@ -85,11 +86,11 @@ p.sub,.sub{color:var(--muted)}
 .sess .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--surface2);color:var(--muted);white-space:nowrap}
 button.pill{min-height:44px;padding:0 14px}
-.pill.c{background:rgba(255,92,135,.16);color:var(--pink)}
-.pill.w{background:rgba(255,198,112,.14);color:var(--warn)}
+.pill.c{background:rgba(201,147,155,.16);color:var(--pink)}
+.pill.w{background:rgba(226,186,124,.14);color:var(--warn)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{min-height:44px;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;background:var(--surface2);color:var(--muted);font-weight:600;font-size:13px;transition:background .15s,color .15s}
-.chip[aria-pressed="true"]{background:var(--coral);color:#1a0810}
+.chip[aria-pressed="true"]{background:var(--coral);color:#1C1114}
 .seg3{display:flex;background:var(--surface);border-radius:999px;padding:4px}
 .seg3 button{flex:1;min-height:40px;border-radius:999px;font-weight:700;font-size:13px;color:var(--muted)}
 .seg3 button[aria-pressed="true"]{background:var(--surface2);color:var(--text)}
@@ -102,7 +103,7 @@ textarea{min-height:84px;resize:vertical}
 .sw .k{width:46px;height:28px;border-radius:999px;background:var(--surface2);position:relative;flex:none;transition:background .15s}
 .sw .k::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
 .sw[aria-checked="true"] .k{background:var(--coral)}
-.sw[aria-checked="true"] .k::after{transform:translateX(18px);background:#1a0810}
+.sw[aria-checked="true"] .k::after{transform:translateX(18px);background:#1C1114}
 .sw[disabled]{opacity:.5;cursor:not-allowed}
 .top{display:flex;align-items:center;gap:8px;padding:10px 12px 2px}
 .ib{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:none}
@@ -114,10 +115,10 @@ textarea{min-height:84px;resize:vertical}
 .stage [data-act]{cursor:pointer}
 .stage g:focus-visible{outline:none}
 .stage g:focus-visible path.vis{stroke:var(--text)}
-.orb{width:150px;height:150px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:radial-gradient(circle at 35% 30%,#FFA3BF,#FF5C87 70%);color:#1a0810;font-weight:800;box-shadow:0 0 0 10px rgba(255,92,135,.08),0 18px 50px rgba(255,92,135,.28);transition:transform .15s}
+.orb{width:150px;height:150px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:radial-gradient(circle at 35% 30%,#B0475F,var(--burgundy) 72%);color:var(--text);font-weight:800;box-shadow:0 0 0 10px rgba(201,147,155,.08),0 18px 50px rgba(201,147,155,.28);transition:transform .15s}
 .orb:active{transform:scale(.96)}
 .orb svg{width:38px;height:38px}
-.orb.dark{background:var(--surface);color:var(--text);box-shadow:0 0 0 10px rgba(255,92,135,.08)}
+.orb.dark{background:var(--surface);color:var(--text);box-shadow:0 0 0 10px rgba(201,147,155,.08)}
 .orb .mc{font-size:26px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .live .glow{animation:pulse 2.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.25}50%{opacity:.6}}
@@ -139,45 +140,46 @@ textarea{min-height:84px;resize:vertical}
 .sheet{background:var(--surface);border-radius:26px 26px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));width:100%;max-height:88%;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
 .sheet:focus{outline:none}
 .toast{position:absolute;left:16px;right:16px;bottom:84px;background:var(--text);color:#15131c;padding:12px 16px;border-radius:14px;font-weight:600;font-size:14px;z-index:30;text-align:center}
-.banner{background:rgba(255,198,112,.12);color:var(--warn);border-radius:var(--r-sm);padding:6px 14px;min-height:44px;font-size:13px;font-weight:600;display:flex;gap:10px;align-items:center;justify-content:space-between}
-.banner.ok{background:rgba(123,224,181,.12);color:var(--ok)}
+.banner{background:rgba(226,186,124,.12);color:var(--warn);border-radius:var(--r-sm);padding:6px 14px;min-height:44px;font-size:13px;font-weight:600;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.banner.ok{background:rgba(147,201,170,.12);color:var(--ok)}
 .ob{flex:1;display:flex;flex-direction:column;padding:26px 24px calc(22px + env(safe-area-inset-bottom));gap:18px;overflow-y:auto}
 .ob .mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px}
 .steps{display:flex;gap:5px}.steps i{height:3px;flex:1;border-radius:3px;background:var(--surface2)}.steps i.on{background:var(--coral)}
 .opt{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:var(--r-sm);border:1.5px solid var(--line);text-align:left;width:100%}
-.opt[aria-pressed="true"]{border-color:var(--coral);background:rgba(255,92,135,.08)}
+.opt[aria-pressed="true"]{border-color:var(--coral);background:rgba(201,147,155,.08)}
 .opt[disabled]{opacity:.45;cursor:not-allowed}
 .opt b{display:block}
-.share{position:relative;overflow:hidden;border-radius:var(--r);padding:22px;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;gap:20px;color:#1a0810}
-.share.s0{background:linear-gradient(140deg,#FF5C87,#FFA3BF)}
-.share.s1{background:linear-gradient(150deg,#2B1E33,#191820);color:var(--text);box-shadow:inset 0 0 0 1px #4a3350}
-.share.s2{background:linear-gradient(140deg,#FFA3BF,#F8F5F7)}
-.share.s3{background:#0D0D12;color:var(--pink);box-shadow:inset 0 0 0 1.5px var(--coral)}
+.share{position:relative;overflow:hidden;border-radius:var(--r);padding:22px;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;gap:20px;color:#1C1114}
+.share.s0{background:linear-gradient(140deg,#8C2A43,#3E1019);color:var(--text)}
+.share.s1{background:linear-gradient(150deg,#3A1621,#1B1718);color:var(--text);box-shadow:inset 0 0 0 1px #5E2A37}
+.share.s2{background:linear-gradient(140deg,#E8CBC6,#F3ECE3)}
+.share.s3{background:#0E0B0C;color:var(--pink);box-shadow:inset 0 0 0 1.5px var(--coral)}
 .share svg.deco{position:absolute;right:-46px;top:-46px;width:190px;height:190px;opacity:.28}
 .share .big{position:relative;font-family:var(--display);font-size:34px;line-height:1.02;overflow-wrap:anywhere;max-width:85%}
 .share .meta{display:flex;gap:8px;flex-wrap:wrap;font-weight:700;font-size:13px}
 .share .meta span{padding:4px 10px;border-radius:999px;background:rgba(26,8,16,.14)}
-.share.s1 .meta span,.share.s3 .meta span{background:rgba(255,163,191,.16);color:var(--pink)}
+.share.s1 .meta span,.share.s3 .meta span{background:rgba(232,203,198,.16);color:var(--pink)}
 .share .wm{font-family:var(--display);font-style:italic;font-size:20px;opacity:.8}
 .post{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px}
 .av{width:38px;height:38px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-weight:800;color:var(--pink);flex:none}
 .rx{display:flex;gap:6px;flex-wrap:wrap}
 .rx button{min-height:44px;min-width:52px;padding:0 12px;border-radius:999px;background:var(--surface2);font-size:14px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;transition:transform .12s,background .15s}
 .rx button:active{transform:scale(1.15)}
-.rx button[aria-pressed="true"]{background:rgba(255,92,135,.22);color:var(--text)}
+.rx button[aria-pressed="true"]{background:rgba(201,147,155,.22);color:var(--text)}
 .cm{font-size:14px;padding:6px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
 .cm b{color:var(--pink)}
 .ach{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
 .ach:first-of-type{border-top:0}
 .badge{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:var(--dim);font-family:var(--display);font-style:italic;font-size:22px;flex:none}
-.badge.on{background:linear-gradient(140deg,#FF5C87,#FFA3BF);color:#1a0810}
+.badge.on{background:linear-gradient(140deg,#8C2A43,#4A1622);color:var(--pink)}
+.badge svg{width:22px;height:22px}
 .hs{display:flex;gap:10px;overflow-x:auto;margin:0 -18px;padding:2px 18px 6px;scrollbar-width:none}
 .hs::-webkit-scrollbar{display:none}
 .hs .b{flex:none;width:104px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:12px;font-weight:600;color:var(--muted)}
 .hs .b.on{color:var(--text)}
 .hm{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px}
 .hm i{aspect-ratio:1;border-radius:4px;background:var(--surface2)}
-.hm i.l1{background:rgba(255,92,135,.35)}.hm i.l2{background:rgba(255,92,135,.65)}.hm i.l3{background:var(--coral)}.hm i.f{opacity:.25}
+.hm i.l1{background:rgba(201,147,155,.35)}.hm i.l2{background:rgba(201,147,155,.65)}.hm i.l3{background:var(--coral)}.hm i.f{opacity:.25}
 .grid74{display:grid;grid-template-columns:auto repeat(7,1fr);gap:4px;align-items:center;font-size:11px;color:var(--dim);font-weight:600}
 .grid74 i{aspect-ratio:1.5;border-radius:6px;background:var(--surface2);display:grid;place-items:center;font-style:normal;font-size:11px;color:var(--text);font-variant-numeric:tabular-nums}
 .grid74 span{text-align:center}
@@ -200,6 +202,40 @@ ul.plain{list-style:none;padding:0;display:flex;flex-direction:column;gap:8px}
 ul.plain li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted)}
 ul.plain li svg{color:var(--coral);margin-top:2px}
 ul.plain li.p svg{color:var(--warn)}
+
+/* ---- added: couples features ---- */
+.stepper{display:flex;align-items:center;justify-content:center;gap:16px}
+.stepper .ib{font-size:24px;font-weight:500;background:var(--surface2)}
+.stepper .ib[disabled]{opacity:.35}
+.stepper span{min-width:160px;text-align:center;color:var(--muted)}
+.stepper b{font-family:var(--display);font-size:32px;font-weight:400;color:var(--text);vertical-align:-4px;margin-right:4px}
+.pill.ok{background:rgba(147,201,170,.14);color:var(--ok)}
+.qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.qa button{background:var(--surface);border-radius:var(--r-sm);min-height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:var(--text);transition:transform .12s,background .15s}
+.qa button:active{transform:scale(.97);background:var(--surface2)}
+.qa svg{width:24px;height:24px;color:var(--coral)}
+.card.rowcard{flex-direction:row;align-items:center;gap:12px;text-align:left;width:100%}
+.card.idea{gap:10px;background:linear-gradient(160deg,var(--surface),#1F1517)}
+.idea .it{font-family:var(--display);font-size:23px;font-weight:400;line-height:1.15;display:block;margin-bottom:2px}
+.pick{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 0;min-height:60px;border-top:1px solid var(--line)}
+.pick:first-child{border-top:0}
+.pick .tick{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:var(--muted);flex:none;transition:background .15s,color .15s}
+.pick[aria-pressed="true"] .tick{background:var(--wine);color:var(--text)}
+.pick[aria-pressed="true"] b{color:var(--pink)}
+.phs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ph{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--surface2);display:block}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .ib{position:absolute;top:4px;right:4px;width:40px;height:40px;background:rgba(14,11,12,.78)}
+.ph.sm{width:46px;height:46px;flex:none;border-radius:12px}
+.ph.gone img{visibility:hidden}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+label.btn{cursor:pointer}
+label.btn:focus-within{outline:2px solid var(--pink);outline-offset:2px}
+.chips.sm{gap:6px}.chips.sm .chip{padding:0 13px;font-size:12px}
+details.filt summary{display:flex;justify-content:space-between;align-items:center;min-height:44px;cursor:pointer;list-style:none}
+details.filt summary::-webkit-details-marker{display:none}
+.mark b{color:var(--wine)}
+h1 em,h2 em{color:var(--coral)}
 </style>
 </head>
 <body>
@@ -227,22 +263,28 @@ const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 const reduced=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return true}};
 const PARTS=["Morning","Afternoon","Evening","Night"],PARTH=["5am to noon","noon to 5pm","5pm to 10pm","10pm to 5am"];
 const partOf=h=>h>=5&&h<12?0:h>=12&&h<17?1:h>=17&&h<22?2:3;
-const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',track:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.6 5.2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>',play:'<path d="M8 4.5v15l12-7.5z" fill="currentColor"/>',pause:'<path d="M8 5v14M16 5v14"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="M15 5l-7 7 7 7"/>',next:'<path d="M9 5l7 7-7 7"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',edit:'<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',share:'<path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',dots:'<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>',watch:'<rect x="6.5" y="6" width="11" height="12" rx="3"/><path d="M9 6l.6-3.5h4.8L15 6M9 18l.6 3.5h4.8L15 18"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'};
+const IC={heart:'<path d="M12 20s-7.5-4.6-9.2-9.3C1.7 7.5 3.8 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.2 0 5.3 3 4.2 6.2C19.5 15.4 12 20 12 20z"/>',compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>',photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',track:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.6 5.2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>',play:'<path d="M8 4.5v15l12-7.5z" fill="currentColor"/>',pause:'<path d="M8 5v14M16 5v14"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="M15 5l-7 7 7 7"/>',next:'<path d="M9 5l7 7-7 7"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',edit:'<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',share:'<path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',dots:'<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>',watch:'<rect x="6.5" y="6" width="11" height="12" rx="3"/><path d="M9 6l.6-3.5h4.8L15 6M9 18l.6 3.5h4.8L15 18"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'};
 const ic=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>';
 
 /* ============ private store (this device, not encrypted by VOUZ) ============ */
 const LS="vouz.v1"; let storageOK=true;
-const fresh=()=>({v:1,onboarded:false,stamp:0,lastSync:0,syncBase:0,user:{name:"",mode:"local",createdAt:Date.now()},settings:{social:false,privateProfile:true,defaultVis:"connections",regular:null,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0},sessions:[],deleted:{},active:null,draft:null,blocks:[],ignored:[],keys:null});
+const fresh=()=>({v:1,onboarded:false,stamp:0,lastSync:0,syncBase:0,user:{name:"",mode:"local",createdAt:Date.now()},settings:{social:false,privateProfile:true,defaultVis:"connections",regular:null,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0},sessions:[],exps:[],picks:{},deleted:{},active:null,draft:null,blocks:[],ignored:[],keys:null});
 function load(){try{const r=localStorage.getItem(LS);if(r){const o=JSON.parse(r);if(o&&o.v===1)return Object.assign(fresh(),o,{settings:Object.assign(fresh().settings,o.settings)})}}catch(e){storageOK=false}return fresh()}
 let S=load();
 function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){storageOK=false}}
 function save(){S.stamp=Date.now();saveLocal();Cloud.queueVault()}
 /* What sync and export carry: never demo rows, never social keys. */
-const vaultPayload=()=>({v:1,stamp:S.stamp,user:S.user,settings:S.settings,sessions:S.sessions.filter(s=>!s.demo),deleted:S.deleted,blocks:S.blocks,ignored:S.ignored});
+/* Photos are not in here: they stay on the device. */
+const vaultPayload=()=>({v:1,stamp:S.stamp,user:S.user,settings:S.settings,sessions:S.sessions.filter(s=>!s.demo),exps:S.exps.filter(e=>!e.demo).map(e=>({...e,photos:[]})),picks:S.picks,deleted:S.deleted,blocks:S.blocks,ignored:S.ignored});
 /* Two devices: keep the newer copy of each session, honour deletions from either side. */
 function mergeVault(v){const del=Object.assign({},v.deleted||{});for(const k in S.deleted)del[k]=Math.max(del[k]||0,S.deleted[k]);
   const m={};for(const s of (v.sessions||[]).concat(S.sessions)){const c=m[s.id];if(!c||(s.updatedAt||0)>(c.updatedAt||0))m[s.id]=s}
   S.sessions=Object.values(m).filter(s=>!(del[s.id]>=(s.updatedAt||0)));S.deleted=del;
+  /* Experiences merge the same way. A copy from another device has no photos, so keep this device's photo list. */
+  const mx={};for(const e of (v.exps||[]).concat(S.exps||[])){const c=mx[e.id];if(!c||(e.updatedAt||0)>(c.updatedAt||0))mx[e.id]=Object.assign({},e,{photos:(c&&c.photos&&c.photos.length?c.photos:e.photos)||[]})}
+  const local=Object.fromEntries((S.exps||[]).map(e=>[e.id,e]));S.exps=Object.values(mx).filter(e=>!(del[e.id]>=(e.updatedAt||0))).map(e=>local[e.id]&&local[e.id].photos&&local[e.id].photos.length?{...e,photos:local[e.id].photos}:e);
+  if((v.stamp||0)>S.stamp&&v.picks)S.picks=v.picks;
+  normCats();
   if((v.stamp||0)>S.stamp){S.settings=Object.assign(fresh().settings,v.settings);S.blocks=v.blocks||[];S.ignored=v.ignored||[];S.user=Object.assign({},v.user,{mode:"account"})}}
 
 /* ============ optional cloud: private account space ============ */
@@ -265,7 +307,7 @@ const Cloud={db:null,user:null,uid:null,state:"checking",t:null,busy:false,dirty
     this.busy=false;if(this.dirty){this.dirty=false;this.pushVault()}},
   async readVault(){try{const s=await this.priv("vault").get();if(s.exists){const o=JSON.parse(s.data().json);if(o&&o.v===1)return o}}catch(e){}return null},
   async deleteAll(){if(this.state!=="ready")return;const ps=["vault","keys","stash"].map(n=>this.priv(n).delete());
-    for(const c of ["profiles","posts","reactions","comments","links","invites","reports"])ps.push(this.db.doc(c+"/"+this.uid).delete());
+    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","reports"])ps.push(this.db.doc(c+"/"+this.uid).delete());
     await Promise.allSettled(ps)}
 };
 
@@ -298,18 +340,18 @@ const K={ok:!!(window.crypto&&crypto.subtle),priv:null,self:null,pairs:{},
    Shared storage holds: profiles (handle + public key), posts, reactions, comments, links.
    "Everyone" cards are stored readable. Connections-only cards are stored as ciphertext with one wrapped key per
    permitted recipient; reconcile() is the single place that decides who gets a key. No key, no card. */
-const SHARED=["profiles","posts","reactions","comments","links","invites"];
-const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
+const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match"];
+const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
   async ensureKeys(){if(!S.keys){const d=await Cloud.priv("keys").get();if(d.exists)S.keys=JSON.parse(d.data().json);else{S.keys=await K.gen();await Cloud.priv("keys").set({json:JSON.stringify(S.keys)})}saveLocal()}
     if(!K.priv)await K.load(S.keys)},
   async start(){if(this.subs.length||Cloud.state!=="ready"||!K.ok)return;this.status="loading";
     try{await this.ensureKeys()}catch(e){this.status="error";return}
     const timer=setTimeout(()=>{if(this.status==="loading"){this.status="slow";render()}},10000);
     for(const c of SHARED)this.subs.push(Cloud.db.collection(c).onSnapshot(q=>{const m={};q.docs.forEach(d=>{m[d.id]=d.data()||{}});this[c]=m;if(c==="posts")clearTimeout(timer);this.sched()},()=>{clearTimeout(timer);this.status="error";render()}))},
-  stop(){this.subs.forEach(u=>{try{u()}catch(e){}});this.subs=[];this.status="off";clearTimeout(this.t);for(const c of SHARED)this[c]={};this.inbox=[];this.inv={};this.invSig="";this.rel={};this.items=[];this.cm={};this.perms={};this.cache={};this.au={}},
+  stop(){this.subs.forEach(u=>{try{u()}catch(e){}});this.subs=[];this.status="off";clearTimeout(this.t);for(const c of SHARED)this[c]={};this.inbox=[];this.inv={};this.invSig="";this.sp={};this.shared=[];this.picks={};this.pubSig="";this.rel={};this.items=[];this.cm={};this.perms={};this.cache={};this.au={}},
   sched(){clearTimeout(this.t);this.t=setTimeout(async()=>{if(this.busy){this.again=true;return}this.busy=true;
     try{await this.recompute()}catch(e){}this.busy=false;if(this.status==="loading"||this.status==="slow")this.status="ready";
-    const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv]),moved=sig!==this.invSig;this.invSig=sig;
+    const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.picks]),moved=sig!==this.invSig;this.invSig=sig;
     if((ui.tab==="social"||ui.tab==="profile"||ui.page&&ui.page.type==="compose"||moved)&&!typing())render();
     if(this.again){this.again=false;this.sched()}},40)},
   write(coll,data){this[coll]=Object.assign({},this[coll]);if(data===null)delete this[coll][Cloud.uid];else this[coll][Cloud.uid]=data;
@@ -341,6 +383,7 @@ const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},inb
         (cm[c.post]=cm[c.post]||[]).push({u,id:c.id,text:String(text||""),at:c.at})}}
     for(const k in cm)cm[k].sort((x,y)=>x.at-y.at);this.cm=cm;
     await this.readInvites();
+    await this.readSpaces();
     await this.reconcile()},
   /* Session invites. One sealed note per invited connection, readable only by that person, carrying date, time, duration and category and nothing else.
      Only mutual, unblocked connections are read, and nothing is added to anyone's log until they accept. */
@@ -350,12 +393,12 @@ const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},inb
       for(const x of (mine.resp||[]))if(x&&x.k===r.out)done[x.i]=1;
       for(const x of (d.items||[])){if(!x||x.k!==r.in||done[x.i])continue;
         try{const b=await open(r.key,x.c),st=+b.start,du=Math.round(+b.dur);if(b.i!==x.i||!(st>0)||st>Date.now()+6e4||!(du>=1&&du<=86400))continue;
-          inbox.push({a:id,i:String(x.i),start:st,dur:du,cat:CAT_PICK.includes(b.cat)?b.cat:null})}catch(e){}}
+          const cv=convCat(b.cat,b.p);inbox.push({a:id,i:String(x.i),start:st,dur:du,cat:cv.category,p:cv.participants,note:typeof b.note==="string"?b.note.slice(0,500):""})}catch(e){}}
       for(const x of (d.resp||[])){if(!x||x.k!==r.in)continue;try{const b=await open(r.key,x.c);if(b.i===x.i)out[id+"|"+x.i]=b.ok?"yes":"no"}catch(e){}}}
     this.inbox=inbox.sort((a,b)=>b.start-a.start);this.inv=out},
   ready(){return S.settings.social&&Cloud.state==="ready"&&K.ok&&!!K.priv&&this.status==="ready"},
   async invite(sess,id){const r=this.rel[id];if(!r||!r.mutual)throw 0;const i=uid(),cur=this.invites[Cloud.uid]||{};
-    const c=await K.encJ(r.key,{i,start:sess.start,dur:sess.durationSec,cat:CAT_PICK.includes(sess.category)?sess.category:null});
+    const c=await K.encJ(r.key,{i,start:sess.start,dur:sess.durationSec,cat:CAT_PICK.includes(sess.category)?sess.category:null,p:sess.participants||null,note:String(sess.sharedNote||"").slice(0,500)});
     await this.write("invites",{items:(cur.items||[]).concat([{i,k:r.out,c}]),resp:cur.resp||[]});return i},
   uninvite(ids){const cur=this.invites[Cloud.uid];if(!cur||!(cur.items||[]).some(x=>ids.includes(x.i)))return Promise.resolve();
     return this.write("invites",{items:cur.items.filter(x=>!ids.includes(x.i)),resp:cur.resp||[]})},
@@ -383,7 +426,7 @@ const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},inb
     const perms=Object.assign({},this.perms);if(!on)delete perms[id];return this.saveLinks(out,perms)},
   setPerm(id,p){return this.saveLinks(Object.assign({},(this.links[Cloud.uid]||{}).out),Object.assign({},this.perms,{[id]:p}))},
   /* Social off without deleting: move my shared documents into my private space, so nothing of mine is left readable. */
-  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
+  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
   async unstash(){try{const s=await Cloud.priv("stash").get();if(!s.exists)return;const o=JSON.parse(s.data().json);for(const c in o)if(SHARED.includes(c))await Cloud.db.doc(c+"/"+Cloud.uid).set(o[c]);await Cloud.priv("stash").delete()}catch(e){}}
 };
 
@@ -400,7 +443,7 @@ function buildCard(o,sess){
 
 /* ============ derived data ============ */
 const sessions=()=>S.sessions.slice().sort((a,b)=>b.start-a.start);
-const hasDemo=()=>S.sessions.some(s=>s.demo);
+const hasDemo=()=>S.sessions.some(s=>s.demo)||S.exps.some(e=>e.demo);
 function stats(list){const n=list.length,tot=list.reduce((a,s)=>a+s.durationSec,0);return{n,tot,avg:n?tot/n:0,longest:list.reduce((a,s)=>Math.max(a,s.durationSec),0),days:new Set(list.map(s=>dayKey(s.start))).size}}
 const countByDay=list=>{const m={};list.forEach(s=>{const k=dayKey(s.start);m[k]=(m[k]||0)+1});return m};
 const ACH=[
@@ -440,12 +483,15 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
 
 /* ============ ui state ============ */
 const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
-  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},soc:{seg:"feed"},compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
-const TABS=()=>[["home","Home","home"],["track","Track","track"],["insights","Insights","chart"],...(S.settings.social?[["social","Social","people"]]:[]),["profile","Profile","user"]];
+  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},int:{seg:"track"},disc:{seg:"match",f:{}},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"feed"},compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
+const TABS=()=>[["home","Home","home"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
 function paintToast(){let t=$(".toast");if(!ui.toast){t&&t.remove();return}if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");$("#app").appendChild(t)}t.textContent=ui.toast}
-function go(tab){ui.tab=tab;ui.page=null;ui.sheet=null;try{if(location.hash!=="#"+tab)location.hash=tab}catch(e){}render(true)}
+/* Older names still work: Track, History and Insights live inside Intimacy; the Social feed is a page under Profile. */
+function go(tab){if(["track","history","insights"].includes(tab)){ui.int.seg=tab;tab="intimacy"}
+  if(tab==="social"){ui.tab="profile";ui.page={type:"social"};ui.sheet=null;render(true);return}
+  ui.tab=tab;ui.page=null;ui.sheet=null;try{if(location.hash!=="#"+tab)location.hash=tab}catch(e){}render(true)}
 function openPage(page){ui.page=page;ui.sheet=null;ui.err="";render(true)}
 function sheet(s){ui.sheet=s;render()}
 
@@ -455,61 +501,62 @@ const running=()=>S.active&&S.active.segments[S.active.segments.length-1][1]===n
 setInterval(()=>{const c=$("#clock");if(c&&S.active){const e=elapsed(S.active);c.textContent=fmtClock(e);const h=$("#hand");if(h)h.setAttribute("stroke-dashoffset",String(741.4*(1-(e%60)/60)))}
   const m=$("#miniclock");if(m&&S.active)m.textContent=fmtClock(elapsed(S.active))},500);
 function draftFromActive(){const a=S.active,segs=a.segments.map(([s,e])=>[s,e||Date.now()]);const d=Math.max(1,Math.round(elapsed({segments:segs})));
-  return{editing:null,fromTimer:true,title:"",startLocal:toLocalInput(segs[0][0]),start:segs[0][0],durMin:Math.floor(d/60),durSec:d%60,category:CAT_PICK.includes(a.category)?a.category:null,tags:[],mood:"",notes:"",hrAvg:"",hrPeak:"",segments:segs}}
-const blankDraft=()=>({editing:null,fromTimer:false,title:"",startLocal:toLocalInput(Date.now()-30*6e4),durMin:20,durSec:0,category:null,tags:[],mood:"",notes:"",hrAvg:"",hrPeak:"",segments:null});
+  return{editing:null,fromTimer:true,title:"",startLocal:toLocalInput(segs[0][0]),start:segs[0][0],durMin:Math.floor(d/60),durSec:d%60,category:CAT_PICK.includes(a.category)?a.category:"couple",participants:a.category==="poly"?clampP(a.participants):2,satisfaction:null,sharedNote:"",tags:[],mood:"",notes:"",hrAvg:"",hrPeak:"",segments:segs}}
+const blankDraft=()=>({editing:null,fromTimer:false,title:"",startLocal:toLocalInput(Date.now()-30*6e4),durMin:20,durSec:0,category:"couple",participants:2,satisfaction:null,sharedNote:"",tags:[],mood:"",notes:"",hrAvg:"",hrPeak:"",segments:null});
 
 /* ============ charts ============ */
 const polar=(cx,cy,r,a)=>[cx+r*Math.cos((a-90)*Math.PI/180),cy+r*Math.sin((a-90)*Math.PI/180)];
 function arc(cx,cy,r,a0,a1){const [x0,y0]=polar(cx,cy,r,a0),[x1,y1]=polar(cx,cy,r,a1);return`M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`}
 const arcLen=(r,a0,a1)=>(r*(a1-a0)*Math.PI/180+2).toFixed(1);
-const GRAD='<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF5C87"/><stop offset="1" stop-color="#FFA3BF"/></linearGradient></defs>';
+const GRAD='<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C9939B"/><stop offset="1" stop-color="#E8CBC6"/></linearGradient></defs>';
 /* Home: the week as a ring of seven arcs, Monday at the top. */
 function weekRing(ws,cd,sel){const cx=160,cy=160,r=114,gap=7,step=360/7,today=dayKey(Date.now());let g="";
   for(let i=0;i<7;i++){const t=addDays(ws,i),k=dayKey(t),c=cd[k]||0,a0=i*step+gap/2,a1=(i+1)*step-gap/2,[lx,ly]=polar(cx,cy,r+27,(a0+a1)/2),d=arc(cx,cy,r,a0,a1);
-    g+=`<g data-act="pickDay" data-i="${i}" tabindex="0" role="button" aria-pressed="${sel===i}" aria-label="${fmtDate(t)}, ${c} session${c===1?"":"s"}"><path d="${d}" stroke="transparent" stroke-width="46" fill="none" pointer-events="stroke"/><path class="vis${c?" seg":""}" d="${d}" stroke="${c?"url(#rg)":"#22212C"}" stroke-width="${sel===i?22:14}" fill="none" stroke-linecap="round" style="--len:${arcLen(r,a0,a1)}"/>${c>1?`<circle cx="${polar(cx,cy,r,(a0+a1)/2)[0].toFixed(1)}" cy="${polar(cx,cy,r,(a0+a1)/2)[1].toFixed(1)}" r="3.5" fill="#1a0810"/>`:""}</g><text x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="${k===today?"#FFA3BF":"#7A7494"}">${WD[new Date(t).getDay()][0]}</text>`}
+    g+=`<g data-act="pickDay" data-i="${i}" tabindex="0" role="button" aria-pressed="${sel===i}" aria-label="${fmtDate(t)}, ${c} session${c===1?"":"s"}"><path d="${d}" stroke="transparent" stroke-width="46" fill="none" pointer-events="stroke"/><path class="vis${c?" seg":""}" d="${d}" stroke="${c?"url(#rg)":"#272123"}" stroke-width="${sel===i?22:14}" fill="none" stroke-linecap="round" style="--len:${arcLen(r,a0,a1)}"/>${c>1?`<circle cx="${polar(cx,cy,r,(a0+a1)/2)[0].toFixed(1)}" cy="${polar(cx,cy,r,(a0+a1)/2)[1].toFixed(1)}" r="3.5" fill="#1C1114"/>`:""}</g><text x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="${k===today?"#E8CBC6":"#988A86"}">${WD[new Date(t).getDay()][0]}</text>`}
   return`<svg viewBox="0 0 320 320">${GRAD}${g}</svg>`}
 /* Replay: the session as one 300-degree ring, active stretches drawn, pauses left open. */
 function replayRing(s,sel){const segs=s.segments&&s.segments.length?s.segments:[[0,1]],t0=segs[0][0],t1=segs[segs.length-1][1],span=Math.max(1,t1-t0),A=300,off=-150,cx=160,cy=160,r=124;
-  let p=`<path d="${arc(cx,cy,r,off,off+A)}" stroke="#22212C" stroke-width="14" fill="none" stroke-linecap="round"/>`;
+  let p=`<path d="${arc(cx,cy,r,off,off+A)}" stroke="#272123" stroke-width="14" fill="none" stroke-linecap="round"/>`;
   segs.forEach(([a,b],i)=>{const x0=off+A*(a-t0)/span,x1=Math.max(off+A*(b-t0)/span,x0+.6);p+=`<path class="seg" d="${arc(cx,cy,r,x0,x1)}" stroke="url(#rg)" stroke-width="${sel===i?20:14}" opacity="${sel===null||sel===undefined||sel===i?1:.45}" fill="none" stroke-linecap="round" style="--len:${arcLen(r,x0,x1)}"/>`});
   return`<svg viewBox="0 0 320 320" role="img" aria-label="Session timeline ring">${GRAD}${p}</svg>`}
-function trackRing(live){return`<svg viewBox="0 0 260 260" aria-hidden="true"><circle class="glow" cx="130" cy="130" r="124" fill="none" stroke="#FF5C87" stroke-width="2" opacity="${live?.4:.12}"/><circle cx="130" cy="130" r="118" fill="none" stroke="#22212C" stroke-width="12"/><circle id="hand" cx="130" cy="130" r="118" fill="none" stroke="#FF5C87" stroke-width="12" stroke-linecap="round" stroke-dasharray="741.4" stroke-dashoffset="${S.active?741.4*(1-(elapsed(S.active)%60)/60):741.4}" transform="rotate(-90 130 130)"/></svg>`}
+function trackRing(live){return`<svg viewBox="0 0 260 260" aria-hidden="true"><circle class="glow" cx="130" cy="130" r="124" fill="none" stroke="#C9939B" stroke-width="2" opacity="${live?.4:.12}"/><circle cx="130" cy="130" r="118" fill="none" stroke="#272123" stroke-width="12"/><circle id="hand" cx="130" cy="130" r="118" fill="none" stroke="#C9939B" stroke-width="12" stroke-linecap="round" stroke-dasharray="741.4" stroke-dashoffset="${S.active?741.4*(1-(elapsed(S.active)%60)/60):741.4}" transform="rotate(-90 130 130)"/></svg>`}
 function bars(vals,labels,unit,color){const W=320,H=150,L=26,B=22,T=10,max=Math.max(1,...vals),n=vals.length,bw=(W-L-4)/n,ticks=max<=4?Math.ceil(max):4;let g="";
-  for(let i=0;i<=ticks;i++){const v=max*i/ticks,y=T+(H-T-B)*(1-i/ticks);g+=`<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="#2F2D3B" stroke-width="1"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#7A7494">${Number.isInteger(v)?v:v.toFixed(1)}</text>`}
-  vals.forEach((v,i)=>{const h=(H-T-B)*v/max,x=L+i*bw+bw*.18,w=bw*.64;if(v>0)g+=`<rect x="${x.toFixed(1)}" y="${(H-B-h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${Math.min(4,w/2).toFixed(1)}" fill="${color||"#FF5C87"}"><title>${esc(labels[i].full)}: ${v} ${unit}</title></rect>`;
-    if(labels[i].s)g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="10" fill="#A9A1C6">${esc(labels[i].s)}</text>`});
+  for(let i=0;i<=ticks;i++){const v=max*i/ticks,y=T+(H-T-B)*(1-i/ticks);g+=`<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="#3A3133" stroke-width="1"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#988A86">${Number.isInteger(v)?v:v.toFixed(1)}</text>`}
+  vals.forEach((v,i)=>{const h=(H-T-B)*v/max,x=L+i*bw+bw*.18,w=bw*.64;if(v>0)g+=`<rect x="${x.toFixed(1)}" y="${(H-B-h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${Math.min(4,w/2).toFixed(1)}" fill="${color||"#C9939B"}"><title>${esc(labels[i].full)}: ${v} ${unit}</title></rect>`;
+    if(labels[i].s)g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="10" fill="#BCAFA9">${esc(labels[i].s)}</text>`});
   return`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(unit)} chart">${g}</svg>`}
-function line(vals,labels){const W=320,H=120,L=30,B=18,T=10,mn=Math.min(...vals)-5,mx=Math.max(...vals)+5,n=vals.length;const X=i=>L+(W-L-8)*(n===1?.5:i/(n-1)),Y=v=>T+(H-T-B)*(1-(v-mn)/(mx-mn));
-  let g=`<line x1="${L}" x2="${W}" y1="${Y(mx)}" y2="${Y(mx)}" stroke="#2F2D3B"/><line x1="${L}" x2="${W}" y1="${Y(mn)}" y2="${Y(mn)}" stroke="#2F2D3B"/><text x="${L-6}" y="${Y(mx)+4}" text-anchor="end" font-size="10" fill="#7A7494">${mx}</text><text x="${L-6}" y="${Y(mn)+4}" text-anchor="end" font-size="10" fill="#7A7494">${mn}</text>`;
-  g+=`<polyline fill="none" stroke="#FFA3BF" stroke-width="2" points="${vals.map((v,i)=>X(i).toFixed(1)+","+Y(v).toFixed(1)).join(" ")}"/>`;
-  vals.forEach((v,i)=>{g+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${i===n-1?4.5:3}" fill="${i===n-1?"#FF5C87":"#FFA3BF"}"><title>${esc(labels[i])}: ${v} bpm</title></circle>`});
-  return`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Average heart rate by session">${g}</svg>`}
+function line(vals,labels,aria="Average heart rate by session",unit="bpm",rng=null){const W=320,H=120,L=30,B=18,T=10,mn=rng?rng[0]:Math.min(...vals)-5,mx=rng?rng[1]:Math.max(...vals)+5,n=vals.length;const X=i=>L+(W-L-8)*(n===1?.5:i/(n-1)),Y=v=>T+(H-T-B)*(1-(v-mn)/(mx-mn));
+  let g=`<line x1="${L}" x2="${W}" y1="${Y(mx)}" y2="${Y(mx)}" stroke="#3A3133"/><line x1="${L}" x2="${W}" y1="${Y(mn)}" y2="${Y(mn)}" stroke="#3A3133"/><text x="${L-6}" y="${Y(mx)+4}" text-anchor="end" font-size="10" fill="#988A86">${mx}</text><text x="${L-6}" y="${Y(mn)+4}" text-anchor="end" font-size="10" fill="#988A86">${mn}</text>`;
+  g+=`<polyline fill="none" stroke="#E8CBC6" stroke-width="2" points="${vals.map((v,i)=>X(i).toFixed(1)+","+Y(v).toFixed(1)).join(" ")}"/>`;
+  vals.forEach((v,i)=>{g+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${i===n-1?4.5:3}" fill="${i===n-1?"#C9939B":"#E8CBC6"}"><title>${esc(labels[i])}: ${v} ${unit}</title></circle>`});
+  return`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(aria)}">${g}</svg>`}
 function heatmap(list,weeks){const m=countByDay(list),end=addDays(startOfWeek(Date.now()),6),start=addDays(end,-(weeks*7-1));let h="";
   for(let t=start,i=0;i<weeks*7;i++,t=addDays(t,1)){const c=m[dayKey(t)]||0;h+=`<i class="${c?"l"+Math.min(3,c):""}${t>Date.now()?" f":""}" title="${fmtDate(t)}: ${c} session${c===1?"":"s"}"></i>`}
   return`<div class="hm" style="grid-template-columns:repeat(${weeks},1fr)">${h}</div>`}
 /* Insights: a 24-hour dial, midnight at the top, one spoke per starting hour. */
 function dial(list){const cx=150,cy=150,r0=50,r1=112,by=Array(24).fill(0);list.forEach(s=>by[new Date(s.start).getHours()]++);const max=Math.max(1,...by);
-  let g=`<circle cx="${cx}" cy="${cy}" r="${r0-8}" fill="none" stroke="#2F2D3B"/><circle cx="${cx}" cy="${cy}" r="${r1+4}" fill="none" stroke="#2F2D3B" stroke-dasharray="2 5"/>`;
+  let g=`<circle cx="${cx}" cy="${cy}" r="${r0-8}" fill="none" stroke="#3A3133"/><circle cx="${cx}" cy="${cy}" r="${r1+4}" fill="none" stroke="#3A3133" stroke-dasharray="2 5"/>`;
   by.forEach((c,h)=>{const a=h*15+7.5,[x0,y0]=polar(cx,cy,r0,a),[x1,y1]=polar(cx,cy,r0+(r1-r0)*(c/max),a);
-    g+=c?`<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="url(#rg)" stroke-width="9" stroke-linecap="round"><title>${h%12||12}${h<12?"am":"pm"}: ${c} session${c===1?"":"s"}</title></line>`:`<circle cx="${x0.toFixed(1)}" cy="${y0.toFixed(1)}" r="2" fill="#2F2D3B"/>`});
-  [["12am",0],["6am",90],["12pm",180],["6pm",270]].forEach(([l,a])=>{const [x,y]=polar(cx,cy,r1+24,a);g+=`<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="#A9A1C6">${l}</text>`});
+    g+=c?`<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="url(#rg)" stroke-width="9" stroke-linecap="round"><title>${h%12||12}${h<12?"am":"pm"}: ${c} session${c===1?"":"s"}</title></line>`:`<circle cx="${x0.toFixed(1)}" cy="${y0.toFixed(1)}" r="2" fill="#3A3133"/>`});
+  [["12am",0],["6am",90],["12pm",180],["6pm",270]].forEach(([l,a])=>{const [x,y]=polar(cx,cy,r1+24,a);g+=`<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="#BCAFA9">${l}</text>`});
   return`<svg viewBox="0 0 300 300" width="100%" style="max-width:300px;align-self:center" role="img" aria-label="Sessions by starting hour">${GRAD}${g}</svg>`}
-const MC={Playful:"#FF5C87",Tender:"#FFA3BF",Electric:"#FFC670",Relaxed:"#7BE0B5",Connected:"#B79CFF",Curious:"#7CC4FF"};
+const MC={Playful:"#C9939B",Tender:"#E8CBC6",Electric:"#E2BA7C",Relaxed:"#93C9AA",Connected:"#A99CC4",Curious:"#8FB2C6"};
 
 /* ============ render ============ */
 let lastKey="",lastSheet=null;
 function render(resetScroll){
-  const app=$("#app"),sc=$(".scroll"),key=(ui.locked?"lock":S.onboarded?ui.tab:"ob"+ui.ob.step)+"|"+(ui.page?ui.page.type+(ui.page.id||""):"");
+  const app=$("#app"),sc=$(".scroll"),key=(ui.locked?"lock":S.onboarded?ui.tab+(ui.tab==="intimacy"?ui.int.seg:""):"ob"+ui.ob.step)+"|"+(ui.page?ui.page.type+(ui.page.id||""):"");
   const changed=key!==lastKey,keep=sc&&!resetScroll&&!changed?sc.scrollTop:0;lastKey=key;
   let h;
   if(ui.locked)h=vLock();
   else if(!S.onboarded)h=vOnboard();
-  else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear})[ui.page.type]();
-  else h=({home:vHome,track:vTrack,insights:vInsights,social:vSocial,profile:vProfile})[ui.tab]()+vTabs();
+  else{if(!ui.sheet&&legacySessions().length)ui.sheet={type:"legacy"}}
+  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,social:()=>hdr("Social")+vSocial(),spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
+  else h=({home:vHome,intimacy:vIntimacy,discover:vDiscover,story:vStory,profile:vProfile})[ui.tab]()+vTabs();
   const sheetNew=ui.sheet&&ui.sheet!==lastSheet;lastSheet=ui.sheet;
   app.classList.toggle("enter",changed);
   app.innerHTML=h+(ui.sheet?vSheet(sheetNew):"");
-  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();
+  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();hydratePhotos();
   if(sheetNew){const f=$(".sheet input,.sheet textarea")||$(".sheet");f&&f.focus({preventScroll:true})}
   else if(changed&&!ui.sheet){if(ns){ns.setAttribute("tabindex","-1");if(!typing())ns.focus({preventScroll:true})}countUp()}
 }
@@ -518,14 +565,14 @@ function countUp(){if(reduced())return;document.querySelectorAll("[data-count]")
 const vTabs=()=>`<nav class="tabs" aria-label="Primary">${TABS().map(([id,l,i])=>`<button class="tab" data-act="tab" data-tab="${id}" ${ui.tab===id?'aria-current="page"':""}>${ic(i)}${l}</button>`).join("")}</nav>`;
 const hdr=(title,right="")=>`<div class="top"><button class="ib" data-act="back" aria-label="Back">${ic("back")}</button><div class="grow" style="font-weight:700;text-align:center">${esc(title)}</div>${right||'<span style="width:44px"></span>'}</div>`;
 const sw=(act,on,label,sub="",extra="")=>`<button class="sw" role="switch" aria-checked="${!!on}" data-act="${act}" ${extra}><span class="grow"><b>${label}</b>${sub?`<span class="sub small" style="display:block">${sub}</span>`:""}</span><span class="k"></span></button>`;
-const sessRow=s=>{const d=new Date(s.start);return`<button class="sess" data-act="openReplay" data-id="${s.id}"><span class="d"><b>${d.getDate()}</b><span>${MO[d.getMonth()]}</span></span><span class="grow"><span class="t" style="display:block">${esc(s.title||"Session")}</span><span class="sub small">${WD[d.getDay()]} ${fmtTime(s.start)}${catLabel(s)?" · "+esc(catLabel(s)):""}${s.mood?" · "+esc(s.mood):""}${s.demo?" · demo":""}</span></span><span class="pill c">${fmtDur(s.durationSec)}</span></button>`};
+const sessRow=s=>{const d=new Date(s.start);return`<button class="sess" data-act="openReplay" data-id="${s.id}"><span class="d"><b>${d.getDate()}</b><span>${MO[d.getMonth()]}</span></span><span class="grow"><span class="t" style="display:block">${esc(s.title||"Session")}</span><span class="sub small">${WD[d.getDay()]} ${fmtTime(s.start)}${catLabel(s)?" · "+esc(catLabel(s)):""}${s.mood?" · "+esc(s.mood):""}${verifyStatus(s).k==="mutual"?" · confirmed":verifyStatus(s).k==="pending"?" · pending":""}${s.demo?" · demo":""}</span></span><span class="pill c">${fmtDur(s.durationSec)}</span></button>`};
 const demoBanner=()=>hasDemo()?`<div class="banner"><span>Demo data is showing. None of it is yours.</span><button class="link" data-act="removeDemo">Remove</button></div>`:"";
 
 /* ---- onboarding: three steps ---- */
 function vOnboard(){const o=ui.ob,n=3,i=o.step;
   const nav=(label="Continue",dis=false)=>`<div class="row">${i>0?`<button class="btn ghost" data-act="obBack" aria-label="Back">${ic("back")}</button>`:""}<button class="btn primary grow" data-act="obNext" ${dis?"disabled":""}>${label}</button></div>`;
   const pages=[
-   ()=>`<div class="mid"><div class="mark" style="font-size:84px">vouz<b>.</b></div><h1>Your other <em>cardio.</em></h1><p class="sub">A private tracker for the workouts that don't need sneakers. Time it, log it, look back on it.</p><ul class="plain"><li>${ic("check")}<span><b style="color:var(--text)">Track privately.</b> No location, contacts, ads or analytics.</span></li><li>${ic("check")}<span><b style="color:var(--text)">Celebrate personally.</b> No rankings and no targets handed to you.</span></li><li>${ic("check")}<span><b style="color:var(--text)">Share optionally.</b> Social is off until you turn it on, and nothing ever posts by itself.</span></li></ul></div>${nav("Get started")}`,
+   ()=>`<div class="mid"><div class="mark" style="font-size:84px">vouz<b>.</b></div><h1>Less scrolling. <em>More together.</em></h1><p class="sub">A private place for the time you spend together: intimacy you track for yourselves, experiences you plan, and the memories you keep.</p><ul class="plain"><li>${ic("check")}<span><b style="color:var(--text)">Private by default.</b> No ads, no location tracking, no analytics on what you log.</span></li><li>${ic("check")}<span><b style="color:var(--text)">Together on your terms.</b> Partners confirm and share only what they choose.</span></li><li>${ic("check")}<span><b style="color:var(--text)">No scores.</b> No rankings, and no number that says how a relationship is doing.</span></li></ul></div>${nav("Get started")}`,
    ()=>`<div class="mid"><h3>Before you come in</h3><h1>Adults only, and <em>private by default.</em></h1><p class="sub">VOUZ is for people aged 18 and over. Your sessions, notes and moods are yours: you can edit, export or permanently delete them whenever you like.</p><div class="card">${sw("obAdult",o.adult,"I confirm I'm 18 or older")}</div><p class="tiny">If you're under 18, VOUZ isn't for you, and you can close this page.</p></div>${nav("Continue",!o.adult)}`,
    ()=>`<div class="mid"><h3>Set it up your way</h3><h1>Your moments, <em>your rules.</em></h1>
      <div class="col"><button class="opt" data-act="obMode" data-mode="local" aria-pressed="${o.mode==="local"}"><span class="grow"><b>Keep it on this device</b><span class="sub small">Stored in this browser only. Export a backup when you like.</span></span></button>
@@ -543,7 +590,7 @@ function vHome(){const all=sessions(),st=stats(all),h=new Date().getHours(),gree
   const orb=S.active?`<button class="orb dark" data-act="tab" data-tab="track" aria-label="Return to your running session">${ic(running()?"pause":"play")}<span class="mc" id="miniclock">${fmtClock(elapsed(S.active))}</span><span class="small">${running()?"Running":"Paused"}</span></button>`
     :S.draft&&S.draft.fromTimer?`<button class="orb" data-act="resumeDraft">${ic("edit")}<span>Finish saving</span></button>`
     :`<button class="orb" data-act="start" aria-label="Start session">${ic("play")}<span>Start</span></button>`;
-  const hero=`<div class="sec"><div><h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1><p class="sub">${all.length?"Ready for another round?":"Some workouts don't need sneakers."}</p></div><div class="stage" style="margin-top:4px">${weekRing(ws,cd,sel)}<div class="in">${orb}</div></div></div>`;
+  const hero=`<div class="sec"><div><h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1><p class="sub">${all.length?"Ready when you are.":"Time together, kept privately."}</p></div><div class="stage" style="margin-top:4px">${weekRing(ws,cd,sel)}<div class="in">${orb}</div></div></div>`;
   if(!all.length)return`<div class="scroll">${head}${invitesCard()}${hero}<div class="sec" style="text-align:center;align-items:center"><h2>Nothing logged yet. <em>Good.</em></h2><p class="sub">This page starts blank and fills in from what you save, and only from that. The ring is your week: each arc is a day.</p><div class="row wrap" style="justify-content:center"><button class="btn sm" data-act="manual">${ic("plus")} Log a past session</button><button class="btn sm ghost" data-act="loadDemo">See it with demo data</button></div></div></div>`;
   const dayT=addDays(ws,sel),dayS=all.filter(s=>dayKey(s.start)===dayKey(dayT)),wk=all.filter(s=>s.start>=ws),wst=stats(wk);
   const dayBox=`<div class="sec" aria-live="polite"><div class="row between"><h3>${sel===todayI?"Today":fmtDate(dayT)}</h3><span class="sub small">This week: ${wst.n} session${wst.n===1?"":"s"}, ${fmtDur(wst.tot)}</span></div>${dayS.length?`<div>${dayS.map(sessRow).join("")}</div>`:`<p class="sub small">${dayT>Date.now()?"Still ahead.":"Nothing logged for this day."} Tap any arc on the ring to look at another day.</p>`}</div>`;
@@ -561,23 +608,24 @@ function vHome(){const all=sessions(),st=stats(all),h=new Date().getHours(),gree
    <div class="sec"><div class="row between"><h3>Achievements</h3><button class="link small" data-act="page" data-page="achievements">${got.length} of ${ach.length}</button></div><div class="hs">${got.concat(rest).map(a=>`<div class="b ${a.at?"on":""}"><span class="badge ${a.at?"on":""}">${a.g}</span>${a.name}</div>`).join("")}</div><p class="tiny">Private to you unless you choose to share one.</p></div></div>`}
 
 /* ---- track ---- */
-function trackCats(){const c=S.active?S.active.category:ui.trackCat;return`<div class="col" style="align-items:center"><h3>Category <span class="tiny" style="text-transform:none;letter-spacing:0">Optional</span></h3><div class="chips" style="justify-content:center" role="group" aria-label="Session category">${CAT_PICK.map(v=>`<button class="chip" data-act="tCat" data-v="${v}" aria-pressed="${c===v}">${CATS[v]}</button>`).join("")}</div></div>`}
+function trackCats(){const a=S.active,c=a?a.category:ui.trackCat,n=a?(a.participants||3):ui.trackP;return who(c,c==="poly"?n:2,"t")}
 /* People on a session. Added by hand after it's saved, and only ever from your own connections. */
 const PST={yes:"Confirmed",no:"Declined",wait:"Invited"};
-function peopleCard(s){const pp=s.people||[],on=Soc.ready();if(s.demo)return"";
-  return`<div class="card"><h3>Who was there <span class="tiny" style="text-transform:none;letter-spacing:0">Optional, private</span></h3>
-   ${pp.length?`<div>${pp.map(p=>{const st=p.from?"Added you":on?PST[Soc.inv[p.id+"|"+p.i]||"wait"]:"Social is off";return`<div class="ach"><span class="av" aria-hidden="true">${esc((p.h||"?")[0].toUpperCase())}</span><span class="grow"><b>${esc(on?Soc.handle(p.id)==="Someone"?p.h:Soc.handle(p.id):p.h)}</b><span class="sub small" style="display:block">${st}</span></span><button class="btn sm ghost" data-act="personOff" data-sid="${s.id}" data-i="${esc(p.i)}" aria-label="Remove ${esc(p.h)} from this session">Remove</button></div>`}).join("")}</div>`:`<p class="sub small">Nobody added. Nothing is detected: you choose who to add, and they choose whether to accept.</p>`}
-   <button class="btn sm" style="align-self:flex-start" data-act="addPeople" data-id="${s.id}">${ic("plus")} Add someone</button>
-   <p class="tiny">They'd see the date, time, length and category. Never your notes, mood, tags, heart rate or title. This stays out of shared cards.</p></div>`}
+function peopleCard(s){const pp=s.people||[],on=Soc.ready(),vs=verifyStatus(s),room=s.category==="poly"?(s.participants||3)-1:s.category==="couple"?1:PMAX,mine=pp.filter(p=>!p.from).length;if(s.demo)return"";
+  return`<div class="card"><div class="row between"><h3>Confirmation <span class="tiny" style="text-transform:none;letter-spacing:0">Optional</span></h3><span class="pill ${vs.k==="mutual"?"ok":vs.k==="pending"?"w":""}">${vs.l}</span></div>
+   ${pp.length?`<div>${pp.map(p=>{const st=p.from?"Logged it; you confirmed":on?PST[Soc.inv[p.id+"|"+p.i]||"wait"]:"Connections are off";return`<div class="ach"><span class="av" aria-hidden="true">${esc((p.h||"?")[0].toUpperCase())}</span><span class="grow"><b>${esc(on?Soc.handle(p.id)==="Someone"?p.h:Soc.handle(p.id):p.h)}</b><span class="sub small" style="display:block">${st}</span></span><button class="btn sm ghost" data-act="personOff" data-sid="${s.id}" data-i="${esc(p.i)}" aria-label="Remove ${esc(p.h)} from this session">Remove</button></div>`}).join("")}</div>`:`<p class="sub small">Self-reported. You can invite the other person or people to confirm it, and they decide.</p>`}
+   ${pp.some(p=>p.from)?"":mine<room?`<button class="btn sm" style="align-self:flex-start" data-act="addPeople" data-id="${s.id}">${ic("plus")} Invite someone to confirm</button>`:`<p class="tiny">${s.category==="couple"?"A Couple session has one other person.":"Everyone counted on this session has been invited."}</p>`}
+   <p class="tiny">They'd see the date, time, length, who was involved and your shared note. Never your private notes, satisfaction, mood, tags, heart rate or title. Confirming means the people listed agree the record is right. It isn't proof of anything, and anyone can step out later.</p></div>`}
 function invitesCard(){if(!S.settings.social||!Soc.inbox.length)return"";
-  return`<div class="card line" role="region" aria-label="Session invites"><h3>Session invites</h3><div>${Soc.inbox.map(v=>`<div class="col" style="gap:8px;padding:8px 0"><span><b>${esc(Soc.handle(v.a))}</b> added you to a session<span class="sub small" style="display:block">${fmtDate(v.start)} · ${fmtTime(v.start)} · ${fmtDur(v.dur)}${v.cat?" · "+CATS[v.cat]:""}</span></span><div class="row"><button class="btn sm primary grow" data-act="invYes" data-a="${esc(v.a)}" data-i="${esc(v.i)}">Add to my log</button><button class="btn sm ghost grow" data-act="invNo" data-a="${esc(v.a)}" data-i="${esc(v.i)}">Decline</button></div></div>`).join("")}</div><p class="tiny">Accepting saves your own private copy. Declining saves nothing.</p></div>`}
+  return`<div class="card line" role="region" aria-label="Session invites"><h3>Session invites</h3><div>${Soc.inbox.map(v=>`<div class="col" style="gap:8px;padding:8px 0"><span><b>${esc(Soc.handle(v.a))}</b> added you to a session<span class="sub small" style="display:block">${fmtDate(v.start)} · ${fmtTime(v.start)} · ${fmtDur(v.dur)}${v.cat?" · "+catLabel({category:v.cat,participants:v.p}):""}</span>${v.note?`<span class="small" style="display:block;margin-top:4px;overflow-wrap:anywhere">“${esc(v.note)}”</span>`:""}</span><div class="row"><button class="btn sm primary grow" data-act="invYes" data-a="${esc(v.a)}" data-i="${esc(v.i)}">Confirm and add to my log</button><button class="btn sm ghost grow" data-act="invNo" data-a="${esc(v.a)}" data-i="${esc(v.i)}">Decline</button></div></div>`).join("")}</div><p class="tiny">Confirming saves your own private copy and marks the record as confirmed by you. Declining saves nothing.</p></div>`}
 function vTrack(){const a=S.active;
-  if(!a)return`<div class="scroll"><div><h3>Track</h3><h1>${S.sessions.length?"Ready for <em>another round?</em>":"Some workouts don't need <em>sneakers.</em>"}</h1></div>
+  if(!a)return`<div class="scroll"><div><h3>Track</h3><h1>${S.sessions.length?"Ready when <em>you are.</em>":"Time together, <em>kept privately.</em>"}</h1></div>
     <div class="stage" style="max-width:300px">${trackRing(false)}<div class="in"><div class="clock">00:00:00</div><span class="sub small">Nothing running</span></div></div>
     ${S.draft&&S.draft.fromTimer?"":trackCats()}
     ${S.draft&&S.draft.fromTimer?`<button class="btn primary block" data-act="resumeDraft">Finish saving your last session</button>`:`<button class="btn primary block" data-act="start">${ic("play")} Start session</button>`}
+    <button class="btn block" data-act="quick">${ic("heart")} Quick log: just finished</button>
     <button class="btn ghost block" data-act="manual">${ic("plus")} Log a past session</button>
-    <p class="tiny" style="text-align:center">Pick a category now, during, or after. Only you start the timer.</p></div>`;
+    <p class="tiny" style="text-align:center">Set this now, during, or after. Nothing is detected: only you start and stop the timer.</p></div>`;
   const live=running();
   return`<div class="scroll"><div><h3>${live?"In session":"Paused"}</h3><h1>${live?"Take your <em>time.</em>":"Catching your <em>breath.</em>"}</h1></div>
     <div class="stage ${live?"live":""}" style="max-width:300px">${trackRing(live)}<div class="in"><div class="clock" id="clock" role="timer" aria-live="off">${fmtClock(elapsed(a))}</div><span class="sub small">Started ${fmtTime(a.segments[0][0])}${a.segments.length>1?" · "+(a.segments.length-1)+" pause"+(a.segments.length>2?"s":""):""}</span></div></div>
@@ -589,20 +637,41 @@ function vTrack(){const a=S.active;
 /* ---- session details (new, manual, edit) ---- */
 const MOODS=Object.keys(MC);
 /* Session categories. "partnered" is the earlier value: still valid, still shown, never converted automatically. */
-const CATS={solo:"Solo",duo:"Duo",trio:"Trio",group:"Group",partnered:"Partnered"},CAT_PICK=["solo","duo","trio","group"],CAT_ALL=["solo","duo","trio","group","partnered"];
-const CATC={solo:"var(--pink)",duo:"#B79CFF",trio:"#7CC4FF",group:"#FFC670",partnered:"var(--coral)"};
-const catLabel=s=>s.category==="group"&&s.groupSize?"Group of "+s.groupSize:CATS[s.category]||"";
+/* Session modes. Couple is exactly two people; Poly is three or more and keeps a head count.
+   "Poly" names a kind of session, not anyone's relationship. */
+const CATS={couple:"Couple",poly:"Poly"},CAT_PICK=["couple","poly"],CAT_ALL=["couple","poly"],PMAX=20;
+const CATC={couple:"var(--coral)",poly:"#C9A27E"};
+const clampP=n=>Math.min(PMAX,Math.max(3,Math.round(+n)||3));
+const catLabel=s=>s.category==="poly"?"Poly · "+(s.participants||3):s.category==="couple"?"Couple":"";
+/* Earlier categories: Duo becomes Couple; Trio and Group become Poly with their head count. Solo and Partnered
+   can't be expressed as either, so they are removed once the person has seen the notice (legacy sheet). */
+const LEGACY=["solo","partnered"];
+function convCat(c,n){if(c==="couple"||c==="duo")return{category:"couple",participants:2};if(c==="poly")return{category:"poly",participants:clampP(n)};
+  if(c==="trio")return{category:"poly",participants:3};if(c==="group")return{category:"poly",participants:clampP(+n>=4?n:4)};return{category:null,participants:null}}
+function normCats(){for(const s of S.sessions){if(LEGACY.includes(s.category))continue;if(s.category){Object.assign(s,convCat(s.category,s.participants??s.groupSize))}else{s.category=null;s.participants=null}delete s.groupSize}
+  for(const a of [S.active,S.draft])if(a&&a.category&&!LEGACY.includes(a.category)){const c=convCat(a.category,a.participants??a.groupSize);a.category=c.category;a.participants=c.participants;delete a.groupSize}
+  for(const a of [S.active,S.draft])if(a&&LEGACY.includes(a.category)){a.category="couple";a.participants=2}}
+const legacySessions=()=>S.sessions.filter(s=>!s.demo&&LEGACY.includes(s.category));
+/* Status of the people on a session. Declining takes someone off the list, so they don't hold it at Pending. */
+function verifyStatus(s){const pp=(s.people||[]).filter(p=>p.from||(Soc.inv[p.id+"|"+p.i]||"wait")!=="no");
+  if(!pp.length)return{k:"self",l:"Self-reported"};if(pp.some(p=>p.from))return{k:"mutual",l:"Mutually confirmed"};
+  return pp.every(p=>Soc.inv[p.id+"|"+p.i]==="yes")?{k:"mutual",l:"Mutually confirmed"}:{k:"pending",l:"Pending confirmation"}}
+const SATL=["","Not really","A little","Fairly","Very","Completely"];
+function who(cat,n,ctx){return`<div class="col"><h3>Who was involved?</h3><div class="seg3" role="group" aria-label="Who was involved">${CAT_PICK.map(v=>`<button data-act="${ctx}Cat" data-v="${v}" aria-pressed="${cat===v}">${CATS[v]}</button>`).join("")}</div>
+  ${cat==="poly"?`<div class="stepper" role="group" aria-label="Number of people, including you"><button class="ib" data-act="${ctx}P" data-d="-1" aria-label="One fewer" ${n<=3?"disabled":""}>−</button><span><b aria-live="polite">${n}</b> people, including you</span><button class="ib" data-act="${ctx}P" data-d="1" aria-label="One more" ${n>=PMAX?"disabled":""}>+</button></div><p class="tiny">Three to ${PMAX}. It describes the session, not anyone's relationship.</p>`:cat==="couple"?`<p class="tiny">Two people, including you.</p>`:`<p class="tiny">Not set on this earlier entry. Pick one, or leave it.</p>`}</div>`}
 function vDetails(){const d=S.draft;if(!d)return vHome()+vTabs();
   return hdr(d.editing?"Edit session":d.fromTimer?"Save session":"Log a session")+`<div class="scroll">
    ${d.fromTimer?`<div class="card" style="text-align:center"><span class="sub small">Tracked time</span><div class="clock" style="font-size:44px">${fmtClock(d.durMin*60+ +d.durSec)}</div></div>`:""}
    <p class="sub small">Only the time and duration are needed. Everything else is optional and stays private.</p>
-   <div class="col"><h3>Category <span class="tiny" style="text-transform:none;letter-spacing:0">Optional</span></h3><div class="chips">${CAT_PICK.concat(d.category==="partnered"?["partnered"]:[]).map(v=>`<button class="chip" data-act="dCat" data-v="${v}" aria-pressed="${d.category===v}">${CATS[v]}${v==="partnered"?" (earlier entry)":""}</button>`).join("")}</div>${d.category==="group"?`<label class="f" for="d-gsize">How many people? <em>Optional. 4 or more.</em><input type="number" id="d-gsize" data-bind="draft.groupSize" min="4" max="99" inputmode="numeric" value="${esc(d.groupSize??"")}"></label>`:""}<p class="tiny">${d.category==="partnered"?"This session was saved as Partnered before Duo, Trio and Group existed. It stays that way unless you pick a new one.":"Solo is just you. Duo is two people, Trio is three, Group is four or more."}</p></div>
+   ${who(d.category,d.category==="poly"?clampP(d.participants):2,"d")}
    <label class="f" for="d-title">Title <em>Optional</em><input type="text" id="d-title" data-bind="draft.title" maxlength="60" value="${esc(d.title)}" placeholder="Session" autocomplete="off"></label>
    <label class="f" for="d-start">Date and time<input type="datetime-local" id="d-start" data-bind="draft.startLocal" value="${esc(d.startLocal)}"></label>
    <div class="row"><label class="f grow" for="d-min">Minutes<input type="number" id="d-min" data-bind="draft.durMin" min="0" max="1440" inputmode="numeric" value="${esc(d.durMin)}"></label><label class="f grow" for="d-sec">Seconds<input type="number" id="d-sec" data-bind="draft.durSec" min="0" max="59" inputmode="numeric" value="${esc(d.durSec)}"></label></div>
    <div class="col"><h3>Mood <span class="tiny" style="text-transform:none;letter-spacing:0">Optional</span></h3><div class="chips">${MOODS.map(m=>`<button class="chip" data-act="dMood" data-v="${m}" aria-pressed="${d.mood===m}">${m}</button>`).join("")}</div></div>
    <div class="col"><label class="f" for="d-tag">Tags <em>Optional. Press Enter to add.</em><input type="text" id="d-tag" maxlength="24" placeholder="e.g. morning, weekend away" autocomplete="off"></label>${d.tags.length?`<div class="chips">${d.tags.map((t,i)=>`<button class="chip" data-act="dTagDel" data-i="${i}" aria-label="Remove tag ${esc(t)}">${esc(t)} ×</button>`).join("")}</div>`:""}</div>
-   <label class="f" for="d-notes">Private notes <em>Optional. Never shared.</em><textarea id="d-notes" data-bind="draft.notes" maxlength="2000">${esc(d.notes)}</textarea></label>
+   <div class="col"><h3>How satisfied were you? <span class="tiny" style="text-transform:none;letter-spacing:0">Optional, private</span></h3><div class="chips" role="group" aria-label="Satisfaction, 1 to 5">${[1,2,3,4,5].map(v=>`<button class="chip" data-act="dSat" data-v="${v}" aria-pressed="${d.satisfaction===v}" aria-label="${v}, ${SATL[v]}">${v}</button>`).join("")}</div><p class="tiny">${d.satisfaction?SATL[d.satisfaction]+".":"1 is not really, 5 is completely."} Only you see this.</p></div>
+   <label class="f" for="d-notes">Private notes <em>Optional. Never shared with anyone.</em><textarea id="d-notes" data-bind="draft.notes" maxlength="2000">${esc(d.notes)}</textarea></label>
+   <label class="f" for="d-shared">Shared note <em>Optional. Goes only to people you invite to confirm.</em><textarea id="d-shared" data-bind="draft.sharedNote" maxlength="500">${esc(d.sharedNote||"")}</textarea></label>
    <div class="card line"><h3>Heart rate <span class="tiny" style="text-transform:none;letter-spacing:0">Optional, typed in by you</span></h3><div class="row"><label class="f grow" for="d-hra">Average bpm<input type="number" id="d-hra" data-bind="draft.hrAvg" min="30" max="240" inputmode="numeric" value="${esc(d.hrAvg)}"></label><label class="f grow" for="d-hrp">Peak bpm<input type="number" id="d-hrp" data-bind="draft.hrPeak" min="30" max="240" inputmode="numeric" value="${esc(d.hrPeak)}"></label></div><p class="tiny">No wearable is connected in the web build. VOUZ shows these numbers back to you and reads nothing into them.</p></div>
    ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}
    <button class="btn primary block" data-act="saveSession">${d.editing?"Save changes":"Save session"}</button>
@@ -628,11 +697,12 @@ function vReplay(){const s=S.sessions.find(x=>x.id===ui.page.id);if(!s){ui.page=
   return hdr("Replay",`<button class="ib" data-act="editSession" data-id="${s.id}" aria-label="Edit session">${ic("edit")}</button>`)+`<div class="scroll">
    ${ui.page.fresh?`<div class="banner ok" role="status"><span>Saved privately.</span></div>`:""}${s.demo?`<div class="banner"><span>This is a demo session.</span></div>`:""}
    <div><h3>${fmtDate(s.start)} · ${fmtTime(s.start)}</h3><h1>${esc(s.title||"Session")}</h1></div>
-   <div class="stage">${replayRing(s,sel)}<div class="in"><span class="sub small">Duration</span><div class="clock" style="font-size:48px">${fmtClock(s.durationSec)}</div><div class="row" style="gap:6px">${s.category?`<span class="pill c">${esc(catLabel(s))}</span>`:""}${s.mood?`<span class="pill" style="color:${MC[s.mood]||"var(--muted)"}">${esc(s.mood)}</span>`:""}</div></div></div>
+   <div class="stage">${replayRing(s,sel)}<div class="in"><span class="sub small">Duration</span><div class="clock" style="font-size:48px">${fmtClock(s.durationSec)}</div><div class="row" style="gap:6px">${s.category?`<span class="pill c">${esc(catLabel(s))}</span>`:""}<span class="pill">${s.segments?"Timed":"Estimated"}</span>${s.mood?`<span class="pill" style="color:${MC[s.mood]||"var(--muted)"}">${esc(s.mood)}</span>`:""}</div></div></div>
    <h2>${esc(summaryFor(s))}</h2>
    <div class="sec"><h3>Timeline</h3>${tl}</div>
    ${ms.length?`<div class="card"><h3>Milestones from this one</h3><div>${ms.map(m=>`<div class="ach"><span class="badge on new">${m.g}</span><span class="grow"><b>${esc(m.t)}</b><span class="sub small" style="display:block">${esc(m.d)}</span></span></div>`).join("")}</div></div>`:""}
-   <div class="card"><div class="row between"><h3>How it sits in your history</h3></div><div class="seg3" role="group" aria-label="Compare against">${[["all","All time"],["near","Around then"],["cat","Same category"]].map(([v,l])=>`<button data-act="rScope" data-v="${v}" aria-pressed="${sc===v}" ${v==="cat"&&!s.category?"disabled":""}>${l}</button>`).join("")}</div>${cmp}<ul class="plain">${facts.map(f=>`<li>${ic("clock")}<span>${esc(f)}.</span></li>`).join("")}</ul></div>
+   <div class="card"><div class="row between"><h3>How it sits in your history</h3></div><div class="seg3" role="group" aria-label="Compare against">${[["all","All time"],["near","Around then"],["cat","Same mode"]].map(([v,l])=>`<button data-act="rScope" data-v="${v}" aria-pressed="${sc===v}" ${v==="cat"&&!s.category?"disabled":""}>${l}</button>`).join("")}</div>${cmp}<ul class="plain">${facts.map(f=>`<li>${ic("clock")}<span>${esc(f)}.</span></li>`).join("")}</ul></div>
+   ${s.satisfaction||s.sharedNote?`<div class="card">${s.satisfaction?`<div class="row between"><h3>Satisfaction</h3><span><b>${s.satisfaction}</b> <span class="sub small">of 5 · ${SATL[s.satisfaction]}</span></span></div>`:""}${s.sharedNote?`<h3>Shared note</h3><p style="overflow-wrap:anywhere">${esc(s.sharedNote)}</p><p class="tiny">${(s.people||[]).some(p=>p.from)?"Written by "+esc(s.people.find(p=>p.from).h)+".":"Sent with invites to the people you add."}</p>`:""}</div>`:""}
    ${peopleCard(s)}
    <div class="card"><h3>Reflection <span class="tiny" style="text-transform:none;letter-spacing:0">Optional, private</span></h3><div class="chips" role="group" aria-label="Mood">${MOODS.map(m=>`<button class="chip" data-act="rMood" data-v="${m}" aria-pressed="${s.mood===m}">${m}</button>`).join("")}</div><label class="f" for="rf-text">${RPROMPT[idx%3]}<textarea id="rf-text" maxlength="600" placeholder="A line or two, just for you.">${esc(s.reflection||"")}</textarea></label><button class="btn sm" style="align-self:flex-start" data-act="rSave">Save reflection</button></div>
    ${s.hrAvg||s.hrPeak?`<div class="card"><h3>Heart rate, as you entered it</h3><div class="trio">${s.hrAvg?`<div><b>${esc(s.hrAvg)}</b><span>average bpm</span></div>`:""}${s.hrPeak?`<div><b>${esc(s.hrPeak)}</b><span>peak bpm</span></div>`:""}</div><p class="tiny">A chart needs readings from a wearable, which the web build doesn't have.</p></div>`:""}
@@ -657,11 +727,11 @@ function insRange(){const r=ui.ins,now=Date.now();
 function prevRange(rg){const r=ui.ins.range,d=new Date(rg[0]);if(r==="month")return[new Date(d.getFullYear(),d.getMonth()-1,1).getTime(),rg[0]];if(r==="year")return[new Date(d.getFullYear()-1,0,1).getTime(),rg[0]];return[addDays(rg[0],-Math.round((rg[1]-rg[0])/DAY)),rg[0]]}
 function vInsights(){const r=ui.ins,inCat=s=>r.cat==="all"||s.category===r.cat,base=S.sessions.filter(inCat),rg=insRange();
   const list=rg?base.filter(s=>s.start>=rg[0]&&s.start<rg[1]):[],st=stats(list),rl={week:"this week",month:"this month",year:"this year",custom:"this range"}[r.range];
-  const head=`<div><h3>Insights</h3><h1>Patterns, <em>not goals.</em></h1><p class="sub small">A description of what you logged. There's no right amount, and nothing here is advice.</p></div>${demoBanner()}
+  const head=`<div><h3>Insights</h3><h1>Patterns, <em>not scores.</em></h1><p class="sub small">A description of what you logged. There's no right amount, and how often says nothing about how a relationship is doing.</p></div>${demoBanner()}
    <div class="chips" role="group" aria-label="Time range">${[["week","Week"],["month","Month"],["year","Year"],["custom","Custom"]].map(([v,l])=>`<button class="chip" data-act="insRange" data-v="${v}" aria-pressed="${r.range===v}">${l}</button>`).join("")}</div>
    ${r.range==="custom"?`<div class="row"><label class="f grow" for="i-from">From<input type="date" id="i-from" data-bind="ins.from" data-live="1" value="${esc(r.from)}"></label><label class="f grow" for="i-to">To<input type="date" id="i-to" data-bind="ins.to" data-live="1" value="${esc(r.to)}"></label></div>${rg?"":`<p class="sub small">Pick a start and end date.</p>`}`:""}
-   <div class="chips" role="group" aria-label="Category">${[["all","All"]].concat(CAT_PICK.concat(S.sessions.some(x=>x.category==="partnered")?["partnered"]:[]).map(v=>[v,CATS[v]])).map(([v,l])=>`<button class="chip" data-act="insCat" data-v="${v}" aria-pressed="${r.cat===v}">${l}</button>`).join("")}</div>`;
-  if(!S.sessions.length)return`<div class="scroll">${head}<div class="card"><h2>Nothing to chart yet.</h2><p class="sub">Save a session and this page fills in from your own records.</p><button class="btn sm primary" data-act="tab" data-tab="track" style="align-self:flex-start">Go to Track</button></div></div>`;
+   <div class="chips" role="group" aria-label="Who was involved">${[["all","All"]].concat(CAT_PICK.map(v=>[v,CATS[v]])).map(([v,l])=>`<button class="chip" data-act="insCat" data-v="${v}" aria-pressed="${r.cat===v}">${l}</button>`).join("")}</div>`;
+  if(!S.sessions.length)return`<div class="scroll">${head}<div class="card"><h2>Nothing to chart yet.</h2><p class="sub">Save a session and this page fills in from your own records.</p><button class="btn sm primary" data-act="iSeg" data-v="track" style="align-self:flex-start">Go to Track</button></div></div>`;
   const tabs=`<div class="seg3" role="group" aria-label="Insights section">${[["overview","Overview"],["patterns","Patterns"],["mood","Mood"]].map(([v,l])=>`<button data-act="insTab" data-v="${v}" aria-pressed="${r.tab===v}">${l}</button>`).join("")}</div>`;
   const none=`<div class="card line"><p class="sub small">No sessions ${rl}${r.cat!=="all"?" in this category":""}. Try a wider range.</p></div>`;
   let body="";
@@ -675,31 +745,35 @@ function vInsights(){const r=ui.ins,inCat=s=>r.cat==="all"||s.category===r.cat,b
     const cmp=(a,b,l,f)=>{const mx=Math.max(a,b,1);return`<div class="pair"><div class="row between small"><span class="sub">${l}</span><span><b>${f(a)}</b> <span class="sub">· before ${f(b)}</span></span></div><div class="bar"><i style="width:${a/mx*100}%"></i></div><div class="bar"><i style="width:${b/mx*100}%;background:var(--dim)"></i></div></div>`};
     const allSt=stats(base),wkCounts={};base.forEach(s=>{const k=startOfWeek(s.start);wkCounts[k]=(wkCounts[k]||0)+1});const firstS=base.slice().sort((a,b)=>a.start-b.start)[0];
     body=`<div class="tiles"><div class="tile"><b>${st.n}</b><span>sessions</span></div><div class="tile"><b>${fmtDur(st.tot)}</b><span>total time</span></div><div class="tile"><b>${fmtDur(st.avg)}</b><span>average</span></div><div class="tile"><b>${fmtDur(st.longest)}</b><span>longest</span></div><div class="tile"><b>${st.days}</b><span>active days</span></div><div class="tile"><b>${(st.n/weeks).toFixed(1)}</b><span>per week</span></div></div>
+     ${st.n?`<p class="tiny">${list.filter(s=>s.segments).length} timed with VOUZ, ${list.filter(s=>!s.segments).length} entered by hand as an estimate. Heart rate is only ever what you typed in.</p>`:""}
      ${rg?`<div class="sec"><h3>Sessions ${r.range==="year"?"per month":r.range==="custom"&&Math.round((rg[1]-rg[0])/DAY)>62?"per week":"per day"}</h3>${st.n?chart:`<p class="sub small">No sessions ${rl}${r.cat!=="all"?" in this category":""}.</p>`}</div>`:""}
-     ${pst?`<div class="card"><h3>${rl[0].toUpperCase()+rl.slice(1)} and the one before</h3>${cmp(st.n,pst.n,"Sessions",v=>v)}${cmp(st.tot,pst.tot,"Time",fmtDur)}${cmp(st.avg,pst.avg,"Average length",fmtDur)}<p class="tiny">Coral is ${rl}, grey is the period before. Different isn't better or worse.</p></div>`:""}
-     <div class="sec"><div class="row between"><h3>Last 18 weeks</h3><span class="row tiny" style="gap:4px">0 <i style="width:10px;height:10px;border-radius:3px;background:var(--surface2)"></i><i style="width:10px;height:10px;border-radius:3px;background:rgba(255,92,135,.35)"></i><i style="width:10px;height:10px;border-radius:3px;background:var(--coral)"></i> 3+</span></div>${heatmap(base,18)}</div>
+     ${pst?`<div class="card"><h3>${rl[0].toUpperCase()+rl.slice(1)} and the one before</h3>${cmp(st.n,pst.n,"Sessions",v=>v)}${cmp(st.tot,pst.tot,"Time",fmtDur)}${cmp(st.avg,pst.avg,"Average length",fmtDur)}<p class="tiny">Rose is ${rl}, grey is the period before. Different isn't better or worse.</p></div>`:""}
+     <div class="sec"><div class="row between"><h3>Last 18 weeks</h3><span class="row tiny" style="gap:4px">0 <i style="width:10px;height:10px;border-radius:3px;background:var(--surface2)"></i><i style="width:10px;height:10px;border-radius:3px;background:rgba(201,147,155,.35)"></i><i style="width:10px;height:10px;border-radius:3px;background:var(--coral)"></i> 3+</span></div>${heatmap(base,18)}</div>
      <div class="card"><h3>Personal milestones</h3><div class="tiles two"><div class="tile"><b>${fmtDur(allSt.longest)}</b><span>longest session</span></div><div class="tile"><b>${Math.max(0,...Object.values(wkCounts))}</b><span>most in one week</span></div><div class="tile"><b>${allSt.n}</b><span>sessions all time</span></div><div class="tile"><b>${firstS?new Date(firstS.start).getDate()+" "+MO[new Date(firstS.start).getMonth()]:"–"}</b><span>first tracked</span></div></div></div>`}
   else if(r.tab==="patterns"){if(!list.length)body=none;else{
     const parts=[0,0,0,0],grid=Array.from({length:4},()=>Array(7).fill(0)),wdN=Array(7).fill(0),wdT=Array(7).fill(0);
     list.forEach(s=>{const d=new Date(s.start),p=partOf(d.getHours()),w=(d.getDay()+6)%7;parts[p]++;grid[p][w]++;wdN[w]++;wdT[w]+=s.durationSec});
     const top=parts.indexOf(Math.max(...parts)),gmax=Math.max(1,...grid.flat()),cats=CAT_ALL.map(k=>[k,list.filter(s=>s.category===k)]).filter(x=>x[1].length),un=list.length-cats.reduce((a,x)=>a+x[1].length,0);
     body=`<div class="card"><h3>Time of day</h3>${dial(list)}<h2>Most often in the <em>${PARTS[top].toLowerCase()}.</em></h2><p class="sub small">${parts[top]} of ${list.length} session${list.length===1?"":"s"} ${rl} started between ${PARTH[top]}.</p></div>
-     <div class="card"><h3>Day and time</h3><div class="grid74"><span></span>${"MTWTFSS".split("").map(c=>`<span>${c}</span>`).join("")}${grid.map((row,p)=>`<span style="text-align:left;padding-right:6px">${PARTS[p]}</span>${row.map((c,w)=>`<i style="${c?`background:rgba(255,92,135,${(.25+.75*c/gmax).toFixed(2)});${c/gmax>.6?"color:#1a0810;font-weight:700":""}`:""}" title="${WD[(w+1)%7]} ${PARTS[p].toLowerCase()}: ${c}">${c||""}</i>`).join("")}`).join("")}</div></div>
-     <div class="sec"><h3>Average length by weekday</h3>${bars(wdN.map((n,i)=>n?Math.round(wdT[i]/n/60):0),["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>({s:d,full:d})),"minutes","#FFA3BF")}</div>
-     ${r.cat==="all"?`<div class="card"><h3>Categories</h3><div class="bar" style="height:18px;border-radius:9px" role="img" aria-label="${cats.map(([k,l])=>l.length+" "+CATS[k]).join(", ")}, ${un} not set">${cats.map(([k,l])=>`<i style="width:${l.length/list.length*100}%;background:${CATC[k]}"></i>`).join("")}</div><div class="lg">${cats.map(([k,l])=>`<span><i style="background:${CATC[k]}"></i>${CATS[k]} ${l.length}, avg ${fmtDur(stats(l).avg)}</span>`).join("")}${un?`<span><i style="background:var(--surface2)"></i>Not set ${un}</span>`:""}</div>${cats.some(x=>x[0]==="partnered")?`<p class="tiny">Partnered is the earlier category. Those sessions stay as they are unless you edit them.</p>`:""}</div>`:""}`}}
+     <div class="card"><h3>Day and time</h3><div class="grid74"><span></span>${"MTWTFSS".split("").map(c=>`<span>${c}</span>`).join("")}${grid.map((row,p)=>`<span style="text-align:left;padding-right:6px">${PARTS[p]}</span>${row.map((c,w)=>`<i style="${c?`background:rgba(201,147,155,${(.25+.75*c/gmax).toFixed(2)});${c/gmax>.6?"color:#1C1114;font-weight:700":""}`:""}" title="${WD[(w+1)%7]} ${PARTS[p].toLowerCase()}: ${c}">${c||""}</i>`).join("")}`).join("")}</div></div>
+     <div class="sec"><h3>Average length by weekday</h3>${bars(wdN.map((n,i)=>n?Math.round(wdT[i]/n/60):0),["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>({s:d,full:d})),"minutes","#E8CBC6")}</div>
+     ${r.cat==="all"?`<div class="card"><h3>Couple and Poly</h3><div class="bar" style="height:18px;border-radius:9px" role="img" aria-label="${cats.map(([k,l])=>l.length+" "+CATS[k]).join(", ")}${un?", "+un+" not set":""}">${cats.map(([k,l])=>`<i style="width:${l.length/list.length*100}%;background:${CATC[k]}"></i>`).join("")}</div>
+       <div class="tiles two">${cats.map(([k,l])=>{const t=stats(l);return`<div class="tile"><b>${l.length}</b><span>${CATS[k]}: avg ${fmtDur(t.avg)}${k==="poly"?", "+(l.reduce((a,x)=>a+(x.participants||3),0)/l.length).toFixed(1)+" people":""}</span></div>`}).join("")}</div>${un?`<p class="tiny">${un} earlier session${un===1?"":"s"} with no mode set.</p>`:""}</div>`:""}`}}
   else{const withMood=list.filter(s=>s.mood&&MC[s.mood]),cnt={};withMood.forEach(s=>cnt[s.mood]=(cnt[s.mood]||0)+1);const ord=MOODS.filter(m=>cnt[m]).sort((a,b)=>cnt[b]-cnt[a]),mmax=Math.max(1,...Object.values(cnt));
     const months=Array.from({length:6},(_,i)=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth()-5+i,1)}),hr=base.filter(s=>s.hrAvg).sort((a,b)=>a.start-b.start).slice(-12),refl=list.filter(s=>s.reflection&&s.reflection.trim()).sort((a,b)=>b.start-a.start);
     const mm=months.map(d=>{const a=d.getTime(),b=new Date(d.getFullYear(),d.getMonth()+1,1).getTime(),ms=base.filter(s=>s.start>=a&&s.start<b&&s.mood&&MC[s.mood]),c={};ms.forEach(s=>c[s.mood]=(c[s.mood]||0)+1);return{l:MO[d.getMonth()],n:ms.length,c}});
     body=`${withMood.length?`<div class="card"><h3>Moods you logged ${rl}</h3><div class="col">${ord.map(m=>`<div class="hb"><span>${m}</span><div class="bar"><i style="width:${cnt[m]/mmax*100}%;background:${MC[m]}"></i></div><span class="sub">${cnt[m]}</span></div>`).join("")}</div><p class="tiny">${withMood.length} of ${list.length} session${list.length===1?"":"s"} ${rl} have a mood.</p></div>`:`<div class="card line"><h3>Moods</h3><p class="sub small">No moods logged ${rl}. Add one from a session's Replay, if you like. It's optional.</p></div>`}
      ${mm.some(x=>x.n)?`<div class="card"><h3>Mood mix, last six months</h3><div class="col">${mm.map(x=>`<div class="hb"><span>${x.l}</span><div class="bar" style="height:14px">${MOODS.filter(m=>x.c[m]).map(m=>`<i style="width:${x.c[m]/x.n*100}%;background:${MC[m]}" title="${m}: ${x.c[m]}"></i>`).join("")}</div><span class="sub">${x.n||"–"}</span></div>`).join("")}</div><div class="lg">${MOODS.filter(m=>mm.some(x=>x.c[m])).map(m=>`<span><i style="background:${MC[m]}"></i>${m}</span>`).join("")}</div><p class="tiny">Each bar is that month's sessions with a mood, split by mood. The number is how many.</p></div>`:""}
      ${refl.length?`<div class="card"><h3>Your reflections ${rl}</h3><div>${refl.slice(0,5).map(s=>`<button class="sess" data-act="openReplay" data-id="${s.id}"><span class="grow"><span class="sub small" style="display:block">${fmtDate(s.start)}</span><span style="display:block;font-family:var(--display);font-size:19px;line-height:1.25;overflow-wrap:anywhere">${esc(s.reflection.length>110?s.reflection.slice(0,110)+"…":s.reflection)}</span></span></button>`).join("")}</div></div>`:""}
+     ${(()=>{const sat=months.map(d=>{const a=d.getTime(),b=new Date(d.getFullYear(),d.getMonth()+1,1).getTime(),ms=base.filter(s=>s.start>=a&&s.start<b&&s.satisfaction);return{l:MO[d.getMonth()],n:ms.length,v:ms.length?ms.reduce((x,s)=>x+s.satisfaction,0)/ms.length:0}}),have=sat.filter(x=>x.n);
+       return have.length>=2?`<div class="card"><h3>Satisfaction, last six months</h3>${line(have.map(x=>+x.v.toFixed(1)),have.map(x=>x.l+" ("+x.n+")"),"Average satisfaction by month","out of 5",[1,5])}<p class="tiny">Monthly average of the ratings you gave, 1 to 5, only for sessions you rated. For you alone.</p></div>`:`<div class="card line"><h3>Satisfaction</h3><p class="sub small">${list.some(s=>s.satisfaction)?"A trend appears once two months have a rating.":"Rate a session from 1 to 5 when you save it, if you like. It's optional and only you see it."}</p></div>`})()}
      ${hr.length>=2?`<div class="card"><h3>Average heart rate, as entered</h3>${line(hr.map(s=>+s.hrAvg),hr.map(s=>fmtDate(s.start)))}<p class="tiny">Last ${hr.length} sessions with a value. Shown as recorded, with no interpretation.</p></div>`:`<div class="card line"><h3>Heart-rate trends</h3><p class="sub small">Appears once two or more sessions have an average bpm. No wearable is connected in the web build.</p></div>`}`}
   return`<div class="scroll">${head}${tabs}${body}</div>`}
 
 /* ---- social ---- */
 const RX=["🔥","❤️","👏","✨"];
-function cardHTML(c){const a=c.arc?Math.min(60,+c.arc||0):0;return`<div class="share s${[0,1,2,3].includes(c.style)?c.style:0}">${a?`<svg class="deco" viewBox="0 0 100 100" aria-hidden="true"><path d="${arc(50,50,40,0,Math.min(359.9,a*6))}" stroke="currentColor" stroke-width="9" fill="none" stroke-linecap="round"/></svg>`:""}<div class="big">${esc(c.title||"Your other cardio.")}</div><div><div class="meta">${c.duration?`<span>${esc(c.duration)}</span>`:""}${c.category?`<span>${esc(c.category)}</span>`:""}${c.badge?`<span>${esc(c.badge)}</span>`:""}</div><div class="wm" style="margin-top:10px">vouz.</div></div></div>`}
-const names=ids=>ids.map(i=>Soc.handle(i)).join(", ");
+function cardHTML(c){const a=c.arc?Math.min(60,+c.arc||0):0;return`<div class="share s${[0,1,2,3].includes(c.style)?c.style:0}">${a?`<svg class="deco" viewBox="0 0 100 100" aria-hidden="true"><path d="${arc(50,50,40,0,Math.min(359.9,a*6))}" stroke="currentColor" stroke-width="9" fill="none" stroke-linecap="round"/></svg>`:""}<div class="big">${esc(c.title||"Less scrolling. More together.")}</div><div><div class="meta">${c.duration?`<span>${esc(c.duration)}</span>`:""}${c.category?`<span>${esc(c.category)}</span>`:""}${c.badge?`<span>${esc(c.badge)}</span>`:""}</div><div class="wm" style="margin-top:10px">vouz.</div></div></div>`}
+const names=ids=>ids.map(i=>i==="you"?"you":Soc.handle(i)).join(", ");
 function vSocial(){if(!S.settings.social)return vProfile();
   if(Cloud.state!=="ready"||!K.ok)return`<div class="scroll"><div class="card"><h2>Social can't connect here.</h2><p class="sub">It needs a signed-in account and a browser that supports encryption. Your private tracking is unaffected.</p></div></div>`;
   const seg=ui.soc.seg,me=Cloud.uid,head=`<div class="row between"><div><h3>Social</h3><h1>Good <em>company.</em></h1></div><button class="pill" data-act="sheet" data-s="guidelines">Guidelines</button></div><div class="seg3" role="group" aria-label="Social section">${[["feed","Feed"],["people","People"],["mine","My cards"]].map(([v,l])=>`<button data-act="socSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
@@ -739,11 +813,12 @@ function vCompose(){const c=ui.compose,sess=c.sid?S.sessions.find(s=>s.id===c.si
     ${canPost?`<button class="btn primary block ${ui.busy?"busy":""}" data-act="publish" ${c.aud==="pick"&&!c.picks.length?"disabled":""}>${ui.busy?"Sharing…":"Share this card"}</button>`:`<div class="banner"><span>Social is off, so this can't be posted.</span><button class="link" data-act="tab" data-tab="profile">Settings</button></div>`}
     <button class="btn ghost block" data-act="composeStep" data-v="edit">Keep editing</button></div>`;
   return hdr("Shareable card")+`<div class="scroll">${cardHTML(card)}
-    <label class="f" for="c-title">Card title <em>Your private session title is not used</em><input type="text" id="c-title" data-bind="compose.title" maxlength="60" value="${esc(c.title)}" placeholder="Your other cardio." autocomplete="off"></label>
+    <label class="f" for="c-title">Card title <em>Your private session title is not used</em><input type="text" id="c-title" data-bind="compose.title" maxlength="60" value="${esc(c.title)}" placeholder="Less scrolling. More together." autocomplete="off"></label>
     <label class="f" for="c-cap">Caption <em>Optional</em><textarea id="c-cap" data-bind="compose.caption" maxlength="280">${esc(c.caption)}</textarea></label>
-    ${c.kind==="recap"?`<div class="card">${sw("cDur",c.showDuration,"Show duration","Rounded to the nearest 5 minutes.")}${sess&&sess.category?sw("cCat",c.showCategory,"Show category",(CATS[sess.category]||"")+(sess.category==="group"?". The number of people is never shown.":"")):""}</div>`:""}
-    <div class="col"><h3>Style</h3><div class="chips">${["Coral","Midnight","Blush","Outline"].map((l,i)=>`<button class="chip" data-act="cStyle" data-v="${i}" aria-pressed="${c.style===i}">${l}</button>`).join("")}</div></div>
-    <div class="col"><h3>Who can see it</h3><div class="chips">${[["all","All connections"],["pick","Choose people"],["everyone","Everyone on VOUZ"]].map(([v,l])=>`<button class="chip" data-act="cAud" data-v="${v}" aria-pressed="${c.aud===v}">${l}</button>`).join("")}</div>
+    ${c.kind==="recap"?`<div class="card">${sw("cDur",c.showDuration,"Show duration","Rounded to the nearest 5 minutes.")}${sess&&sess.category?sw("cCat",c.showCategory,"Show who was involved",(CATS[sess.category]||"")+(sess.category==="poly"?". The number of people is never shown.":"")):""}</div>`:""}
+    <div class="col"><h3>Style</h3><div class="chips">${["Wine","Midnight","Ivory","Outline"].map((l,i)=>`<button class="chip" data-act="cStyle" data-v="${i}" aria-pressed="${c.style===i}">${l}</button>`).join("")}</div></div>
+    <div class="col"><h3>Who can see it</h3><div class="chips">${[["all","All connections"],["pick","Choose people"]].concat(c.kind==="recap"?[]:[["everyone","Everyone on VOUZ"]]).map(([v,l])=>`<button class="chip" data-act="cAud" data-v="${v}" aria-pressed="${c.aud===v}">${l}</button>`).join("")}</div>
+      ${c.kind==="recap"?`<p class="tiny">Session cards never go to everyone: that would need every participant's consent, which VOUZ can't collect.</p>`:""}
       ${c.aud==="pick"?(conns.length?`<div class="chips" role="group" aria-label="People">${conns.map(i=>`<button class="chip" data-act="cPick" data-id="${esc(i)}" aria-pressed="${c.picks.includes(i)}">${esc(Soc.handle(i))}</button>`).join("")}</div>`:`<p class="sub small">You have no approved connections to choose from yet.</p>`):""}</div>
     <button class="btn primary block" data-act="composeStep" data-v="preview">Preview</button></div>`}
 
@@ -753,13 +828,14 @@ function vProfile(){const s=S.settings,p=Soc.me();
    <div class="card"><label class="f" for="p-name">Name <em>Only shown to you</em><input type="text" id="p-name" data-bind="user.name" data-save="1" maxlength="30" value="${esc(S.user.name)}" autocomplete="off"></label>
      <div class="row between"><span class="grow"><b>Storage</b><span class="sub small" style="display:block">${S.user.mode==="account"?"This device, plus private account sync"+(S.lastSync?". Last synced "+ago(S.lastSync)+(ago(S.lastSync)==="now"?"":" ago"):""):"This device only"}</span></span>${Cloud.state==="ready"?`<button class="btn sm ghost" data-act="toggleMode">${S.user.mode==="account"?"Turn sync off":"Turn sync on"}</button>`:`<span class="pill">${Cloud.state==="checking"?"Checking…":"Sync unavailable"}</span>`}</div></div>
    <div class="card"><h3>Privacy</h3>
-     ${sw("toggleSocial",s.social,"Social",s.social?"On. Nothing posts unless you build and confirm a card.":"Off. The Social tab is hidden and nothing can be shared.",(Cloud.state!=="ready"||!K.ok)&&!s.social?"disabled":"")}
-     ${(Cloud.state!=="ready"||!K.ok)&&!s.social?`<p class="tiny">Social needs a signed-in account with contributor access, which this view doesn't have.</p>`:""}
+     ${sw("toggleSocial",s.social,"Connections",s.social?"On. Partners can confirm sessions, share a space and use Mutual Match. Nothing is shared unless you choose to share it.":"Off. Needed for partner confirmation, shared spaces, Mutual Match and the optional social feed.",(Cloud.state!=="ready"||!K.ok)&&!s.social?"disabled":"")}
+     ${(Cloud.state!=="ready"||!K.ok)&&!s.social?`<p class="tiny">Connections need a signed-in account with contributor access, which this view doesn't have.</p>`:""}
      ${s.social&&p?`<div class="row between"><span><b>Handle</b><span class="sub small" style="display:block">${esc(p.handle)}</span></span><button class="btn sm ghost" data-act="sheet" data-s="handle">Change</button></div>${sw("togglePrivate",s.privateProfile,"Private profile","Hidden from the list of people open to connecting. Others need your code.")}
        <div class="col"><span><b>Default audience for new cards</b></span><div class="chips">${[["connections","All connections"],["everyone","Everyone on VOUZ"]].map(([v,l])=>`<button class="chip" data-act="defVis" data-v="${v}" aria-pressed="${s.defaultVis===v}">${l}</button>`).join("")}</div></div><button class="btn sm danger" style="align-self:flex-start" data-act="sheet" data-s="wipeShared">Delete everything I've shared</button>`:""}
      ${sw("togglePin",!!s.pinHash,"Passcode lock",s.pinHash?"On. Asked for when you open or return to VOUZ.":"Ask for a 4-digit code when VOUZ opens.")}
      <p class="tiny">The passcode is a screen lock. It keeps the app closed to someone holding your unlocked phone; it does not encrypt what's stored in this browser, and a 4-digit code is not strong protection against someone with technical access to the device. Face ID and fingerprint unlock aren't available to a web page here.</p></div>
-   <div class="card"><h3>Your data</h3><div class="row wrap"><button class="btn sm" data-act="exportData">Export</button><button class="btn sm" data-act="sheet" data-s="import">Import</button>${hasDemo()?`<button class="btn sm ghost" data-act="removeDemo">Remove demo data</button>`:`<button class="btn sm ghost" data-act="loadDemo">Load demo data</button>`}</div><p class="tiny">${S.sessions.filter(x=>!x.demo).length} of your own sessions stored. Export gives you everything as one JSON file.</p></div>
+   <div class="card"><h3>Your data</h3><div class="row wrap"><button class="btn sm" data-act="exportData">Export</button><button class="btn sm" data-act="sheet" data-s="import">Import</button>${hasDemo()?`<button class="btn sm ghost" data-act="removeDemo">Remove demo data</button>`:`<button class="btn sm ghost" data-act="loadDemo">Load demo data</button>`}</div><p class="tiny">${S.sessions.filter(x=>!x.demo).length} sessions and ${S.exps.filter(x=>!x.demo).length} memories and plans of your own. Export gives you all of it as one JSON file; photos stay on this device and aren't included.</p></div>
+   ${s.social?`<div class="card"><h3>Connections</h3><div>${[["spaces","Shared spaces"],["social","People and social feed"]].map(([pg,l])=>`<button class="sess" data-act="page" data-page="${pg}"><span class="grow t">${l}</span>${ic("next")}</button>`).join("")}</div></div>`:""}
    <div class="card"><h3>More</h3><div>${[["achievements","Achievements"],["wearables","Wearables and Apple Watch"],["plus","VOUZ Plus"],["policy","Privacy, and what's built vs planned"]].map(([pg,l])=>`<button class="sess" data-act="page" data-page="${pg}"><span class="grow t">${l}</span>${ic("next")}</button>`).join("")}</div></div>
    <button class="btn danger block" data-act="sheet" data-s="deleteAccount">${ic("trash")} Delete account and all data</button>
    <p class="tiny" style="text-align:center">VOUZ web preview. For adults 18+.</p></div>`}
@@ -768,8 +844,8 @@ function vWear(){return hdr("Wearables")+`<div class="scroll"><div><h1>Honest an
   <div class="card"><div class="row">${ic("watch")}<b>Apple Watch companion</b><span class="pill w">Planned</span></div><ul class="plain">${["watchOS app in SwiftUI: start, pause, resume, end, elapsed time.","Heart rate through an HKWorkoutSession the wearer starts by hand, only after a HealthKit permission prompt shown at that moment.","WatchConnectivity to send the finished session to the iPhone, which stores it with SwiftData.","No background monitoring, no automatic start, and no session ever inferred from a raised heart rate.","Open question for App Review: which HealthKit workout type Apple will accept for this use."].map(t=>`<li class="p">${ic("flag")}<span>${t}</span></li>`).join("")}</ul></div>
   <div class="card line"><h3>What works today</h3><p class="sub small">Type an average and peak bpm on any session. They appear in Replay and Insights exactly as entered.</p></div></div>`}
 function vPlus(){return hdr("VOUZ Plus")+`<div class="scroll"><div><h1>Free does the <em>real work.</em></h1><p class="sub">Privacy, safety, deletion, export and tracking are never paid features.</p></div>
-  <div class="card"><div class="row between"><b>VOUZ Free</b><span class="pill c">Your plan</span></div><ul class="plain">${["Unlimited sessions and history","Insights: overview, patterns and mood","Replay, reflections and core achievements","Optional Social with encrypted connections-only cards","Export, delete, passcode lock"].map(t=>`<li>${ic("check")}<span>${t}</span></li>`).join("")}</ul></div>
-  <div class="card line"><div class="row between"><b>VOUZ Plus</b><span class="pill w">Planned</span></div><p class="sub small">Proposed at $4.99 a month.</p><ul class="plain">${["Longer comparisons, year over year","Custom Replay designs","Extra card styles and themes","Deeper private insights"].map(t=>`<li class="p">${ic("flag")}<span>${t}</span></li>`).join("")}</ul><button class="btn block" disabled>Payments aren't built</button><p class="tiny">Nothing here can charge you. Billing waits until the core app has earned it.</p></div></div>`}
+  <div class="card"><div class="row between"><b>VOUZ Free</b><span class="pill c">Your plan</span></div><ul class="plain">${["Couple and Poly tracking, history and Replay","Partner confirmation and shared spaces","Our Story, plans and Mutual Match","Insights: overview, patterns, mood and satisfaction","Export, delete, passcode lock"].map(t=>`<li>${ic("check")}<span>${t}</span></li>`).join("")}</ul></div>
+  <div class="card line"><div class="row between"><b>VOUZ Plus</b><span class="pill w">Planned</span></div><p class="sub small">Proposed at $3.99 a month or $29.99 a year.</p><ul class="plain">${["Monthly and yearly recaps","Longer comparisons, year over year","Advanced private insights","Extra card styles and themes"].map(t=>`<li class="p">${ic("flag")}<span>${t}</span></li>`).join("")}</ul><button class="btn block" disabled>Payments aren't built</button><p class="tiny">Nothing here can charge you. Billing waits until the core app has earned it.</p></div></div>`}
 function vPolicy(){const li=(a,cls="")=>a.map(t=>`<li class="${cls}">${ic(cls?"flag":"check")}<span>${t}</span></li>`).join("");
   return hdr("Privacy and this build")+`<div class="scroll">
   <div class="card"><h3>What is stored, and where</h3><ul class="plain">${li(["<b style='color:var(--text)'>Sessions, notes, reflections, moods, tags, heart rate, settings:</b> this browser's storage, as plain data. With account sync on, one extra copy in a private space only your signed-in account can read.","<b style='color:var(--text)'>Social, readable by people in this space:</b> your handle, a public key, cards you marked for everyone, reactions and comments on those, and when you posted.","<b style='color:var(--text)'>Social, encrypted:</b> connections-only cards, their comments, who each card is for, your connection permissions. Your connection list is stored as labels only you and the other person can match.","<b style='color:var(--text)'>Never collected:</b> location, contacts, device identifiers, advertising or analytics events. VOUZ sends no notifications and has no widgets."])}</ul></div>
@@ -784,6 +860,13 @@ function vLock(){const wait=Math.ceil((S.settings.pinUntil-Date.now())/1e3);retu
 /* ---- sheets ---- */
 function vSheet(isNew){const s=ui.sheet,close=`<button class="btn ghost block" data-act="closeSheet">Cancel</button>`;let b="";
   if(s.type==="confirm")b=`<h2>${esc(s.title)}</h2><p class="sub">${esc(s.body)}</p><button class="btn ${s.danger?"danger":"primary"} block" data-act="confirmYes">${esc(s.yes)}</button>${close}`;
+  else if(s.type==="quick")b=`<h2>Quick log</h2><p class="sub small">For a session that just ended. Saved privately as an estimate; add details later from History if you like.</p>
+    ${who(s.cat,s.cat==="poly"?s.n:2,"q")}<div class="col"><h3>About how long?</h3><div class="chips" role="group" aria-label="Duration">${[10,20,30,45,60,90].map(m=>`<button class="chip" data-act="qDur" data-v="${m}" aria-pressed="${s.min===m}">${m<60?m+" min":m/60+(m===60?" hour":" hours")}</button>`).join("")}</div></div>
+    ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="qSave" ${s.min?"":"disabled"}>Save</button>${close}`;
+  else if(s.type==="sched")b=`<h2>When?</h2><label class="f" for="sch-in">Date and time<input type="datetime-local" id="sch-in" value="${esc(s.val)}"></label><p class="tiny">Clear it to unschedule. VOUZ doesn't book anything or check availability.</p>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="schedSave">Save</button>${close}`;
+  else if(s.type==="legacy"){const L=legacySessions(),nS=L.filter(x=>x.category==="solo").length,nP=L.length-nS;
+    b=`<h2>Sessions are now Couple or Poly</h2><p class="sub">VOUZ now records two kinds of session: Couple, for two people, and Poly, for three or more. ${[nS?nS+" Solo session"+(nS===1?"":"s"):"",nP?nP+" Partnered session"+(nP===1?"":"s"):""].filter(Boolean).join(" and ")} can't be recorded either way, so ${L.length===1?"it is":"they are"} being removed from this device${S.user.mode==="account"?" and your synced copy":""}.</p><p class="sub small">Duo, Trio and Group sessions were kept and converted. This can't be undone, so download a copy first if you might want ${L.length===1?"it":"them"}.</p>
+      <button class="btn block" data-act="legacyExport">${ic("download")} Download a copy first</button><button class="btn danger block" data-act="legacyRemove">Remove ${L.length} session${L.length===1?"":"s"}</button>`}
   else if(s.type==="people"){const ss=S.sessions.find(x=>x.id===s.id)||{},have=(ss.people||[]).map(p=>p.id),list=Soc.ready()?Soc.conns().filter(i=>!have.includes(i)):[];
     b=`<h2>Add someone</h2>${!Soc.ready()?`<p class="sub">${S.settings.social?"Social can't be reached right now, so invites can't be sent. Try again in a moment.":"Adding people works through Social, which is off. Turn it on in Profile, connect with someone, and they'll show up here."}</p>`:list.length?`<p class="sub">Pick from your connections. They get an invite and nothing is linked until they accept.</p><div>${list.map(i=>`<button class="ach" style="width:100%;text-align:left;min-height:52px" data-act="inviteAsk" data-id="${esc(i)}"><span class="av" aria-hidden="true">${esc(Soc.handle(i)[0].toUpperCase())}</span><span class="grow"><b>${esc(Soc.handle(i))}</b></span>${ic("plus")}</button>`).join("")}</div>`:`<p class="sub">${Soc.conns().length?"Everyone you're connected with is already on this session.":"You have no connections yet. Connect with someone under Social, People, and they'll show up here."}</p>`}${close}`}
   else if(s.type==="socialOn")b=`<h2>Turn on Social</h2><p class="sub">You'll get a Social tab. Nothing is shared until you build a card, preview it and confirm. You can turn this off again at any time.</p><label class="f" for="s-handle">Pick a handle <em>A nickname is fine. Your real name isn't used.</em><input type="text" id="s-handle" maxlength="24" autocomplete="off" value="${esc(s.handle||"")}"></label>${sw("sheetPrivate",s.priv,"Private profile","Stay out of the list of people open to connecting.")}${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block ${ui.busy?"busy":""}" data-act="socialOnYes">${ui.busy?"Setting up…":"Turn on Social"}</button>${close}`;
@@ -805,21 +888,28 @@ function vSheet(isNew){const s=ui.sheet,close=`<button class="btn ghost block" d
 /* ============ actions ============ */
 async function hashPin(pin,salt,alg){try{if(alg==="pbkdf2"){const k=await crypto.subtle.importKey("raw",te.encode(pin),"PBKDF2",false,["deriveBits"]);return hex(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:te.encode(salt),iterations:150000},k,256))}
     return hex(await crypto.subtle.digest("SHA-256",te.encode(salt+":"+pin)))}catch(e){let x=5381;for(const c of te.encode(salt+":"+pin))x=((x<<5)+x+c)>>>0;return "f"+x.toString(16)}}
-function demoSessions(){const out=[],base=startOfDay(Date.now()),plan=[[1,21,40,34,"partnered","Tender"],[3,7,15,18,"solo","Relaxed"],[6,22,30,41,"partnered","Electric"],[9,20,5,27,"partnered","Playful"],[12,23,10,22,"solo",""],[15,8,20,31,"partnered","Connected"],[19,21,0,48,"partnered","Tender"],[23,22,45,16,"solo","Curious"],[27,19,30,36,"partnered","Playful"],[33,10,0,29,"partnered","Relaxed"],[38,23,20,24,"solo",""],[45,21,15,39,"partnered","Electric"]];
-  plan.forEach(([back,h,m,dur,cat,mood],i)=>{const st=addDays(base,-back)+h*36e5+m*6e4,d=dur*60+((i*17)%50);out.push({id:"demo"+i,demo:true,title:"",start:st,durationSec:d,segments:i%3?[[st,st+d*1e3]]:[[st,st+d*400],[st+d*400+18e4,st+d*1e3+18e4]],category:cat,tags:i%4===0?["weekend"]:[],mood,notes:"",reflection:i===0?"Demo reflection: an unhurried evening.":"",hrAvg:i%2?"":String(96+i*2),hrPeak:i%2?"":String(128+i*3),createdAt:st,updatedAt:st})});return out}
-function compose(o){ui.compose=Object.assign({kind:"recap",sid:null,title:"",caption:"",showDuration:true,showCategory:false,badge:"",style:0,aud:S.settings.defaultVis==="everyone"?"everyone":"all",picks:[],step:"edit"},o);openPage({type:"compose"})}
+function demoExps(){const b=startOfDay(Date.now()),mk=(back,kind,title,cat,o={})=>({id:"demox"+back+kind,demo:true,kind,title,date:back===null?null:addDays(b,-back)+19*36e5,cat,location:"",favorite:"",mood:"",notes:"",sharedNote:"",space:null,anniv:false,photos:[],idea:null,createdAt:b,updatedAt:b,...o});
+  return[mk(4,"done","Dinner on the terrace","dinner",{location:"The place by the water",favorite:"Ordering dessert first",mood:"Playful"}),mk(18,"done","Coast weekend","trip",{location:"Up the coast",favorite:"The fog lifting on Sunday",mood:"Relaxed"}),
+    mk(365-12,"done","First date","milestone",{anniv:true,favorite:"Talking until they closed",mood:"Curious"}),mk(31,"done","Pottery class","adventure",{mood:"Connected"}),mk(null,"plan","Stargaze away from city lights","other",{idea:"stars"}),mk(-6,"plan","Cook something new together","other",{idea:"cook"})]}
+function demoSessions(){const out=[],base=startOfDay(Date.now()),plan=[[1,21,40,34,2,"Tender",5],[3,7,15,18,2,"Relaxed",4],[6,22,30,41,3,"Electric",4],[9,20,5,27,2,"Playful",5],[12,23,10,22,2,"",0],[15,8,20,31,2,"Connected",4],[19,21,0,48,4,"Tender",5],[23,22,45,16,2,"Curious",3],[27,19,30,36,2,"Playful",4],[33,10,0,29,2,"Relaxed",0],[38,23,20,24,3,"",4],[45,21,15,39,2,"Electric",5]];
+  plan.forEach(([back,h,m,dur,n,mood,sat],i)=>{const st=addDays(base,-back)+h*36e5+m*6e4,d=dur*60+((i*17)%50);out.push({id:"demo"+i,demo:true,title:"",start:st,durationSec:d,segments:i%3?null:[[st,st+d*400],[st+d*400+18e4,st+d*1e3+18e4]],category:n>2?"poly":"couple",participants:n,satisfaction:sat||null,sharedNote:"",tags:i%4===0?["weekend"]:[],mood,notes:"",reflection:i===0?"Demo reflection: an unhurried evening.":"",hrAvg:i%2?"":String(96+i*2),hrPeak:i%2?"":String(128+i*3),people:[],createdAt:st,updatedAt:st})});return out}
+function compose(o){ui.compose=Object.assign({kind:"recap",sid:null,title:"",caption:"",showDuration:true,showCategory:false,badge:"",style:0,aud:"all",picks:[],step:"edit"},o);if(ui.compose.kind!=="recap"&&S.settings.defaultVis==="everyone")ui.compose.aud="everyone";openPage({type:"compose"})}
 const setProfile=h=>Soc.write("profiles",{handle:h||Soc.me().handle,discoverable:!S.settings.privateProfile,pub:S.keys.pub,at:Date.now()});
 const myPosts=()=>Soc.posts[Cloud.uid]||{};
 const busy=async f=>{if(ui.busy)return;ui.busy=true;render();try{await f()}finally{ui.busy=false;render()}};
 const A={
   tab(e){go(e.dataset.tab)},
   back(){const p=ui.page;if(p&&p.type==="details"&&S.draft&&!S.draft.fromTimer){S.draft=null;save()}
+    if(p&&p.type==="expEdit"&&ui.xd){ui.xd.added.forEach(id=>Photos.del(id));ui.xd=null}
     if(p&&p.type==="compose")ui.compose=null;
     ui.page=p&&p.from?p.from:null;ui.err="";render(true)},
   page(e){openPage({type:e.dataset.page})},
   sheet(e){ui.err="";sheet({type:e.dataset.s,id:e.dataset.id})},
   closeSheet(){ui.err="";sheet(null)},
-  overlay(e,ev){if(ev.target===e)A.closeSheet()},
+  overlay(e,ev){if(ev.target===e&&!(ui.sheet&&ui.sheet.type==="legacy"))A.closeSheet()},
+  legacyExport(){return A.exportData()},
+  legacyRemove(){const L=legacySessions(),ids=new Set(L.map(x=>x.id)),now=Date.now();Soc.drop(L.flatMap(x=>x.people||[]));
+    S.sessions=S.sessions.filter(x=>!ids.has(x.id));ids.forEach(id=>S.deleted[id]=now);ui.sheet=null;save();render(true);toast(L.length+" session"+(L.length===1?"":"s")+" removed.")},
   confirmYes(){const f=ui.sheet.fn;ui.sheet=null;f()},
   /* onboarding */
   obNext(){const o=ui.ob;if(o.step===1&&!o.adult)return;
@@ -839,7 +929,7 @@ const A={
   rMood(e){const s=S.sessions.find(x=>x.id===ui.page.id);if(!s)return;const t=$("#rf-text");if(t)s.reflection=t.value.trim().slice(0,600);s.mood=s.mood===e.dataset.v?"":e.dataset.v;s.updatedAt=Date.now();save();render()},
   rSave(){const s=S.sessions.find(x=>x.id===ui.page.id);if(!s)return;s.reflection=($("#rf-text").value||"").trim().slice(0,600);s.updatedAt=Date.now();save();render();toast(s.reflection?"Reflection saved, privately.":"Reflection cleared.")},
   /* timer */
-  start(){if(S.active)return go("track");S.active={segments:[[Date.now(),null]],category:ui.trackCat||null};ui.trackCat=null;S.draft=null;save();buzz(20);go("track")},
+  start(){if(S.active)return go("track");S.active={segments:[[Date.now(),null]],category:ui.trackCat,participants:ui.trackCat==="poly"?ui.trackP:2};S.draft=null;save();buzz(20);go("track")},
   pause(){const s=S.active.segments;s[s.length-1][1]=Date.now();save();buzz(10);render()},
   resume(){S.active.segments.push([Date.now(),null]);save();buzz(10);render()},
   finish(){S.draft=draftFromActive();S.active=null;save();buzz([15,40,15]);openPage({type:"details"})},
@@ -849,33 +939,37 @@ const A={
   /* session form */
   addPeople(e){ui.err="";sheet({type:"people",id:e.dataset.id})},
   inviteAsk(e){const sid=ui.sheet.id,id=e.dataset.id,s=S.sessions.find(x=>x.id===sid);if(!s)return A.closeSheet();const h=Soc.handle(id);
-    sheet({type:"confirm",title:"Add "+h+" to this session?",body:h+" will get an invite showing the date, time, length"+(CAT_PICK.includes(s.category)?" and category ("+CATS[s.category]+")":"")+". Not your notes, mood, tags, heart rate or title. Nothing is added to their log unless they accept.",yes:"Send invite",fn(){busy(async()=>{
-      if((s.people||[]).length>=20)return toast("That's the most people one session can hold.");
+    sheet({type:"confirm",title:"Add "+h+" to this session?",body:h+" will get an invite showing the date, time, length"+(s.category?", "+catLabel(s):"")+(s.sharedNote?" and your shared note":"")+". Not your private notes, satisfaction, mood, tags, heart rate or title. Nothing is added to their log unless they accept.",yes:"Send invite",fn(){busy(async()=>{
+      const room=s.category==="poly"?(s.participants||3)-1:s.category==="couple"?1:PMAX;if((s.people||[]).filter(p=>!p.from).length>=room)return toast(s.category==="couple"?"A Couple session has one other person.":"Everyone counted on this session has been invited.");
       try{const i=await Soc.invite(s,id);s.people=(s.people||[]).concat([{id,h,i}]);s.updatedAt=Date.now();save();toast("Invite sent to "+h+".")}catch(x){toast("That invite couldn't be sent. Nothing was shared.")}})}})},
   personOff(e){const s=S.sessions.find(x=>x.id===e.dataset.sid);if(!s)return;const p=(s.people||[]).find(x=>x.i===e.dataset.i);if(!p)return;
     s.people=s.people.filter(x=>x!==p);s.updatedAt=Date.now();save();Soc.drop([p]);render();toast(p.from?"Removed. "+p.h+" will see you're no longer on it.":"Removed, and the invite is withdrawn.")},
   invYes(e){const v=Soc.inbox.find(x=>x.a===e.dataset.a&&x.i===e.dataset.i);if(!v)return;const h=Soc.handle(v.a);busy(async()=>{
     try{await Soc.respond(v.a,v.i,true)}catch(x){return toast("That couldn't be saved. Try again.")}
-    const id=uid();S.sessions.push({id,title:"",start:v.start,durationSec:v.dur,segments:null,category:v.cat,groupSize:null,tags:[],mood:"",notes:"",reflection:"",hrAvg:"",hrPeak:"",people:[{id:v.a,h,i:v.i,from:true}],createdAt:Date.now(),updatedAt:Date.now()});
+    const id=uid();S.sessions.push({id,title:"",start:v.start,durationSec:v.dur,segments:null,category:v.cat,participants:v.p,satisfaction:null,sharedNote:v.note||"",tags:[],mood:"",notes:"",reflection:"",hrAvg:"",hrPeak:"",people:[{id:v.a,h,i:v.i,from:true}],createdAt:Date.now(),updatedAt:Date.now()});
     save();ui.rp.seg=null;openPage({type:"replay",id,from:ui.page});toast("Added to your log.")})},
   invNo(e){const a=e.dataset.a,i=e.dataset.i;busy(async()=>{try{await Soc.respond(a,i,false);toast("Declined. Nothing was saved.")}catch(x){toast("That couldn't be saved. Try again.")}})},
-  tCat(e){const v=e.dataset.v;if(S.active){S.active.category=S.active.category===v?null:v;save()}else ui.trackCat=ui.trackCat===v?null:v;buzz(8);render()},
-  dCat(e){S.draft.category=S.draft.category===e.dataset.v?null:e.dataset.v;if(S.draft.category!=="group")S.draft.groupSize="";save();render()},
+  tCat(e){const v=e.dataset.v;if(S.active){S.active.category=v;S.active.participants=v==="poly"?clampP(S.active.participants):2;save()}else ui.trackCat=v;buzz(8);render()},
+  tP(e){const d=+e.dataset.d;if(S.active){S.active.participants=clampP((S.active.participants||3)+d);save()}else ui.trackP=clampP(ui.trackP+d);buzz(8);render()},
+  dP(e){const d=S.draft;d.participants=clampP((+d.participants||3)+ +e.dataset.d);save();render()},
+  dCat(e){const d=S.draft,v=e.dataset.v;d.category=v;d.participants=v==="poly"?clampP(d.participants>=3?d.participants:3):2;save();render()},
+  dSat(e){const v=+e.dataset.v;S.draft.satisfaction=S.draft.satisfaction===v?null:v;save();render()},
   dMood(e){S.draft.mood=S.draft.mood===e.dataset.v?"":e.dataset.v;save();render()},
   dTagDel(e){S.draft.tags.splice(+e.dataset.i,1);save();render()},
-  editSession(e){const s=S.sessions.find(x=>x.id===e.dataset.id);if(!s)return;S.draft={editing:s.id,fromTimer:false,title:s.title,startLocal:toLocalInput(s.start),origStart:s.start,durMin:Math.floor(s.durationSec/60),durSec:s.durationSec%60,category:s.category,groupSize:s.groupSize||"",tags:s.tags.slice(),mood:s.mood,notes:s.notes,hrAvg:s.hrAvg,hrPeak:s.hrPeak,segments:s.segments};openPage({type:"details",from:ui.page})},
+  editSession(e){const s=S.sessions.find(x=>x.id===e.dataset.id);if(!s)return;S.draft={editing:s.id,fromTimer:false,title:s.title,startLocal:toLocalInput(s.start),origStart:s.start,durMin:Math.floor(s.durationSec/60),durSec:s.durationSec%60,category:s.category,participants:s.participants,satisfaction:s.satisfaction??null,sharedNote:s.sharedNote||"",tags:s.tags.slice(),mood:s.mood,notes:s.notes,hrAvg:s.hrAvg,hrPeak:s.hrPeak,segments:s.segments};openPage({type:"details",from:ui.page})},
   saveSession(){const d=S.draft,dur=Math.round((+d.durMin||0)*60+(+d.durSec||0));let start=new Date(d.startLocal).getTime();
     if(isNaN(start)){ui.err="Pick a date and time.";return render()}
     if(dur<1||dur>86400){ui.err="Duration needs to be between 1 second and 24 hours.";return render()}
     if(start>Date.now()+6e4){ui.err="That's in the future. Pick a time that has already happened.";return render()}
     for(const k of ["hrAvg","hrPeak"]){if(d[k]!==""&&(+d[k]<30||+d[k]>240)){ui.err="Heart rate should be between 30 and 240 bpm, or left blank.";return render()}}
-    const gs=d.category==="group"&&d.groupSize!==""&&d.groupSize!=null?+d.groupSize:null;
-    if(gs!==null&&!(Number.isInteger(gs)&&gs>=4&&gs<=99)){ui.err="A group is 4 or more people. Enter a whole number from 4 to 99, or leave it blank.";return render()}
+    const pc=d.category==="poly"?+d.participants:d.category==="couple"?2:null;
+    if(d.category&&!CAT_PICK.includes(d.category)){ui.err="Choose Couple or Poly.";return render()}
+    if(d.category==="poly"&&!(Number.isInteger(pc)&&pc>=3&&pc<=PMAX)){ui.err="Poly is 3 to "+PMAX+" people.";return render()}
     const pending=($("#d-tag")||{}).value;if(pending&&pending.trim()&&d.tags.length<8)d.tags.push(pending.trim().slice(0,24));
     let segs=d.segments;
     if(segs){const segDur=Math.round(segs.reduce((t,[a,b])=>t+(b-a),0)/1e3);const orig=d.fromTimer?toLocalInput(segs[0][0]):toLocalInput(d.origStart);
       if(Math.abs(segDur-dur)>1||d.startLocal!==orig)segs=null;else start=d.fromTimer?segs[0][0]:d.origStart}
-    const rec={title:d.title.trim(),start,durationSec:dur,segments:segs,category:d.category,groupSize:gs,tags:d.tags,mood:d.mood,notes:d.notes.trim(),hrAvg:d.hrAvg===""?"":String(Math.round(+d.hrAvg)),hrPeak:d.hrPeak===""?"":String(Math.round(+d.hrPeak)),updatedAt:Date.now()};
+    const rec={title:d.title.trim(),start,durationSec:dur,segments:segs,category:d.category||null,participants:pc,satisfaction:[1,2,3,4,5].includes(d.satisfaction)?d.satisfaction:null,sharedNote:String(d.sharedNote||"").trim().slice(0,500),tags:d.tags,mood:d.mood,notes:d.notes.trim(),hrAvg:d.hrAvg===""?"":String(Math.round(+d.hrAvg)),hrPeak:d.hrPeak===""?"":String(Math.round(+d.hrPeak)),updatedAt:Date.now()};
     let id=d.editing;
     if(id){const s=S.sessions.find(x=>x.id===id);Object.assign(s,rec)}else{id=uid();S.sessions.push(Object.assign({id,createdAt:Date.now(),reflection:""},rec))}
     const wasEdit=!!d.editing;S.draft=null;ui.err="";ui.rp.seg=null;save();buzz(25);openPage({type:"replay",id,fresh:!wasEdit});if(wasEdit)toast("Changes saved.")},
@@ -883,8 +977,8 @@ const A={
   openReplay(e){if(!e.dataset.id)return;ui.rp.seg=null;openPage({type:"replay",id:e.dataset.id,from:e.dataset.keep?ui.page.from:ui.page})},
   setRegular(){const n=Math.round(+$("#rg-n").value),w=Math.round(+$("#rg-w").value);if(!(n>=1&&n<=14&&w>=2&&w<=26))return toast("Enter 1 to 14 a week, for 2 to 26 weeks.");S.settings.regular={perWeek:n,weeks:w};save();render();toast("The Regular is set.")},
   clearRegular(){S.settings.regular=null;save();render()},
-  loadDemo(){S.sessions=S.sessions.filter(s=>!s.demo).concat(demoSessions());save();render(true);toast("Demo data loaded. It's clearly marked.")},
-  removeDemo(){S.sessions=S.sessions.filter(s=>!s.demo);save();render();toast("Demo data removed.")},
+  loadDemo(){S.sessions=S.sessions.filter(s=>!s.demo).concat(demoSessions());S.exps=S.exps.filter(e=>!e.demo).concat(demoExps());save();render(true);toast("Demo data loaded. It's clearly marked.")},
+  removeDemo(){S.sessions=S.sessions.filter(s=>!s.demo);S.exps=S.exps.filter(e=>!e.demo);save();render();toast("Demo data removed.")},
   /* insights */
   insRange(e){ui.ins.range=e.dataset.v;render()}, insCat(e){ui.ins.cat=e.dataset.v;render()}, insTab(e){ui.ins.tab=e.dataset.v;render()},
   /* compose + share */
@@ -894,7 +988,7 @@ const A={
   cStyle(e){ui.compose.style=+e.dataset.v;render()}, cAud(e){ui.compose.aud=e.dataset.v;render()},
   cPick(e){const p=ui.compose.picks,i=p.indexOf(e.dataset.id);if(i>=0)p.splice(i,1);else p.push(e.dataset.id);render()},
   composeStep(e){ui.compose.step=e.dataset.v;render(true)},
-  publish(){return busy(async()=>{const c=ui.compose;if(!c||!S.settings.social||!Soc.me()||!K.priv)return;const sess=c.sid?S.sessions.find(s=>s.id===c.sid):null;
+  publish(){return busy(async()=>{const c=ui.compose;if(!c||!S.settings.social||!Soc.me()||!K.priv)return;if(c.kind==="recap"&&c.aud==="everyone")c.aud="all";const sess=c.sid?S.sessions.find(s=>s.id===c.sid):null;
     const caption=String(c.caption||"").slice(0,280),card=buildCard(c,sess),at=Date.now();
     const item=c.aud==="everyone"?{id:uid(),kind:c.kind,vis:"everyone",caption,card,postedAt:at}:await Soc.seal(uid(),{kind:c.kind,caption,card},c.aud==="pick"?c.picks.slice():"all",at);
     const cur=myPosts();await Soc.write("posts",{items:[item].concat(cur.items||[]).slice(0,60),hidden:cur.hidden||[]});
@@ -949,24 +1043,352 @@ const A={
   async unlock(){const st=S.settings,wait=Math.ceil((st.pinUntil-Date.now())/1e3);if(wait>0){ui.err="Too many tries. Wait "+wait+" seconds.";return render()}
     const p=($("#pin-in")||{}).value||"";if(await hashPin(p,st.pinSalt,st.pinAlg||"sha")===st.pinHash){st.pinFails=0;st.pinUntil=0;saveLocal();ui.locked=false;ui.err="";render(true)}
     else{st.pinFails=(st.pinFails||0)+1;if(st.pinFails>=5){st.pinFails=0;st.pinUntil=Date.now()+30000;ui.err="Too many tries. Wait 30 seconds."}else ui.err="That's not it. Try again.";saveLocal();render();buzz([30,40,30])}},
-  forgotErase(){try{localStorage.removeItem(LS)}catch(e){}S=fresh();K.reset();ui.locked=false;ui.sheet=null;ui.ob.step=0;Soc.stop();render(true)},
+  forgotErase(){try{localStorage.removeItem(LS)}catch(e){}Photos.clear();S=fresh();K.reset();ui.locked=false;ui.sheet=null;ui.ob.step=0;Soc.stop();render(true)},
   async exportData(){const json=JSON.stringify({app:"vouz",exportedAt:new Date().toISOString(),...vaultPayload(),settings:{...S.settings,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0}},null,2);
     try{const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;if(dl){await dl.save({filename:"vouz-export-"+dayKey(Date.now())+".json",data:json});return toast("Export ready.")}}catch(e){}
     sheet({type:"export",json})},
   async copyExport(){try{await navigator.clipboard.writeText(ui.sheet.json);toast("Copied.")}catch(e){$("#exp-out").select();toast("Select all and copy.")}},
   async importYes(){const f=$("#imp-file").files[0];if(!f){ui.err="Choose a file first.";return render()}
     try{const o=JSON.parse(await f.text());if(!o||!Array.isArray(o.sessions))throw 0;const have=new Set(S.sessions.map(s=>s.id));let n=0;
-      for(const s of o.sessions){if(!s||have.has(s.id)||s.demo||typeof s.start!=="number"||!(s.durationSec>0))continue;const id=String(s.id||uid());delete S.deleted[id];
-        S.sessions.push({id,title:String(s.title||"").slice(0,60),start:s.start,durationSec:Math.round(s.durationSec),segments:Array.isArray(s.segments)?s.segments:null,category:CATS[s.category]?s.category:null,groupSize:s.category==="group"&&+s.groupSize>=4?Math.min(99,Math.round(+s.groupSize)):null,tags:Array.isArray(s.tags)?s.tags.map(String).slice(0,8):[],mood:MC[s.mood]?s.mood:"",notes:String(s.notes||"").slice(0,2000),reflection:String(s.reflection||"").slice(0,600),hrAvg:String(s.hrAvg||""),hrPeak:String(s.hrPeak||""),people:Array.isArray(s.people)?s.people.filter(p=>p&&p.id&&p.i).slice(0,20).map(p=>({id:String(p.id),h:String(p.h||"Someone").slice(0,24),i:String(p.i),...(p.from?{from:true}:{})})):[],createdAt:s.createdAt||Date.now(),updatedAt:Date.now()});n++}
-      save();ui.sheet=null;ui.err="";render();toast(n+" session"+(n===1?"":"s")+" imported.")}catch(e){ui.err="That file isn't a VOUZ export.";render()}},
+      let skipped=0;for(const s of o.sessions){if(!s||have.has(s.id)||s.demo||typeof s.start!=="number"||!(s.durationSec>0))continue;if(LEGACY.includes(s.category)){skipped++;continue}const id=String(s.id||uid());delete S.deleted[id];
+        S.sessions.push({id,title:String(s.title||"").slice(0,60),start:s.start,durationSec:Math.round(s.durationSec),segments:Array.isArray(s.segments)?s.segments:null,...convCat(s.category,s.participants??s.groupSize),satisfaction:[1,2,3,4,5].includes(s.satisfaction)?s.satisfaction:null,sharedNote:String(s.sharedNote||"").slice(0,500),tags:Array.isArray(s.tags)?s.tags.map(String).slice(0,8):[],mood:MC[s.mood]?s.mood:"",notes:String(s.notes||"").slice(0,2000),reflection:String(s.reflection||"").slice(0,600),hrAvg:String(s.hrAvg||""),hrPeak:String(s.hrPeak||""),people:Array.isArray(s.people)?s.people.filter(p=>p&&p.id&&p.i).slice(0,20).map(p=>({id:String(p.id),h:String(p.h||"Someone").slice(0,24),i:String(p.i),...(p.from?{from:true}:{})})):[],createdAt:s.createdAt||Date.now(),updatedAt:Date.now()});n++}
+      save();ui.sheet=null;ui.err="";render();toast(n+" session"+(n===1?"":"s")+" imported."+(skipped?" "+skipped+" Solo or Partnered left out.":""))}catch(e){ui.err="That file isn't a VOUZ export.";render()}},
   deleteAccountYes(){if(($("#del-in").value||"").trim()!=="DELETE"){ui.err="Type DELETE in capitals to confirm.";return render()}
-    return busy(async()=>{clearTimeout(Cloud.t);Soc.stop();await Cloud.deleteAll();try{localStorage.removeItem(LS)}catch(e){}
+    return busy(async()=>{clearTimeout(Cloud.t);Soc.stop();await Cloud.deleteAll();try{localStorage.removeItem(LS)}catch(e){}await Photos.clear();
       S=fresh();K.reset();ui.sheet=null;ui.page=null;ui.tab="home";ui.err="";ui.homeDay=null;ui.ob={step:0,adult:false,mode:"local",name:"",social:false,restore:null};ui.busy=false;render(true);toast("Everything is erased.")})}
 };
 document.addEventListener("click",ev=>{const e=ev.target.closest("[data-act]");if(!e||e.disabled||e.hasAttribute("disabled"))return;const f=A[e.dataset.act];if(f)f(e,ev)});
-function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user}[o];if(!tgt)return;tgt[k]=e.value;
+/* ============ experiences, relationship spaces, Mutual Match ============ */
+const XCATS={dinner:"Dinner date",trip:"Trip",adventure:"Adventure",movie:"Movie",celebration:"Celebration",romantic:"Romantic",milestone:"Milestone",other:"Other"};
+/* Generic ideas only. VOUZ names no venue and claims no price, opening hours or availability. */
+const IDEAS=[
+ ["newrest","Try a new restaurant","Somewhere neither of you has been.",2,2,"in",1,"near","food"],
+ ["hike","Go hiking","Pick a trail with a view at the end.",0,3,"out",3,"day","outdoors adventure"],
+ ["roadtrip","Take a road trip","No fixed plan past the first stop.",2,4,"out",2,"away","adventure"],
+ ["cook","Cook something new together","A recipe neither of you has made.",1,2,"in",1,"home","food home"],
+ ["concert","Go to a concert","Live music, any genre.",3,2,"in",2,"near","music culture"],
+ ["romeve","Plan a romantic evening at home","Lights low, phones away.",1,2,"in",1,"home","romance home"],
+ ["hood","Explore a new neighborhood","Walk it, eat there, get a little lost.",0,3,"out",2,"near","culture adventure"],
+ ["picnic","Pack a picnic","Something simple, somewhere green.",1,2,"out",1,"near","food outdoors romance"],
+ ["museum","Visit a museum or gallery","Each of you picks one piece to show the other.",1,2,"in",1,"near","culture learning"],
+ ["sunrise","Watch the sunrise","Bring something warm to drink.",0,1,"out",2,"near","outdoors romance"],
+ ["class","Take a class together","Cooking, pottery, dance, anything new to both of you.",2,2,"in",2,"near","learning"],
+ ["movienight","Themed movie night","Pick a theme, a snack to match, and a double bill.",0,2,"in",1,"home","home"],
+ ["stars","Stargaze away from city lights","Check the sky forecast first.",0,3,"out",1,"day","outdoors romance"],
+ ["bike","Go for a bike ride","An easy loop with a stop for food.",0,2,"out",3,"near","outdoors wellness"],
+ ["spa","Spa night at home","Face masks, a long bath, no schedule.",1,2,"in",1,"home","wellness romance"],
+ ["market","Shop a farmers market, then cook","Let what you find decide dinner.",1,2,"out",1,"near","food"],
+ ["getaway","Weekend getaway","Two nights somewhere new.",3,4,"in",2,"away","adventure romance"],
+ ["games","Board-game night","Something new or an old favourite.",0,2,"in",1,"home","home"],
+ ["dance","Go dancing","Lessons first if you want them.",1,2,"in",3,"near","music"],
+ ["water","Beach or lake day","Swim, read, nap.",0,3,"out",2,"day","outdoors"],
+ ["volunteer","Volunteer together","An afternoon for something you both care about.",0,3,"in",2,"near","learning"],
+ ["letters","Write each other letters","Swap them over dinner.",0,1,"in",1,"home","romance"],
+ ["books","Bookstore date","Choose a book for each other.",1,1,"in",1,"near","culture"],
+ ["tasting","Wine, coffee or tea tasting","Compare notes, keep score if you like.",2,2,"in",1,"near","food"],
+ ["photo","Photo walk","One camera each, same route, compare after.",0,2,"out",2,"near","outdoors culture"],
+ ["show","Comedy or a live show","Something you'd both laugh at.",2,2,"in",1,"near","culture music"],
+ ["stretch","Yoga or stretching together","Twenty slow minutes.",0,1,"in",2,"home","wellness"],
+ ["dreamtrip","Plan a dream trip","Just the planning, no booking.",0,1,"in",1,"home","adventure"],
+ ["firstdate","Recreate your first date","Or the closest you can get.",1,2,"in",1,"near","romance"],
+ ["sport","Try a new sport","Climbing, paddleboarding, tennis.",1,2,"out",3,"near","adventure wellness"],
+ ["brunch","Slow brunch","No alarms beforehand.",1,2,"in",1,"near","food"],
+ ["garden","Botanical garden or big park","Walk until you find a bench you like.",0,2,"out",1,"near","outdoors"]
+].map(([id,t,d,b,tm,w,e,ds,g])=>({id,t,d,b,tm,w,e,ds,g:g.split(" ")}));
+const IDEA=Object.fromEntries(IDEAS.map(x=>[x.id,x]));
+const BUD=["Free","$","$$","$$$"],TM=["","Up to an hour","2–3 hours","Half a day","A day or more"],EN=["","Low energy","Some energy","High energy"],DS={home:"At home",near:"Nearby",day:"Day trip",away:"Travel"},INTS={food:"Food",outdoors:"Outdoors",culture:"Culture",home:"Home",adventure:"Adventure",romance:"Romance",learning:"Learning",wellness:"Wellness",music:"Music"};
+const ideaMeta=x=>[BUD[x.b],TM[x.tm],DS[x.ds],x.w==="out"?"Outdoors":"Indoors",EN[x.e]].join(" · ");
+function ideaOk(x,f){return(f.b==null||x.b<=f.b)&&(f.tm==null||x.tm<=f.tm)&&(!f.w||x.w===f.w)&&(f.e==null||x.e===f.e)&&(!f.ds||x.ds===f.ds)&&(!(f.g&&f.g.length)||x.g.some(g=>f.g.includes(g)))}
+
+/* ---- photos: kept on this device only, re-saved without location data, never uploaded ---- */
+const Photos={db:null,urls:new Map(),ok:typeof indexedDB!=="undefined",
+  open(){return this.db||(this.db=new Promise((res,rej)=>{const r=indexedDB.open("vouz-photos",1);r.onupgradeneeded=()=>r.result.createObjectStore("p");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))},
+  async tx(mode,f){const db=await this.open();return new Promise((res,rej)=>{const t=db.transaction("p",mode),r=f(t.objectStore("p"));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})},
+  put(id,blob){return this.tx("readwrite",st=>st.put(blob,id))},
+  get(id){return this.tx("readonly",st=>st.get(id))},
+  del(id){const u=this.urls.get(id);if(u){URL.revokeObjectURL(u);this.urls.delete(id)}return this.tx("readwrite",st=>st.delete(id)).catch(()=>{})},
+  clear(){this.urls.forEach(u=>URL.revokeObjectURL(u));this.urls.clear();return this.ok?this.tx("readwrite",st=>st.clear()).catch(()=>{}):Promise.resolve()},
+  async url(id){if(this.urls.has(id))return this.urls.get(id);const b=await this.get(id);if(!b)return null;const u=URL.createObjectURL(b);this.urls.set(id,u);return u}};
+/* Drawing onto a canvas and re-encoding drops EXIF data, including any GPS position the camera wrote. */
+async function shrink(file){const bmp=await createImageBitmap(file),k=Math.min(1,1600/Math.max(bmp.width,bmp.height)),c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(bmp.width*k));c.height=Math.max(1,Math.round(bmp.height*k));c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);if(bmp.close)bmp.close();
+  return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error("encode")),"image/jpeg",.85))}
+function hydratePhotos(){document.querySelectorAll("img[data-photo]:not([src])").forEach(async im=>{const u=await Photos.url(im.dataset.photo).catch(()=>null);if(u)im.src=u;else{im.alt="Photo not on this device";im.closest(".ph")&&im.closest(".ph").classList.add("gone")}})}
+
+/* ---- what one experience looks like to the other people in a space: never private notes or photos ---- */
+const shareX=e=>({id:e.id,kind:e.kind,title:e.title,date:e.date,cat:e.cat,location:e.location||"",sharedNote:e.sharedNote||"",mood:e.mood||"",favorite:e.favorite||"",idea:e.idea||null,anniv:!!e.anniv,updatedAt:e.updatedAt});
+function sanX(b,a,sp){if(!b||typeof b.id!=="string"||!["done","plan"].includes(b.kind))return null;const str=(v,n)=>typeof v==="string"?v.slice(0,n):"";
+  return{id:b.id,a,sp,kind:b.kind,title:str(b.title,80)||"Untitled",date:typeof b.date==="number"&&isFinite(b.date)?b.date:null,cat:XCATS[b.cat]?b.cat:"other",location:str(b.location,80),sharedNote:str(b.sharedNote,500),mood:MC[b.mood]?b.mood:"",favorite:str(b.favorite,200),idea:IDEA[b.idea]?b.idea:null,anniv:!!b.anniv,updatedAt:+b.updatedAt||0,photos:[]}}
+
+Object.assign(Soc,{sp:{},shared:[],picks:{},accRaw:[],pubSig:"",
+  async open(key,c){const k="o"+c;if(k in this.cache)return this.cache[k];return this.cache[k]=await K.decJ(key,c)},
+  /* A space: a random key, wrapped for the owner and for each person invited, plus an encrypted description.
+     Only people holding the key can read the space's name, its member list, and anything shared into it. */
+  async sealSpace(body,raw){raw=raw||crypto.getRandomValues(new Uint8Array(32));const key=await K.aes(raw),wk={self:await K.enc(K.self,raw)};
+    for(const u of body.members.concat(body.invited)){const r=this.rel[u];if(r&&r.mutual)wk[r.out]=await K.enc(r.key,raw)}
+    return{id:body.id,c:await K.encJ(key,body),wk}},
+  async readSpaces(){const me=Cloud.uid,sp={},acc={},accRaw=[];
+    for(const x of ((this.spaces[me]||{}).acc||[])){if(!x)continue;let hit=null;
+      for(const id in this.rel){const r=this.rel[id];if(x.k!==r.out)continue;try{const b=await this.open(r.key,x.c);if(b&&b.id){hit={id:b.id,ok:!!b.ok,owner:id}}}catch(e){}}
+      accRaw.push({...x,id:hit&&hit.id});if(hit)acc[hit.id]=hit}
+    this.accRaw=accRaw;
+    for(const owner in this.spaces){if(owner!==me&&(!this.rel[owner]||!this.rel[owner].mutual||S.blocks.includes(owner)))continue;
+      for(const it of (this.spaces[owner].items||[])){if(!it||!it.wk)continue;const w=owner===me?it.wk.self:it.wk[this.rel[owner].in];if(!w)continue;
+        try{const ck="s"+it.c+w;let e=this.cache[ck];if(!e){const raw=await K.dec(owner===me?K.self:this.rel[owner].key,w),key=await K.aes(raw);
+            e=this.cache[ck]={raw,key,body:await K.decJ(key,it.c),tag:hex(await crypto.subtle.digest("SHA-256",cat(raw,"|vouz-space"))).slice(0,24)}}
+          const b=e.body;if(b.id!==it.id||b.owner!==owner)continue;const a=acc[b.id];
+          const role=owner===me?"owner":a&&!a.ok?null:(b.members||[]).includes(me)?"member":a&&a.ok?"joining":(b.invited||[]).includes(me)?"invited":null;
+          if(role)sp[b.id]={id:b.id,name:String(b.name||"Our space").slice(0,40),owner,members:(b.members||[]).filter(u=>u!==owner),invited:(b.invited||[]).filter(u=>u!==owner),key:e.key,raw:e.raw,tag:e.tag,role,v:+b.v||1,item:it}}catch(x){}}}
+    this.sp=sp;
+    const shared=[],picks={};
+    for(const x of Object.values(sp)){if(x.role==="invited")continue;picks[x.id]={};
+      for(const u of [x.owner,...x.members]){if(S.blocks.includes(u))continue;
+        for(const it of ((this.match[u]||{}).items||[]))if(it&&it.t===x.tag){try{const b=await this.open(x.key,it.c);if(Array.isArray(b.picks))picks[x.id][u]=b.picks.filter(p=>IDEA[p])}catch(e){}}
+        if(u===me)continue;
+        for(const it of ((this.exps[u]||{}).items||[]))if(it&&it.t===x.tag){try{const v=sanX(await this.open(x.key,it.c),u,x.id);if(v)shared.push(v)}catch(e){}}}}
+    this.shared=shared;this.picks=picks;
+    await this.reconcileSpaces();await this.publishMine()},
+  async answerFrom(u,id){const r=this.rel[u];if(!r)return null;let out=null;
+    for(const x of ((this.spaces[u]||{}).acc||[])){if(!x||x.k!==r.in)continue;try{const b=await this.open(r.key,x.c);if(b&&b.id===id)out=!!b.ok}catch(e){}}return out},
+  /* Owner only: move people who accepted into the member list, and drop anyone who declined, left, disconnected or was blocked.
+     Anyone dropped held the key, so the space gets a new one. */
+  async reconcileSpaces(){const me=Cloud.uid,cur=this.spaces[me];if(!cur||!cur.items||this.recSp)return;let changed=false;const items=[];
+    for(const it of cur.items){const x=Object.values(this.sp).find(s=>s.item===it&&s.role==="owner");if(!x){items.push(it);continue}
+      let members=x.members.slice(),invited=x.invited.slice();const drop=[];
+      for(const u of members.concat(invited)){const r=this.rel[u];if(!r||!r.mutual||S.blocks.includes(u)){drop.push(u);continue}
+        const a=await this.answerFrom(u,x.id);if(a===false)drop.push(u);else if(a===true&&invited.includes(u)){invited=invited.filter(v=>v!==u);members.push(u)}}
+      members=members.filter(u=>!drop.includes(u));invited=invited.filter(u=>!drop.includes(u));
+      if(drop.length||members.length!==x.members.length){changed=true;items.push(await this.sealSpace({id:x.id,name:x.name,owner:me,members,invited,v:x.v+(drop.length?1:0)},drop.length?null:x.raw))}else items.push(it)}
+    if(changed){this.recSp=true;try{await this.write("spaces",{items,acc:cur.acc||[]})}finally{this.recSp=false}}},
+  /* My shared experiences and Mutual Match picks are rebuilt from this device's records under each space's current key. */
+  async publishMine(){const me=Cloud.uid,inSp=Object.values(this.sp).filter(x=>x.role!=="invited");
+    const sig=JSON.stringify([inSp.map(x=>x.tag),S.exps.filter(e=>!e.demo&&e.space).map(e=>[e.id,e.space,e.updatedAt]),inSp.map(x=>[x.id,S.picks[x.id]||null])]);
+    if(sig===this.pubSig)return;this.pubSig=sig;const ex=[],pk=[];
+    for(const x of inSp){for(const e of S.exps.filter(e=>!e.demo&&e.space===x.id))ex.push({t:x.tag,c:await K.encJ(x.key,shareX(e))});
+      if(Array.isArray(S.picks[x.id]))pk.push({t:x.tag,c:await K.encJ(x.key,{picks:S.picks[x.id]})})}
+    if(ex.length||((this.exps[me]||{}).items||[]).length)await this.write("exps",{items:ex});
+    if(pk.length||((this.match[me]||{}).items||[]).length)await this.write("match",{items:pk})},
+  async answerSpace(x,ok){const r=this.rel[x.owner];if(!r)throw 0;const cur=this.spaces[Cloud.uid]||{};
+    const keep=(cur.acc||[]).filter(a=>{const raw=this.accRaw.find(z=>z.c===a.c);return!(raw&&raw.id===x.id)});
+    keep.push({k:r.out,c:await K.encJ(r.key,{id:x.id,ok})});
+    await this.write("spaces",{items:cur.items||[],acc:keep})},
+  async saveSpaces(items){const cur=this.spaces[Cloud.uid]||{};await this.write("spaces",{items,acc:cur.acc||[]})},
+  inSpaces(){return Object.values(this.sp).filter(x=>x.role!=="invited")},
+  spaceName(id){const x=this.sp[id];return x?x.name:null},
+  people(x){return [x.owner,...x.members].filter((u,i,a)=>a.indexOf(u)===i)}
+});
+
+/* Mutual Match: an idea is shown only when every member of the space has picked it. */
+function matchFor(x){const me=Cloud.uid,ppl=Soc.people(x);if(!ppl.includes(me))ppl.push(me);const p=Soc.picks[x.id]||{},mine=S.picks[x.id];
+  const has=u=>u===me?Array.isArray(mine):Array.isArray(p[u]),waiting=ppl.filter(u=>!has(u)),sets=ppl.map(u=>new Set(u===me?mine||[]:p[u]||[]));
+  return{ppl,waiting,matches:waiting.length||ppl.length<2?[]:IDEAS.filter(i=>sets.every(st=>st.has(i.id)))}}
+
+/* Everything for the timeline and plans: my own records plus what people shared into spaces I'm in. */
+function allExps(){const mine=S.exps.map(e=>({...e,a:"me",sp:e.space&&Soc.sp[e.space]&&Soc.sp[e.space].role!=="invited"?e.space:null}));
+  const theirs=S.settings.social?Soc.shared.filter(x=>Soc.sp[x.sp]):[];return mine.concat(theirs)}
+const storyItems=f=>allExps().filter(e=>e.kind==="done"&&(f==="all"||(f==="mine"?e.a==="me"&&!e.sp:e.sp===f))).sort((a,b)=>(b.date||0)-(a.date||0));
+const allPlans=()=>allExps().filter(e=>e.kind==="plan").sort((a,b)=>(a.date||9e15)-(b.date||9e15));
+const whoX=e=>e.a==="me"?"":Soc.handle(e.a);
+function nextAnniv(e,now=Date.now()){const d=new Date(e.date),t=new Date(new Date(now).getFullYear(),d.getMonth(),d.getDate()).getTime();const n=t>=startOfDay(now)?t:new Date(new Date(now).getFullYear()+1,d.getMonth(),d.getDate()).getTime();return{at:n,years:new Date(n).getFullYear()-d.getFullYear(),days:Math.round((n-startOfDay(now))/DAY)}}
+
+/* ---------------- views ---------------- */
+function vIntimacy(){const seg=ui.int.seg,bar=`<div><h3>Intimacy</h3></div><div class="seg3" role="group" aria-label="Intimacy section">${[["track","Track"],["history","History"],["insights","Insights"]].map(([v,l])=>`<button data-act="iSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
+  const h=seg==="insights"?vInsights():seg==="history"?vHistList():vTrack();return h.replace('<div class="scroll">','<div class="scroll">'+bar)}
+
+function vHistList(){const all=sessions(),st=stats(all),ws=startOfWeek(Date.now()),cd=countByDay(all),todayI=(new Date().getDay()+6)%7,sel=ui.homeDay===null?todayI:ui.homeDay;
+  if(!all.length)return`<div class="scroll">${demoBanner()}<div class="card"><h2>Nothing logged yet.</h2><p class="sub">This fills in from what you save, and only from that.</p><div class="row wrap"><button class="btn sm primary" data-act="quick">${ic("plus")} Quick log</button><button class="btn sm" data-act="manual">Log a past session</button><button class="btn sm ghost" data-act="loadDemo">See it with demo data</button></div></div></div>`;
+  const dayT=addDays(ws,sel),dayS=all.filter(s=>dayKey(s.start)===dayKey(dayT)),wk=all.filter(s=>s.start>=ws),wst=stats(wk);
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth(),first=new Date(y,m,1),lead=(first.getDay()+6)%7,dim=new Date(y,m+1,0).getDate(),today=dayKey(Date.now());
+  let cal="MTWTFSS".split("").map(c=>`<span class="h">${c}</span>`).join("")+"<span></span>".repeat(lead);
+  for(let d=1;d<=dim;d++){const k=y+"-"+pad(m+1)+"-"+pad(d),c=cd[k]||0;cal+=`<span class="${c>1?"on2":c?"on":""}${k===today?" today":""}" title="${c} session${c===1?"":"s"}">${d}</span>`}
+  const ach=achievements(),got=ach.filter(a=>a.at).sort((a,b)=>b.at.start-a.at.start),rest=ach.filter(a=>!a.at);
+  return`<div class="scroll">${demoBanner()}<div class="stage" style="max-width:250px">${weekRing(ws,cd,sel)}<div class="in"><b style="font-family:var(--display);font-size:44px;font-weight:400" data-count="${wst.n}">${wst.n}</b><span class="sub small">this week</span></div></div>
+   <div class="sec" aria-live="polite"><div class="row between"><h3>${sel===todayI?"Today":fmtDate(dayT)}</h3><span class="sub small">This week: ${fmtDur(wst.tot)}</span></div>${dayS.length?`<div>${dayS.map(sessRow).join("")}</div>`:`<p class="sub small">${dayT>Date.now()?"Still ahead.":"Nothing logged for this day."} Tap a day on the ring to look at another.</p>`}</div>
+   <div class="trio"><div><b data-count="${st.n}">${st.n}</b><span>sessions</span></div><div><b data-count="${fmtMin(st.tot)}">${fmtMin(st.tot)}</b><span>minutes</span></div><div><b data-count="${fmtMin(st.avg)}">${fmtMin(st.avg)}</b><span>avg minutes</span></div></div>
+   <div class="card"><div class="row between"><h3>${MO[m]} ${y}</h3><span class="sub small">${Object.keys(cd).filter(k=>k.startsWith(y+"-"+pad(m+1))).length} active days</span></div><div class="cal">${cal}</div></div>
+   <div class="sec"><div class="row between"><h3>All sessions</h3><button class="link small" data-act="manual">${ic("plus")} Log one</button></div><div>${all.map(sessRow).join("")}</div></div>
+   <div class="sec"><div class="row between"><h3>Achievements</h3><button class="link small" data-act="page" data-page="achievements">${got.length} of ${ach.length}</button></div><div class="hs">${got.concat(rest).map(a=>`<div class="b ${a.at?"on":""}"><span class="badge ${a.at?"on":""}">${a.g}</span>${a.name}</div>`).join("")}</div><p class="tiny">Private to you unless you choose to share one.</p></div></div>`}
+
+function spaceInvitesCard(){if(!S.settings.social)return"";const inv=Object.values(Soc.sp).filter(x=>x.role==="invited");if(!inv.length)return"";
+  return`<div class="card line" role="region" aria-label="Space invitations"><h3>Shared space invitations</h3><div>${inv.map(x=>`<div class="col" style="gap:8px;padding:8px 0"><span><b>${esc(Soc.handle(x.owner))}</b> invited you to <b>${esc(x.name)}</b><span class="sub small" style="display:block">With ${esc(names(Soc.people(x).concat(x.invited).filter(u=>u!==Cloud.uid&&u!==x.owner))||"just the two of you")}</span></span><div class="row"><button class="btn sm primary grow" data-act="spAccept" data-id="${esc(x.id)}">Join</button><button class="btn sm ghost grow" data-act="spDecline" data-id="${esc(x.id)}">Decline</button></div></div>`).join("")}</div><p class="tiny">Members see what each person chooses to share into the space: memories, plans and Mutual Match results. Never private notes, photos or intimacy records.</p></div>`}
+
+function planRow(e){const mine=e.a==="me",it=e.idea?IDEA[e.idea]:null;
+  return`<div class="ach"><span class="badge on" aria-hidden="true">${ic("compass")}</span><span class="grow"><b>${esc(e.title)}</b><span class="sub small" style="display:block">${e.date?fmtDate(e.date)+(new Date(e.date).getHours()||new Date(e.date).getMinutes()?" · "+fmtTime(e.date):""):"Not scheduled"}${e.sp?" · "+esc(Soc.spaceName(e.sp)):" · Just you"}${mine?"":" · planned by "+esc(whoX(e))}</span>${it&&!mine?"":""}</span>
+   ${mine?`<span class="row" style="gap:6px"><button class="btn sm ghost" data-act="planSched" data-id="${e.id}" aria-label="Schedule ${esc(e.title)}">${ic("clock")}</button><button class="btn sm" data-act="planDone" data-id="${e.id}" aria-label="Mark ${esc(e.title)} done">${ic("check")}</button></span>`:""}</div>`}
+
+function ideaCard(x,extra=""){const planned=S.exps.some(e=>e.kind==="plan"&&e.idea===x.id);
+  return`<div class="card idea"><div><b class="it">${esc(x.t)}</b><p class="sub small">${esc(x.d)}</p><p class="tiny">${ideaMeta(x)}</p></div>${extra||`<button class="btn sm ${planned?"ghost":""}" style="align-self:flex-start" data-act="ideaSave" data-v="${x.id}" ${planned?"disabled":""}>${planned?ic("check")+" In your plans":ic("plus")+" Save to plans"}</button>`}</div>`}
+
+function suggestion(){const used=new Set(S.exps.map(e=>e.idea).filter(Boolean)),pool=IDEAS.filter(x=>!used.has(x.id));if(!pool.length)return null;
+  return pool[(Math.floor(Date.now()/DAY)+(ui.sugOff||0))%pool.length]}
+
+function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning":h<18?"Afternoon":"Evening";
+  const head=`<div class="row between"><div class="mark">vouz<b>.</b></div><button class="pill" data-act="tab" data-tab="profile" aria-label="Privacy settings">${ic("lock")} Private</button></div>`;
+  const plans=allPlans().slice(0,3),mem=storyItems("all").slice(0,2),ws=startOfWeek(Date.now()),wk=S.sessions.filter(s=>s.start>=ws),sug=suggestion();
+  const live=S.active?`<button class="card rowcard" data-act="tab" data-tab="track" aria-label="Return to your running session"><span class="badge on" aria-hidden="true">${ic(running()?"pause":"play")}</span><span class="grow"><b>Session ${running()?"running":"paused"}</b><span class="sub small" style="display:block" id="miniclock">${fmtClock(elapsed(S.active))}</span></span>${ic("next")}</button>`
+    :S.draft&&S.draft.fromTimer?`<button class="card rowcard" data-act="resumeDraft"><span class="badge on" aria-hidden="true">${ic("edit")}</span><span class="grow"><b>Finish saving your session</b></span>${ic("next")}</button>`:"";
+  return`<div class="scroll">${head}${demoBanner()}${invitesCard()}${spaceInvitesCard()}
+   <div><h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1><p class="sub">Less scrolling. More together.</p></div>${live}
+   <div class="qa"><button data-act="quick">${ic("heart")}<span>Quick log</span></button><button data-act="expNew" data-kind="done">${ic("book")}<span>Add a memory</span></button><button data-act="tab" data-tab="discover">${ic("compass")}<span>Find an idea</span></button></div>
+   <div class="sec"><div class="row between"><h3>Coming up</h3><button class="link small" data-act="discSeg" data-v="plans">All plans</button></div>${plans.length?`<div>${plans.map(planRow).join("")}</div>`:`<p class="sub small">Nothing planned. Save an idea from Discover, or one you match on together.</p>`}</div>
+   ${sug?`<div class="sec"><div class="row between"><h3>An idea</h3><button class="link small" data-act="sugNext">Something else</button></div>${ideaCard(sug)}</div>`:""}
+   <div class="sec"><div class="row between"><h3>Recent memories</h3><button class="link small" data-act="tab" data-tab="story">Our Story</button></div>${mem.length?`<div>${mem.map(storyRow).join("")}</div>`:`<p class="sub small">Nothing here yet. Add a dinner, a trip, a milestone: anything worth keeping.</p>`}</div>
+   <button class="card rowcard" data-act="tab" data-tab="history"><span class="badge" aria-hidden="true">${ic("heart")}</span><span class="grow"><b>Intimacy this week</b><span class="sub small" style="display:block">${wk.length?wk.length+" session"+(wk.length===1?"":"s")+", "+fmtDur(stats(wk).tot):"Nothing logged this week"} · only you see this</span></span>${ic("next")}</button>
+   ${!S.sessions.length&&!S.exps.length?`<div class="sec" style="text-align:center;align-items:center"><p class="sub small">Everything here starts empty and fills in from what you add.</p><button class="btn sm ghost" data-act="loadDemo">See it with demo data</button></div>`:""}</div>`}
+
+function storyRow(e){const t=new Date(e.date||0);return`<button class="sess" data-act="expOpen" data-id="${esc(e.id)}" data-a="${esc(e.a)}">${e.photos&&e.photos[0]?`<span class="ph sm"><img data-photo="${esc(e.photos[0])}" alt=""></span>`:`<span class="d"><b>${t.getDate()}</b><span>${MO[t.getMonth()]}</span></span>`}<span class="grow"><span class="t" style="display:block">${esc(e.title)}</span><span class="sub small">${XCATS[e.cat]||"Other"}${e.location?" · "+esc(e.location):""}${e.a!=="me"?" · from "+esc(whoX(e)):e.sp?" · "+esc(Soc.spaceName(e.sp)):" · private"}${e.demo?" · demo":""}</span></span></button>`}
+
+function vStory(){const f=ui.story.space,sps=Soc.inSpaces(),items=storyItems(f),now=Date.now();
+  const ann=allExps().filter(e=>e.kind==="done"&&e.anniv&&e.date).map(e=>({e,n:nextAnniv(e)})).filter(x=>x.n.days<=60&&x.n.years>0).sort((a,b)=>a.n.days-b.n.days);
+  const groups=[];items.forEach(e=>{const d=new Date(e.date),k=d.getFullYear()+"-"+d.getMonth();const g=groups[groups.length-1];if(g&&g.k===k)g.items.push(e);else groups.push({k,l:MO[d.getMonth()]+" "+d.getFullYear(),items:[e]})});
+  return`<div class="scroll"><div class="row between"><div><h3>Our Story</h3><h1>The parts <em>worth keeping.</em></h1></div></div>${demoBanner()}
+   <button class="btn primary block" data-act="expNew" data-kind="done">${ic("plus")} Add a memory</button>
+   ${sps.length?`<div class="chips" role="group" aria-label="Show">${[["all","Everything"],["mine","Private"]].concat(sps.map(x=>[x.id,x.name])).map(([v,l])=>`<button class="chip" data-act="storyFilter" data-v="${esc(v)}" aria-pressed="${f===v}">${esc(l)}</button>`).join("")}</div>`:""}
+   ${ann.length?`<div class="card line"><h3>Coming up</h3>${ann.map(({e,n})=>`<p><b>${esc(e.title)}</b>: ${n.years===1?"first":n.years+ordinal(n.years)} anniversary ${n.days===0?"today":n.days===1?"tomorrow":"in "+n.days+" days"}, ${fmtDate(n.at)}.</p>`).join("")}</div>`:""}
+   ${groups.length?groups.map(g=>`<div class="sec"><h3>${g.l}</h3><div>${g.items.map(storyRow).join("")}</div></div>`).join(""):`<div class="card"><h2>${f==="all"?"Your story starts here.":"Nothing here yet."}</h2><p class="sub">Dinners, trips, small wins, big milestones. Each one is private unless you put it in a shared space.</p>${S.exps.length?"":`<button class="btn sm ghost" style="align-self:flex-start" data-act="loadDemo">See it with demo data</button>`}</div>`}</div>`}
+const ordinal=n=>{const t=n%100;return t>=11&&t<=13?"th":({1:"st",2:"nd",3:"rd"})[n%10]||"th"};
+
+function findX(id,a){return a==="me"||!a?S.exps.find(e=>e.id===id):Soc.shared.find(e=>e.id===id&&e.a===a)}
+function vExp(){const p=ui.page,e=findX(p.id,p.a);if(!e){ui.page=null;return vStory()+vTabs()}const mine=!p.a||p.a==="me";const sp=mine?(e.space&&Soc.sp[e.space]?Soc.sp[e.space]:null):Soc.sp[e.sp];
+  return hdr(e.kind==="plan"?"Plan":"Memory",mine?`<button class="ib" data-act="expEdit" data-id="${e.id}" aria-label="Edit">${ic("edit")}</button>`:"")+`<div class="scroll">
+   <div><h3>${e.date?fmtDate(e.date)+" "+new Date(e.date).getFullYear():"Not scheduled"} · ${XCATS[e.cat]||"Other"}</h3><h1>${esc(e.title)}</h1>${e.location?`<p class="sub">${esc(e.location)}</p>`:""}</div>
+   ${mine&&e.photos&&e.photos.length?`<div class="phs">${e.photos.map(id=>`<span class="ph"><img data-photo="${esc(id)}" alt="Photo from ${esc(e.title)}"></span>`).join("")}</div><p class="tiny">Photos are kept on this device only.</p>`:""}
+   ${e.favorite?`<div class="card"><h3>Favorite moment</h3><p style="font-family:var(--display);font-size:22px;line-height:1.25;overflow-wrap:anywhere">${esc(e.favorite)}</p></div>`:""}
+   ${e.mood?`<p><span class="pill" style="color:${MC[e.mood]||"var(--muted)"}">${esc(e.mood)}</span></p>`:""}
+   ${e.sharedNote?`<div class="card"><h3>Shared note</h3><p style="overflow-wrap:anywhere">${esc(e.sharedNote)}</p></div>`:""}
+   ${mine&&e.notes?`<div class="card line"><h3>Private notes</h3><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(e.notes)}</p><p class="tiny">Only you see these.</p></div>`:""}
+   <p class="tiny">${mine?(sp?"Shared with "+esc(sp.name)+": "+esc(names(Soc.people(sp).filter(u=>u!==Cloud.uid))||"no one else yet")+". Private notes and photos stay with you.":e.space?"Private: the space this was shared to has ended.":"Private: only you see this."):"Shared by "+esc(Soc.handle(e.a))+" in "+esc(sp?sp.name:"a space")+"."}</p>
+   ${mine&&e.kind==="plan"?`<div class="row"><button class="btn grow" data-act="planSched" data-id="${e.id}">${ic("clock")} Schedule</button><button class="btn primary grow" data-act="planDone" data-id="${e.id}">${ic("check")} Mark done</button></div>`:""}
+   ${mine?`<button class="btn danger block" data-act="expDelAsk" data-id="${e.id}">${ic("trash")} Delete</button>`:""}</div>`}
+
+function vExpEdit(){const d=ui.xd;if(!d){ui.page=null;return vStory()+vTabs()}const sps=Soc.inSpaces();
+  return hdr(d.editing?"Edit":d.kind==="plan"?"New plan":"New memory")+`<div class="scroll">
+   <label class="f" for="x-title">What was it?<input type="text" id="x-title" data-bind="xd.title" maxlength="80" value="${esc(d.title)}" placeholder="${d.kind==="plan"?"Something to do together":"Dinner at the place by the water"}" autocomplete="off"></label>
+   <label class="f" for="x-date">${d.kind==="plan"?"When <em>Optional</em>":"Date"}<input type="date" id="x-date" data-bind="xd.date" value="${esc(d.date)}" ${d.kind==="plan"?"":`max="${dayKey(Date.now())}"`}></label>
+   <div class="col"><h3>Kind</h3><div class="chips" role="group" aria-label="Kind">${Object.entries(XCATS).map(([k,l])=>`<button class="chip" data-act="xCat" data-v="${k}" aria-pressed="${d.cat===k}">${l}</button>`).join("")}</div></div>
+   ${d.cat==="milestone"?sw("xAnniv",d.anniv,"Remember the anniversary","Our Story reminds you as the date comes round."):""}
+   <label class="f" for="x-loc">Place <em>Optional. Typed by you; VOUZ never reads your location.</em><input type="text" id="x-loc" data-bind="xd.location" maxlength="80" value="${esc(d.location)}" autocomplete="off"></label>
+   ${d.kind==="done"?`<label class="f" for="x-fav">Favorite moment <em>Optional</em><input type="text" id="x-fav" data-bind="xd.favorite" maxlength="200" value="${esc(d.favorite)}" autocomplete="off"></label>
+   <div class="col"><h3>Mood <span class="tiny" style="text-transform:none;letter-spacing:0">Optional</span></h3><div class="chips">${MOODS.map(m=>`<button class="chip" data-act="xMood" data-v="${m}" aria-pressed="${d.mood===m}">${m}</button>`).join("")}</div></div>
+   <div class="col"><h3>Photos <span class="tiny" style="text-transform:none;letter-spacing:0">Optional, this device only</span></h3>${d.photos.length?`<div class="phs">${d.photos.map(id=>`<span class="ph"><img data-photo="${esc(id)}" alt="Photo"><button class="ib" data-act="xPhotoDel" data-id="${esc(id)}" aria-label="Remove photo">${ic("x")}</button></span>`).join("")}</div>`:""}
+     ${Photos.ok?(d.photos.length<6?`<label class="btn sm" style="align-self:flex-start" for="x-photo">${ic("photo")} Add photos<input type="file" id="x-photo" accept="image/*" multiple class="vh"></label>`:`<p class="tiny">Six photos per memory.</p>`):`<p class="tiny">This browser can't keep photos.</p>`}
+     <p class="tiny">Photos stay on this device. They're re-saved without location data, aren't synced or exported, and nobody else sees them.</p></div>`:""}
+   <label class="f" for="x-notes">Private notes <em>Optional. Never shared.</em><textarea id="x-notes" data-bind="xd.notes" maxlength="2000">${esc(d.notes)}</textarea></label>
+   <div class="col"><h3>Who can see it</h3><div class="chips" role="group" aria-label="Who can see it"><button class="chip" data-act="xSpace" data-v="" aria-pressed="${!d.space}">${ic("lock")} Just me</button>${sps.map(x=>`<button class="chip" data-act="xSpace" data-v="${esc(x.id)}" aria-pressed="${d.space===x.id}">${esc(x.name)}</button>`).join("")}</div>
+     ${d.space?`<label class="f" for="x-shared">Shared note <em>Optional. Visible to the space.</em><textarea id="x-shared" data-bind="xd.sharedNote" maxlength="500">${esc(d.sharedNote)}</textarea></label><p class="tiny">The space sees the title, date, kind, place, favorite moment, mood and shared note. Not your private notes or photos.</p>`:sps.length?"":`<p class="tiny">To share with a partner, turn on Connections in Profile and create a shared space.</p>`}</div>
+   ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}
+   <button class="btn primary block" data-act="expSave">${d.editing?"Save changes":"Save"}</button></div>`}
+
+function vDiscover(){const seg=ui.disc.seg,f=ui.disc.f;
+  const head=`<div><h3>Discover</h3><h1>Something to <em>do together.</em></h1></div><div class="seg3" role="group" aria-label="Discover section">${[["ideas","Ideas"],["match","Mutual Match"],["plans","Plans"]].map(([v,l])=>`<button data-act="discSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
+  const chipRow=(k,label,opts)=>`<div class="col" style="gap:6px"><span class="tiny">${label}</span><div class="chips sm" role="group" aria-label="${label}">${opts.map(([v,l])=>`<button class="chip" data-act="fSet" data-k="${k}" data-v="${v}" aria-pressed="${String(f[k]??"")===String(v)}">${l}</button>`).join("")}</div></div>`;
+  const filters=`<details class="card filt" ${ui.disc.open?"open":""}><summary data-act="fOpen"><b>Filters</b><span class="sub small">${IDEAS.filter(x=>ideaOk(x,f)).length} of ${IDEAS.length}</span></summary>
+    ${chipRow("b","Budget",[["","Any"],["0","Free"],["1","Up to $"],["2","Up to $$"]])}${chipRow("tm","Time you have",[["","Any"],["1","An hour"],["2","A few hours"],["3","Half a day"]])}
+    ${chipRow("ds","Distance",[["","Any"],["home","At home"],["near","Nearby"],["day","Day trip"],["away","Travel"]])}${chipRow("w","Setting",[["","Either"],["in","Indoors"],["out","Outdoors"]])}${chipRow("e","Energy",[["","Any"],["1","Low"],["2","Some"],["3","High"]])}
+    <div class="col" style="gap:6px"><span class="tiny">Interests</span><div class="chips sm">${Object.entries(INTS).map(([k,l])=>`<button class="chip" data-act="fInt" data-v="${k}" aria-pressed="${(f.g||[]).includes(k)}">${l}</button>`).join("")}</div></div>
+    <button class="link small" data-act="fClear">Clear filters</button></details>`;
+  let body="";
+  if(seg==="ideas"){const list=IDEAS.filter(x=>ideaOk(x,f));body=filters+(list.length?list.map(x=>ideaCard(x)).join(""):`<div class="card line"><p class="sub small">Nothing fits all of those. Loosen a filter.</p></div>`)}
+  else if(seg==="plans"){const pl=allPlans();body=`<button class="btn block" data-act="expNew" data-kind="plan">${ic("plus")} New plan</button>`+(pl.length?`<div class="sec"><div>${pl.map(planRow).join("")}</div></div><p class="tiny">Tap ${ic("clock").replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')} to schedule, ${ic("check").replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')} when it's done: it moves to Our Story.</p>`:`<div class="card line"><p class="sub small">No plans yet. Save an idea, or one you match on.</p></div>`)}
+  else{if(!Soc.ready())body=`<div class="card"><h2>Pick privately. <em>Match together.</em></h2><p class="sub">Each of you chooses what you'd like to do, without seeing the other's choices. VOUZ shows only what everyone picked.</p><p class="sub small">${S.settings.social?"Connections can't be reached right now.":"This needs Connections, which is off. Turn it on in Profile, connect with your partner, and create a shared space."}</p><button class="btn sm" style="align-self:flex-start" data-act="tab" data-tab="profile">Profile</button></div>`;
+    else{const sps=Soc.inSpaces();if(!sps.length)body=`<div class="card"><h2>Start a shared space.</h2><p class="sub">Mutual Match happens inside a space you share with a partner, or with everyone in a relationship who agrees to join.</p><button class="btn sm primary" style="align-self:flex-start" data-act="page" data-page="spaces">Shared spaces</button></div>`;
+      else{const x=Soc.sp[ui.disc.space]&&Soc.sp[ui.disc.space].role!=="invited"?Soc.sp[ui.disc.space]:sps[0];ui.disc.space=x.id;const m=matchFor(x),mine=new Set(S.picks[x.id]||[]),list=IDEAS.filter(i=>ideaOk(i,f));
+        body=`${sps.length>1?`<div class="chips" role="group" aria-label="Space">${sps.map(s=>`<button class="chip" data-act="pickSpace" data-v="${esc(s.id)}" aria-pressed="${s.id===x.id}">${esc(s.name)}</button>`).join("")}</div>`:""}
+         <div class="card"><div class="row between"><h3>${esc(x.name)}</h3><span class="pill">${m.ppl.length} ${m.ppl.length===1?"person":"people"}</span></div><p class="sub small">Matching between ${esc(names(m.ppl.map(u=>u===Cloud.uid?"you":u)))}. An idea appears only when every one of you picked it.</p>
+          ${m.ppl.length<2?`<p class="sub small">Nobody else has joined yet.</p>`:m.waiting.length?`<p class="sub small">Waiting for ${esc(names(m.waiting.map(u=>u===Cloud.uid?"you":u)))} to pick.</p>`:m.matches.length?`<h3 style="margin-top:6px">You matched on ${m.matches.length}</h3>`:`<p class="sub small">No matches yet. Pick a few more, or come back after the others do.</p>`}</div>
+         ${m.matches.map(i=>ideaCard(i,(()=>{const done=S.exps.some(e=>e.idea===i.id&&e.space===x.id);return`<button class="btn sm primary" style="align-self:flex-start" data-act="matchSave" data-v="${i.id}" ${done?"disabled":""}>${done?ic("check")+" Planned":ic("plus")+" Plan it together"}</button>`})())).join("")}
+         <div class="sec"><div class="row between"><h3>Your picks</h3><span class="sub small">${mine.size} chosen</span></div><p class="tiny">Only you see this list. Nobody sees what you picked unless they picked it too.</p>${filters}<div>${list.map(i=>`<button class="pick" data-act="pickToggle" data-v="${i.id}" aria-pressed="${mine.has(i.id)}"><span class="grow"><b>${esc(i.t)}</b><span class="sub small" style="display:block">${ideaMeta(i)}</span></span><span class="tick" aria-hidden="true">${ic(mine.has(i.id)?"check":"plus")}</span></button>`).join("")}</div></div>`}}}
+  return`<div class="scroll">${head}${body}</div>`}
+
+function vSpaces(){const ready=Soc.ready();
+  if(!ready)return hdr("Shared spaces")+`<div class="scroll"><div class="card"><h2>Shared with the people <em>you choose.</em></h2><p class="sub">A shared space is where a partner, or everyone in a relationship who agrees to join, can see the memories and plans each person puts there, and use Mutual Match.</p><p class="sub small">${S.settings.social?"Connections can't be reached right now.":"Turn on Connections in Profile first."}</p></div></div>`;
+  const all=Object.values(Soc.sp),mine=all.filter(x=>x.role!=="invited"),conns=Soc.conns(),pick=ui.spPick||[];
+  const card=x=>{const owner=x.role==="owner";return`<div class="card"><div class="row between"><h2>${esc(x.name)}</h2><span class="pill">${owner?"You created it":"Created by "+esc(Soc.handle(x.owner))}</span></div>
+    <div>${[x.owner,...x.members,...x.invited].filter((u,i,a)=>a.indexOf(u)===i).map(u=>`<div class="ach"><span class="av" aria-hidden="true">${esc((u===Cloud.uid?"you":Soc.handle(u))[0].toUpperCase())}</span><span class="grow"><b>${u===Cloud.uid?"You":esc(Soc.handle(u))}</b><span class="sub small" style="display:block">${u===x.owner?"Created the space":x.invited.includes(u)?"Invited":x.role==="joining"&&u===Cloud.uid?"Joining":"Member"}</span></span>${owner&&u!==Cloud.uid?`<button class="btn sm ghost" data-act="spRemove" data-id="${esc(x.id)}" data-u="${esc(u)}" aria-label="Remove ${esc(Soc.handle(u))}">Remove</button>`:""}</div>`).join("")}</div>
+    ${owner?`<button class="btn sm danger" style="align-self:flex-start" data-act="spDelete" data-id="${esc(x.id)}">Delete space</button>`:`<button class="btn sm ghost" style="align-self:flex-start" data-act="spLeave" data-id="${esc(x.id)}">Leave</button>`}</div>`};
+  return hdr("Shared spaces")+`<div class="scroll">${spaceInvitesCard()}
+   ${mine.length?mine.map(card).join(""):`<p class="sub">You're not in a shared space yet.</p>`}
+   <div class="card line"><h3>New shared space</h3><label class="f" for="sp-name">Name<input type="text" id="sp-name" maxlength="40" placeholder="Us" autocomplete="off" value="${esc(ui.spName||"")}"></label>
+    ${conns.length?`<div class="col"><span class="tiny">Invite from your connections</span><div class="chips">${conns.map(i=>`<button class="chip" data-act="spPick" data-v="${esc(i)}" aria-pressed="${pick.includes(i)}">${esc(Soc.handle(i))}</button>`).join("")}</div></div>`:`<p class="sub small">You have no connections yet.</p>`}
+    ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block ${ui.busy?"busy":""}" data-act="spCreate" ${conns.length?"":"disabled"}>Create and invite</button>
+    <button class="link small" data-act="tab" data-tab="social">Find or add a connection</button>
+    <p class="tiny">Each person joins only if they accept. Anyone can leave at any time, and the space then gets a new key. Space contents are encrypted in your browsers before they're stored.</p></div></div>`}
+
+/* ---------------- actions ---------------- */
+function blankX(kind){return{editing:null,kind,title:"",date:kind==="plan"?"":dayKey(Date.now()),cat:kind==="plan"?"other":"dinner",location:"",favorite:"",mood:"",notes:"",sharedNote:"",space:null,anniv:false,photos:[],added:[],removed:[],idea:null}}
+function dateFromInput(v){if(!v)return null;const t=new Date(v+"T12:00").getTime();return isNaN(t)?NaN:t}
+Object.assign(A,{
+  iSeg(e){ui.int.seg=e.dataset.v;render(true)},
+  discSeg(e){ui.disc.seg=e.dataset.v;if(ui.tab!=="discover"||ui.page)go("discover");else render(true)},
+  fOpen(e,ev){ev&&ev.preventDefault();ui.disc.open=!ui.disc.open;render()},
+  fSet(e){const k=e.dataset.k,v=e.dataset.v;ui.disc.f[k]=v===""?null:(k==="w"||k==="ds")?v:+v;render()},
+  fInt(e){const g=ui.disc.f.g=ui.disc.f.g||[],v=e.dataset.v;ui.disc.f.g=g.includes(v)?g.filter(x=>x!==v):g.concat([v]);render()},
+  fClear(){ui.disc.f={};render()},
+  sugNext(){ui.sugOff=(ui.sugOff||0)+1;render()},
+  ideaSave(e){const x=IDEA[e.dataset.v];if(!x||S.exps.some(z=>z.kind==="plan"&&z.idea===x.id))return;const now=Date.now();
+    S.exps.push({id:uid(),kind:"plan",title:x.t,date:null,cat:"other",location:"",favorite:"",mood:"",notes:"",sharedNote:"",space:null,anniv:false,photos:[],idea:x.id,createdAt:now,updatedAt:now});save();render();toast("Saved to your plans.")},
+  matchSave(e){const x=IDEA[e.dataset.v],sp=ui.disc.space;if(!x||!Soc.sp[sp])return;const now=Date.now();
+    S.exps.push({id:uid(),kind:"plan",title:x.t,date:null,cat:"other",location:"",favorite:"",mood:"",notes:"",sharedNote:"",space:sp,anniv:false,photos:[],idea:x.id,createdAt:now,updatedAt:now});save();Soc.sched();render();toast("Planned. Everyone in "+Soc.sp[sp].name+" can see it.")},
+  pickSpace(e){ui.disc.space=e.dataset.v;render()},
+  pickToggle(e){const sp=ui.disc.space;if(!Soc.sp[sp])return;const cur=S.picks[sp]||[],v=e.dataset.v;S.picks[sp]=cur.includes(v)?cur.filter(x=>x!==v):cur.concat([v]);save();buzz(8);Soc.sched();render()},
+  planSched(e){const x=S.exps.find(z=>z.id===e.dataset.id);if(!x)return;ui.err="";sheet({type:"sched",id:x.id,val:x.date?toLocalInput(x.date):""})},
+  schedSave(){const x=S.exps.find(z=>z.id===ui.sheet.id),v=($("#sch-in")||{}).value;if(!x)return A.closeSheet();if(!v){x.date=null}else{const t=new Date(v).getTime();if(isNaN(t)){ui.err="Pick a date and time.";return render()}x.date=t}
+    x.updatedAt=Date.now();ui.sheet=null;ui.err="";save();Soc.sched();render();toast(x.date?"Scheduled for "+fmtDate(x.date)+".":"Unscheduled.")},
+  planDone(e){const x=S.exps.find(z=>z.id===e.dataset.id);if(!x)return;ui.xd={...blankX("done"),editing:x.id,fromPlan:true,title:x.title,date:dayKey(x.date&&x.date<=Date.now()?x.date:Date.now()),cat:x.cat==="other"&&x.idea?"adventure":x.cat,location:x.location||"",notes:x.notes||"",sharedNote:x.sharedNote||"",space:x.space||null,photos:(x.photos||[]).slice(),idea:x.idea};
+    if(x.idea){const it=IDEA[x.idea];ui.xd.cat=it.g.includes("food")?"dinner":it.g.includes("romance")?"romantic":it.ds==="away"?"trip":it.g.includes("music")||it.g.includes("culture")?"celebration":"adventure"}
+    openPage({type:"expEdit",from:ui.page})},
+  storyFilter(e){ui.story.space=e.dataset.v;render()},
+  expNew(e){ui.xd=blankX(e.dataset.kind||"done");ui.err="";openPage({type:"expEdit",from:ui.page})},
+  expOpen(e){openPage({type:"exp",id:e.dataset.id,a:e.dataset.a,from:ui.page})},
+  expEdit(e){const x=S.exps.find(z=>z.id===e.dataset.id);if(!x)return;ui.err="";
+    ui.xd={...blankX(x.kind),editing:x.id,title:x.title,date:x.date?dayKey(x.date):"",cat:x.cat,location:x.location||"",favorite:x.favorite||"",mood:x.mood||"",notes:x.notes||"",sharedNote:x.sharedNote||"",space:x.space&&Soc.sp[x.space]?x.space:null,anniv:!!x.anniv,photos:(x.photos||[]).slice(),idea:x.idea||null,keepTime:x.date};openPage({type:"expEdit",from:ui.page})},
+  xCat(e){ui.xd.cat=e.dataset.v;if(ui.xd.cat!=="milestone")ui.xd.anniv=false;render()},
+  xMood(e){ui.xd.mood=ui.xd.mood===e.dataset.v?"":e.dataset.v;render()},
+  xSpace(e){ui.xd.space=e.dataset.v||null;render()},
+  xAnniv(){ui.xd.anniv=!ui.xd.anniv;render()},
+  xPhotoDel(e){const d=ui.xd,id=e.dataset.id;d.photos=d.photos.filter(x=>x!==id);if(d.added.includes(id)){d.added=d.added.filter(x=>x!==id);Photos.del(id)}else d.removed.push(id);render()},
+  expSave(){const d=ui.xd,title=String(d.title||"").trim();
+    if(!title){ui.err="Give it a short title.";return render()}
+    let date=dateFromInput(d.date);if(Number.isNaN(date)){ui.err="That date isn't valid.";return render()}
+    if(d.kind==="done"){if(date===null){ui.err="Pick the date it happened.";return render()}if(date>Date.now()+DAY){ui.err="A memory can't be in the future. Save it as a plan instead.";return render()}}
+    if(d.keepTime&&date&&dayKey(d.keepTime)===d.date)date=d.keepTime;
+    if(d.space&&!Soc.sp[d.space]){ui.err="That space isn't available any more.";return render()}
+    const now=Date.now(),rec={kind:d.kind,title:title.slice(0,80),date,cat:XCATS[d.cat]?d.cat:"other",location:String(d.location||"").trim().slice(0,80),favorite:String(d.favorite||"").trim().slice(0,200),mood:MC[d.mood]?d.mood:"",notes:String(d.notes||"").trim().slice(0,2000),sharedNote:d.space?String(d.sharedNote||"").trim().slice(0,500):"",space:d.space||null,anniv:d.cat==="milestone"&&!!d.anniv,photos:d.photos.slice(0,6),idea:d.idea||null,updatedAt:now};
+    let id=d.editing;if(id){const x=S.exps.find(z=>z.id===id);if(x)Object.assign(x,rec);else id=null}
+    if(!id){id=uid();S.exps.push({id,createdAt:now,...rec})}
+    d.removed.forEach(p=>Photos.del(p));ui.xd=null;ui.err="";save();Soc.sched();
+    const back=ui.page&&ui.page.from;ui.page={type:"exp",id,a:"me",from:d.editing&&back&&back.type==="exp"?back.from||null:back&&back.type!=="expEdit"&&back.type!=="exp"?back:null};
+    render(true);toast(d.fromPlan?"Moved to Our Story.":d.editing?"Saved.":d.kind==="plan"?"Plan saved.":"Memory saved.")},
+  expDelAsk(e){const id=e.dataset.id,x=S.exps.find(z=>z.id===id);if(!x)return;sheet({type:"confirm",title:"Delete this "+(x.kind==="plan"?"plan":"memory")+"?",body:"It's removed from this device"+(S.user.mode==="account"?", your synced copy":"")+(x.space?" and the shared space":"")+", with its photos. This can't be undone.",yes:"Delete",danger:true,fn(){
+    (x.photos||[]).forEach(p=>Photos.del(p));S.exps=S.exps.filter(z=>z.id!==id);S.deleted[id]=Date.now();save();Soc.sched();ui.page=null;render(true);toast("Deleted.")}})},
+  quick(){ui.err="";sheet({type:"quick",cat:"couple",n:3,min:null})},
+  qCat(e){ui.sheet.cat=e.dataset.v;render()},qP(e){ui.sheet.n=clampP(ui.sheet.n+ +e.dataset.d);render()},
+  qDur(e){ui.sheet.min=+e.dataset.v;render()},
+  qSave(){const q=ui.sheet;if(!q.min){ui.err="Pick about how long.";return render()}const now=Date.now(),dur=q.min*60,start=now-dur*1e3;
+    const dup=S.sessions.find(s=>!s.demo&&Math.abs(s.start-start)<=6e4&&Math.abs(s.durationSec-dur)<=5);if(dup){ui.sheet=null;render();return toast("That's already saved.")}
+    S.sessions.push({id:uid(),title:"",start,durationSec:dur,segments:null,category:q.cat,participants:q.cat==="poly"?clampP(q.n):2,satisfaction:null,sharedNote:"",tags:[],mood:"",notes:"",reflection:"",hrAvg:"",hrPeak:"",people:[],createdAt:now,updatedAt:now});
+    ui.sheet=null;ui.err="";save();buzz(25);render();toast("Saved privately, as an estimate.")},
+  spPick(e){ui.spName=($("#sp-name")||{}).value||"";const p=ui.spPick=ui.spPick||[],v=e.dataset.v;ui.spPick=p.includes(v)?p.filter(x=>x!==v):p.concat([v]);render()},
+  spCreate(){const name=(($("#sp-name")||{}).value||"").trim(),pick=(ui.spPick||[]).filter(u=>Soc.conns().includes(u));ui.spName=name;
+    if(!name){ui.err="Name the space.";return render()}if(!pick.length){ui.err="Invite at least one connection.";return render()}
+    return busy(async()=>{try{const it=await Soc.sealSpace({id:uid(),name:name.slice(0,40),owner:Cloud.uid,members:[],invited:pick,v:1});const cur=Soc.spaces[Cloud.uid]||{};await Soc.saveSpaces((cur.items||[]).concat([it]));
+      ui.spPick=[];ui.spName="";ui.err="";toast("Space created. "+names(pick)+" can join.")}catch(x){ui.err="The space couldn't be created. Nothing was shared."}})},
+  spAccept(e){const x=Soc.sp[e.dataset.id];if(!x)return;busy(async()=>{try{await Soc.answerSpace(x,true);toast("You joined "+x.name+".")}catch(z){toast("That couldn't be saved. Try again.")}})},
+  spDecline(e){const x=Soc.sp[e.dataset.id];if(!x)return;busy(async()=>{try{await Soc.answerSpace(x,false);toast("Declined.")}catch(z){toast("That couldn't be saved. Try again.")}})},
+  spLeave(e){const x=Soc.sp[e.dataset.id];if(!x)return;sheet({type:"confirm",title:"Leave "+x.name+"?",body:"You stop seeing what others share there, your picks are withdrawn, and anything you shared into it becomes private again.",yes:"Leave",danger:true,fn(){busy(async()=>{
+    try{await Soc.answerSpace(x,false)}catch(z){return toast("That couldn't be saved. Try again.")}delete S.picks[x.id];S.exps.forEach(z=>{if(z.space===x.id){z.space=null;z.sharedNote="";z.updatedAt=Date.now()}});save();Soc.sched();toast("You left "+x.name+".")})}})},
+  spRemove(e){const x=Soc.sp[e.dataset.id],u=e.dataset.u;if(!x||x.role!=="owner")return;sheet({type:"confirm",title:"Remove "+Soc.handle(u)+"?",body:"They lose access to "+x.name+", and the space gets a new key.",yes:"Remove",danger:true,fn(){busy(async()=>{
+    const items=[];for(const it of ((Soc.spaces[Cloud.uid]||{}).items||[]))items.push(it===x.item?await Soc.sealSpace({id:x.id,name:x.name,owner:Cloud.uid,members:x.members.filter(v=>v!==u),invited:x.invited.filter(v=>v!==u),v:x.v+1}):it);
+    await Soc.saveSpaces(items);toast("Removed.")})}})},
+  spDelete(e){const x=Soc.sp[e.dataset.id];if(!x||x.role!=="owner")return;sheet({type:"confirm",title:"Delete "+x.name+"?",body:"Everyone loses access to it. Your own memories in it become private again. This can't be undone.",yes:"Delete space",danger:true,fn(){busy(async()=>{
+    await Soc.saveSpaces(((Soc.spaces[Cloud.uid]||{}).items||[]).filter(it=>it!==x.item));delete S.picks[x.id];S.exps.forEach(z=>{if(z.space===x.id){z.space=null;z.sharedNote="";z.updatedAt=Date.now()}});save();Soc.sched();toast("Space deleted.")})}})}
+});
+document.addEventListener("change",async ev=>{const t=ev.target;if(t.id!=="x-photo"||!ui.xd)return;const files=Array.from(t.files||[]).slice(0,6-ui.xd.photos.length);
+  for(const f of files){try{const b=await shrink(f),id=uid();await Photos.put(id,b);ui.xd.photos.push(id);ui.xd.added.push(id)}catch(e){toast("A photo couldn't be added.")}}render()});
+
+function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
-document.addEventListener("input",ev=>{bind(ev.target);if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Your other cardio."}});
+document.addEventListener("input",ev=>{bind(ev.target);if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
 document.addEventListener("change",ev=>{if(ev.target.dataset&&ev.target.dataset.live&&ev.target.type==="date"){bind(ev.target);render()}});
 document.addEventListener("keydown",ev=>{const t=ev.target;
   if(ev.key==="Escape"&&ui.sheet){ev.preventDefault();return A.closeSheet()}
@@ -976,19 +1398,19 @@ document.addEventListener("keydown",ev=>{const t=ev.target;
   if(t.id==="d-tag"){ev.preventDefault();const v=t.value.trim();if(v&&S.draft.tags.length<8&&!S.draft.tags.includes(v)){S.draft.tags.push(v.slice(0,24));save();render();const n=$("#d-tag");n&&n.focus()}}
   else if(t.id==="pin-in")A.unlock(); else if(t.id==="addcode")A.addCode(); else if(t.id&&t.id.startsWith("c-")&&t.id!=="c-title")A.comment({dataset:{k:t.id.slice(2)}})});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&S.onboarded&&S.settings.pinHash&&!ui.locked){ui.locked=true;ui.sheet=null;ui.err="";render()}});
-window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.onboarded&&!ui.locked&&TABS().some(x=>x[0]===t)&&(t!==ui.tab||ui.page)){ui.tab=t;ui.page=null;ui.sheet=null;render(true)}});
+window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.onboarded&&!ui.locked&&TABS().some(x=>x[0]===t)&&(t!==ui.tab||ui.page)&&!legacySessions().length){ui.tab=t;ui.page=null;ui.sheet=null;render(true)}});
 
 /* ============ boot ============ */
-(function boot(){const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
+(function boot(){normCats();const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
   if(S.onboarded&&S.settings.pinHash)ui.locked=true;
-  if(S.active)ui.tab="track";
+  if(S.active){ui.tab="intimacy";ui.int.seg="track"}
   render();
   Cloud.init().then(async()=>{
     if(Cloud.state==="ready"&&S.onboarded&&S.user.mode==="account"&&!S.draft){const v=await Cloud.readVault();if(v){mergeVault(v);saveLocal()}Cloud.queueVault()}
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 })();
-window.__vouz={buildCard,get S(){return S},Soc,Cloud,K};
+window.__vouz={buildCard,get S(){return S},Soc,Cloud,K,Photos};
 </script>
 </body>
 </html>

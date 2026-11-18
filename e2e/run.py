@@ -14,7 +14,7 @@ def can_read(u,p):
 def can_write(u,p):
     s=p.split('/')
     if p.startswith('data/users/'): return s[2]==u
-    return s[0] in('profiles','posts','reactions','comments','links','invites','reports') and s[1]==u
+    return s[0] in('profiles','posts','reactions','comments','links','invites','spaces','exps','match','reports') and s[1]==u
 def db_get(src,u,p): return STORE.get(p) if can_read(u,p) else None
 def db_set(src,u,p,d):
     if not can_write(u,p): raise Exception('invalid_argument')
@@ -54,15 +54,24 @@ def newctx(b,uid=None,motion="reduce"):
     p.on("console",lambda m: errs.append(m.text) if m.type=="error" and "ERR_" not in m.text and "Failed to load" not in m.text else None)
     return ctx,p
 def log(p,title,mins,**kw):
-    act(p,"tab",tab="track"); act(p,"manual"); p.fill("#d-title",title); p.fill("#d-min",str(mins))
+    nav(p,"track"); act(p,"manual"); p.fill("#d-title",title); p.fill("#d-min",str(mins))
     if "notes" in kw: p.fill("#d-notes",kw["notes"])
     if "hr" in kw: p.fill("#d-hra",kw["hr"])
     if "cat" in kw: act(p,"dCat",v=kw["cat"])
     if "mood" in kw: act(p,"dMood",v=kw["mood"])
     if "tag" in kw: p.fill("#d-tag",kw["tag"]); p.press("#d-tag","Enter")
     act(p,"saveSession"); p.wait_for_selector("text=Saved privately"); act(p,"back")
+def nav(p,t):
+    for _ in range(6):
+        if p.locator(".tabs").count(): break
+        if p.locator(".sheet").count(): act(p,"closeSheet")
+        act(p,"back")
+    if t in ("track","history","insights"): nav(p,"intimacy"); act(p,"iSeg",v=t)
+    elif t=="social": nav(p,"profile"); act(p,"page",page="social")
+    elif t in ("ideas","match","plans"): nav(p,"discover"); act(p,"discSeg",v=t)
+    else: act(p,"tab",tab=t)
 def feed(p):
-    act(p,"tab",tab="social"); act(p,"socSeg",v="feed"); p.wait_for_timeout(700); return p.inner_text(".scroll")
+    nav(p,"social"); act(p,"socSeg",v="feed"); p.wait_for_timeout(700); return p.inner_text(".scroll")
 with sync_playwright() as pw:
     b=pw.chromium.launch(executable_path="/usr/bin/google-chrome",args=["--no-sandbox"])
     # ---------- local mode ----------
@@ -70,14 +79,16 @@ with sync_playwright() as pw:
     ok("onboarding is 3 steps with required 18+ acknowledgment",p.locator(".steps i").count()==3)
     onboard(p)
     s=S(p); ok("onboarding: social off by default, local mode",s["onboarded"] and not s["settings"]["social"] and s["user"]["mode"]=="local")
-    ok("nav: social tab hidden when off",p.locator(".tab").count()==4)
-    ok("home: empty state, ring present, no fabricated stats",p.locator("text=Nothing logged yet").count()==1 and p.locator(".trio").count()==0 and p.locator('.stage g[data-act="pickDay"]').count()==7)
-    act(p,"start"); p.wait_for_timeout(2100); act(p,"pause"); p.wait_for_timeout(1000)
+    ok("nav: five tabs: Home, Intimacy, Discover, Our Story, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Intimacy","Discover","Our Story","Profile"])
+    t=p.inner_text(".scroll"); ok("home: empty states, no fabricated stats","Nothing planned" in t and "Nothing logged this week" in t and "Nothing here yet" in t and p.locator(".trio").count()==0)
+    ok("brand: new tagline, old one gone","Less scrolling. More together." in t and "cardio" not in p.content().lower())
+    nav(p,"history"); ok("history: empty state, no fabricated stats",p.locator("text=Nothing logged yet").count()==1 and p.locator(".trio").count()==0)
+    nav(p,"track"); act(p,"start"); p.wait_for_timeout(2100); act(p,"pause"); p.wait_for_timeout(1000)
     t_paused=p.inner_text("#clock"); p.wait_for_timeout(1100)
     ok("timer: paused clock does not advance",p.inner_text("#clock")==t_paused,t_paused)
     act(p,"resume"); p.reload(); p.wait_for_selector("#clock"); p.wait_for_timeout(1200)
     ok("timer: active session survives reload",p.inner_text("#clock")>="00:00:03",p.inner_text("#clock"))
-    act(p,"finish"); p.fill("#d-title","Friday"); p.fill("#d-notes","SECRETNOTE"); p.fill("#d-hra","111"); act(p,"dCat",v="duo"); act(p,"dMood",v="Tender")
+    act(p,"finish"); p.fill("#d-title","Friday"); p.fill("#d-notes","SECRETNOTE"); p.fill("#d-hra","111"); act(p,"dCat",v="couple"); act(p,"dMood",v="Tender")
     p.reload(); p.wait_for_timeout(300); act(p,"resumeDraft")
     ok("draft survives reload",p.input_value("#d-notes")=="SECRETNOTE")
     act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
@@ -87,35 +98,35 @@ with sync_playwright() as pw:
     act(p,"rSeg",i="1"); ok("replay: tapping a part shows its detail","Part 2 of 2" in p.inner_text(".scroll"))
     p.fill("#rf-text","REFLECTTEXT"); act(p,"rSave"); act(p,"rMood",v="Playful")
     e=S(p)["sessions"][0]; ok("replay: reflection and mood saved privately",e["reflection"]=="REFLECTTEXT" and e["mood"]=="Playful")
-    act(p,"back"); act(p,"tab",tab="track"); act(p,"manual"); p.fill("#d-min","0"); p.fill("#d-sec","0"); act(p,"saveSession")
+    act(p,"back"); nav(p,"track"); act(p,"manual"); p.fill("#d-min","0"); p.fill("#d-sec","0"); act(p,"saveSession")
     ok("validation: zero duration rejected",p.locator(".err").count()==1 and len(S(p)["sessions"])==1)
-    p.fill("#d-min","40"); act(p,"dCat",v="solo"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
+    p.fill("#d-min","40"); act(p,"dCat",v="poly"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
     ok("replay: history comparison appears with 2+ sessions","your average" in p.inner_text(".scroll") and "Session 1 of 2" in p.inner_text(".scroll"))
-    act(p,"back"); act(p,"tab",tab="home")
+    act(p,"back"); nav(p,"history")
     tiles=[t.inner_text() for t in p.locator(".trio b").all()]
-    ok("home stats computed from records",tiles[0]=="2" and tiles[1].startswith("40"),str(tiles))
+    ok("history stats computed from records",tiles[0]=="2" and tiles[1].startswith("40"),str(tiles))
     todayI=p.evaluate("(new Date().getDay()+6)%7"); other=(todayI+3)%7
     p.locator(f'.stage g[data-i="{other}"]').focus(); p.keyboard.press("Enter")
-    ok("home ring: day arcs selectable by keyboard",p.locator(f'.stage g[data-i="{other}"]').get_attribute("aria-pressed")=="true")
+    ok("history ring: day arcs selectable by keyboard",p.locator(f'.stage g[data-i="{other}"]').get_attribute("aria-pressed")=="true")
     act(p,"openReplay",id=sid) if p.locator(f'[data-act="openReplay"][data-id="{sid}"]').count() else None
     act(p,"editSession",id=sid); p.fill("#d-min","10"); p.fill("#d-sec","0"); act(p,"saveSession"); p.wait_for_timeout(200)
     e=[x for x in S(p)["sessions"] if x["id"]==sid][0]
     ok("J2 edit updates record, keeps private fields",e["durationSec"]==600 and e["notes"]=="SECRETNOTE" and e["reflection"]=="REFLECTTEXT")
-    act(p,"back"); act(p,"tab",tab="insights"); act(p,"insRange",v="year")
+    act(p,"back"); nav(p,"insights"); act(p,"insRange",v="year")
     tl=[t.inner_text() for t in p.locator(".tile b").all()]
     ok("J4 analytics reflect edit",tl[0]=="2" and tl[1]=="50m" and tl[3].startswith("40m"),str(tl[:4]))
-    act(p,"insCat",v="solo"); ok("filter: category",p.locator(".tile b").first.inner_text()=="1")
+    act(p,"insCat",v="poly"); ok("filter: Couple or Poly",p.locator(".tile b").first.inner_text()=="1")
     act(p,"insCat",v="all"); act(p,"insTab",v="patterns"); t=p.inner_text(".scroll")
-    ok("insights: time-of-day and weekday patterns","time of day" in t.lower() and "most often in the" in t.lower() and "categories" in t.lower())
+    ok("insights: time-of-day and weekday patterns","time of day" in t.lower() and "most often in the" in t.lower() and "couple and poly" in t.lower())
     act(p,"insTab",v="mood"); t=p.inner_text(".scroll"); ok("insights: mood and reflections","Playful" in t and "REFLECTTEXT" in t)
     ok("insights copy never frames more as better",not re.search(r"\b(better than|keep it up|great job|improve|goal reached|up from)\b",p.inner_text("body"),re.I))
     act(p,"insTab",v="overview"); act(p,"insRange",v="custom"); p.fill("#i-from","2020-01-01"); p.dispatch_event("#i-from","change"); p.fill("#i-to","2020-01-31"); p.dispatch_event("#i-to","change")
     ok("filter: custom range",p.locator(".tile b").first.inner_text()=="0")
-    act(p,"tab",tab="home"); act(p,"page",page="history"); act(p,"openReplay",id=sid); act(p,"editSession",id=sid); act(p,"askDelete"); ok("delete asks for confirmation",p.locator(".sheet").count()==1 and len(S(p)["sessions"])==2)
+    nav(p,"history"); act(p,"openReplay",id=sid); act(p,"editSession",id=sid); act(p,"askDelete"); ok("delete asks for confirmation",p.locator(".sheet").count()==1 and len(S(p)["sessions"])==2)
     p.keyboard.press("Escape"); ok("sheets close with Escape",p.locator(".sheet").count()==0)
     act(p,"askDelete"); act(p,"confirmYes"); ok("J3 delete removes record and leaves a tombstone",len(S(p)["sessions"])==1 and sid in S(p)["deleted"])
-    act(p,"tab",tab="home"); ok("J4 analytics reflect delete",p.locator(".trio b").first.inner_text()=="1")
-    act(p,"tab",tab="profile"); ok("social toggle unavailable without account",p.locator('[data-act="toggleSocial"]').is_disabled())
+    nav(p,"history"); ok("J4 analytics reflect delete",p.locator(".trio b").first.inner_text()=="1")
+    nav(p,"profile"); ok("social toggle unavailable without account",p.locator('[data-act="toggleSocial"]').is_disabled())
     small=p.evaluate("""()=>Array.from(document.querySelectorAll('button,[role=button],input,textarea')).filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.height<43.5)}).map(e=>(e.dataset.act||e.id||e.tagName)+':'+Math.round(e.getBoundingClientRect().height))""")
     ok("touch targets at least 44px (profile)",not small,str(small))
     act(p,"togglePin"); p.fill("#pin-new","1234"); act(p,"pinSave"); p.wait_for_timeout(600)
@@ -126,8 +137,8 @@ with sync_playwright() as pw:
     ok("passcode: five wrong tries start a wait","Wait" in p.inner_text("body") and p.locator("#pin-in").is_disabled())
     p.evaluate("()=>{const s=JSON.parse(localStorage.getItem('vouz.v1'));s.settings.pinUntil=0;localStorage.setItem('vouz.v1',JSON.stringify(s))}"); p.reload(); p.wait_for_selector("#pin-in")
     p.fill("#pin-in","1234"); act(p,"unlock"); p.wait_for_selector(".tabs"); ok("passcode: right code unlocks",True)
-    act(p,"tab",tab="profile"); act(p,"loadDemo"); act(p,"tab",tab="home"); ok("demo data is labelled",p.locator(".banner").count()==1)
-    act(p,"tab",tab="profile"); act(p,"exportData"); p.wait_for_selector("#exp-out"); ex=p.input_value("#exp-out")
+    nav(p,"profile"); act(p,"loadDemo"); nav(p,"home"); ok("demo data is labelled",p.locator(".banner").count()==1)
+    nav(p,"profile"); act(p,"exportData"); p.wait_for_selector("#exp-out"); ex=p.input_value("#exp-out")
     ok("export: own sessions only, no passcode or keys",'"sessions"' in ex and '"pinHash": null' in ex and '"demo": true' not in ex and '"keys"' not in ex); act(p,"closeSheet")
     act(p,"removeDemo"); ok("demo removed, own data kept",len(S(p)["sessions"])==1)
     act(p,"sheet",s="deleteAccount"); act(p,"deleteAccountYes"); ok("delete account needs typed confirm",S(p)["onboarded"])
@@ -138,17 +149,17 @@ with sync_playwright() as pw:
     ca,a=newctx(b,"alice"); cb,bb=newctx(b,"bob"); cc,c=newctx(b,"carol")
     for pg,nm in ((a,"ali"),(bb,"bobby"),(c,"caz")):
         pg.goto(URL); pg.wait_for_timeout(400); onboard(pg,account=(pg is a))
-    log(a,"PRIVATETITLE",33,notes="SECRETNOTE",hr="123",cat="duo",mood="Electric",tag="SECRETTAG"); a.wait_for_timeout(1700)
+    log(a,"PRIVATETITLE",33,notes="SECRETNOTE",hr="123",cat="couple",mood="Electric",tag="SECRETTAG"); a.wait_for_timeout(1700)
     ok("account sync: only the private vault is written",set(STORE.keys())=={"data/users/alice/vault"},str(list(STORE.keys())))
     ok("private vault unreadable by another user",db_get(None,"bob","data/users/alice/vault") is None)
     for pg,nm in ((a,"ali"),(bb,"bobby"),(c,"caz")):
-        act(pg,"tab",tab="profile"); act(pg,"toggleSocial"); pg.fill("#s-handle",nm); act(pg,"sheetPrivate"); act(pg,"socialOnYes"); pg.wait_for_selector('.tab[data-tab="social"]'); pg.wait_for_timeout(300)
-    ok("J5 enable social: profile + keys created, nothing posted","profiles/alice" in STORE and "data/users/alice/keys" in STORE and "posts/alice" not in STORE and a.locator(".tab").count()==5)
+        nav(pg,"profile"); act(pg,"toggleSocial"); pg.fill("#s-handle",nm); act(pg,"sheetPrivate"); act(pg,"socialOnYes"); pg.wait_for_function("window.__vouz.S.settings.social===true"); pg.wait_for_timeout(300)
+    ok("J5 enable social: profile + keys created, nothing posted","profiles/alice" in STORE and "data/users/alice/keys" in STORE and "posts/alice" not in STORE)
     # connect alice<->bob ; carol stays unconnected
     act(a,"socSeg",v="people"); a.wait_for_timeout(500); act(a,"request",id="bob"); a.wait_for_timeout(500)
     links=json.dumps(STORE["links/alice"]); ok("connection list stores opaque labels, not user ids","bob" not in links and "alice" not in links,links[:120])
     sid=S(a)["sessions"][0]["id"]
-    act(a,"tab",tab="home"); act(a,"page",page="history"); act(a,"openReplay",id=sid); act(a,"composeRecap",id=sid); a.fill("#c-cap","CONNCAPTION")
+    nav(a,"history"); act(a,"openReplay",id=sid); act(a,"composeRecap",id=sid); a.fill("#c-cap","CONNCAPTION")
     ok("composer defaults to connections audience",a.locator('[data-act="cAud"][data-v="all"]').get_attribute("aria-pressed")=="true")
     act(a,"composeStep",v="preview"); ok("J6 preview required before share",a.locator('[data-act="publish"]').count()==1 and "posts/alice" not in STORE)
     a.screenshot(path=SH+"preview.png"); act(a,"publish"); a.wait_for_timeout(900)
@@ -163,34 +174,36 @@ with sync_playwright() as pw:
     tk=bb.locator('[data-act="comment"]').first.get_attribute("data-k"); bb.fill(f'[id="c-{tk}"]',"SECRETCOMMENT"); act(bb,"comment",k=tk); act(bb,"react",k=tk,e="🔥"); bb.wait_for_timeout(900)
     ok("comment on a connections-only card is encrypted, and unlinkable to the card","SECRETCOMMENT" not in json.dumps(STORE["comments/bob"]) and STORE["posts/alice"]["items"][0]["id"] not in json.dumps(STORE["comments/bob"])+json.dumps(STORE["reactions/bob"]))
     ok("author reads the comment and reaction","SECRETCOMMENT" in feed(a) and "🔥 1" in a.inner_text(".scroll"))
-    # public card
-    act(a,"tab",tab="home"); act(a,"page",page="history"); act(a,"openReplay",id=sid); act(a,"composeRecap",id=sid); a.fill("#c-cap","PUBLICCAP"); act(a,"cAud",v="everyone"); act(a,"composeStep",v="preview"); act(a,"publish"); a.wait_for_timeout(800)
+    # public card: only achievement cards can go to everyone
+    nav(a,"history"); act(a,"openReplay",id=sid); act(a,"composeRecap",id=sid)
+    ok("a session card can never be shared with everyone",a.locator('[data-act="cAud"][data-v="everyone"]').count()==0)
+    a.evaluate("()=>{}"); nav(a,"profile"); act(a,"page",page="achievements"); act(a,"composeAch",id="first"); a.fill("#c-cap","PUBLICCAP"); act(a,"cAud",v="everyone"); act(a,"composeStep",v="preview"); act(a,"publish"); a.wait_for_timeout(800)
     pub=json.dumps([i for i in STORE["posts/alice"]["items"] if i.get("vis")=="everyone"])
-    ok("everyone-card is sanitized whitelist only","PUBLICCAP" in pub and "About 35 min" in pub and not any(w in pub for w in ["SECRETNOTE","SECRETTAG","PRIVATETITLE","Electric","123",sid]),pub)
+    ok("everyone-card is sanitized whitelist only","PUBLICCAP" in pub and not any(w in pub for w in ["SECRETNOTE","SECRETTAG","PRIVATETITLE","Electric","123","About",sid]),pub)
     ok("everyone-card visible to unconnected user","PUBLICCAP" in feed(c))
     # permission off -> key withdrawn
-    act(a,"tab",tab="social"); act(a,"socSeg",v="people"); a.wait_for_timeout(400); act(a,"sheet",s="conn",id="bob"); act(a,"permRecaps",id="bob"); a.wait_for_timeout(1300)
+    nav(a,"social"); act(a,"socSeg",v="people"); a.wait_for_timeout(400); act(a,"sheet",s="conn",id="bob"); act(a,"permRecaps",id="bob"); a.wait_for_timeout(1300)
     ok("turning a permission off removes the recipient key",len([i for i in STORE["posts/alice"]["items"] if i.get("c")][0]["wk"])==1)
     ok("and the connection loses the card","CONNCAPTION" not in feed(bb))
     act(a,"permRecaps",id="bob"); a.wait_for_timeout(1300); act(a,"closeSheet"); ok("turning it back on restores access","CONNCAPTION" in feed(bb))
     # ---------- adding people to a saved session ----------
-    def replay(pg,i): act(pg,"tab",tab="home"); act(pg,"page",page="history"); act(pg,"openReplay",id=i); pg.wait_for_timeout(200)
+    def replay(pg,i): nav(pg,"history"); act(pg,"openReplay",id=i); pg.wait_for_timeout(200)
     def home(pg):
         while pg.locator('[data-act="back"]').count(): act(pg,"back")
-        act(pg,"tab",tab="home"); pg.wait_for_timeout(700); return pg.inner_text(".scroll")
+        nav(pg,"home"); pg.wait_for_timeout(700); return pg.inner_text(".scroll")
     replay(a,sid); act(a,"addPeople"); names=[x.locator("b").inner_text().strip() for x in a.locator('[data-act="inviteAsk"]').all()]
     ok("people: only my connections are offered",names==["bobby"],str(names))
-    act(a,"inviteAsk",id="bob"); ok("people: sending asks first and says what is shown","date, time, length and category (Duo)" in a.inner_text(".sheet") and "invites/alice" not in STORE); a.screenshot(path=SH+"ppl_confirm.png")
+    act(a,"inviteAsk",id="bob"); ok("people: sending asks first and says what is shown","date, time, length, Couple" in a.inner_text(".sheet") and "invites/alice" not in STORE); a.screenshot(path=SH+"ppl_confirm.png")
     act(a,"confirmYes"); a.wait_for_timeout(900); raw=json.dumps(STORE["invites/alice"]); st=str(S(a)["sessions"][0]["start"])
     ok("people: the invite is sealed in storage",len(STORE["invites/alice"]["items"])==1 and not any(w in raw for w in ["bob","alice",sid,st,"duo","1980","PRIVATETITLE","SECRETNOTE"]),raw[:200])
     ok("people: sender sees Invited","Invited" in a.inner_text(".scroll") and S(a)["sessions"][0]["people"][0]["id"]=="bob"); a.screenshot(path=SH+"ppl_replay.png")
     hb=home(bb); bb.screenshot(path=SH+"ppl_inbox.png")
-    ok("people: the invited person is asked, nothing is added yet","ali added you to a session" in hb and "Duo" in hb and len(S(bb)["sessions"])==0,hb[:200])
+    ok("people: the invited person is asked, nothing is added yet","ali added you to a session" in hb and "Couple" in hb and len(S(bb)["sessions"])==0,hb[:200])
     ok("people: nobody else can see the invite","added you" not in home(c) and c.evaluate("window.__vouz.Soc.inbox.length")==0)
     act(bb,"invYes"); bb.wait_for_timeout(900); bs=S(bb)["sessions"]
-    ok("people: accepting saves a private copy with time, length and category only",len(bs)==1 and bs[0]["durationSec"]==1980 and bs[0]["category"]=="duo" and bs[0]["start"]==S(a)["sessions"][0]["start"] and bs[0]["notes"]=="" and bs[0]["title"]=="" and bs[0]["mood"]=="" and bs[0]["tags"]==[] and bs[0]["hrAvg"]=="" and "Added you" in bb.inner_text(".scroll"),str(bs)[:300])
+    ok("people: accepting saves a private copy with time, length and category only",len(bs)==1 and bs[0]["durationSec"]==1980 and bs[0]["category"]=="couple" and bs[0]["participants"]==2 and bs[0]["start"]==S(a)["sessions"][0]["start"] and bs[0]["notes"]=="" and bs[0]["title"]=="" and bs[0]["mood"]=="" and bs[0]["tags"]==[] and bs[0]["hrAvg"]=="" and "you confirmed" in bb.inner_text(".scroll") and "Mutually confirmed" in bb.inner_text(".scroll"),str(bs)[:300])
     ok("people: the invite leaves the inbox once answered","added you" not in home(bb))
-    a.wait_for_timeout(600); ok("people: sender sees Confirmed","Confirmed" in a.inner_text(".scroll"))
+    a.wait_for_timeout(600); ok("people: sender sees Mutually confirmed","Mutually confirmed" in a.inner_text(".scroll"))
     card=a.evaluate("JSON.stringify(window.__vouz.buildCard({kind:'recap',style:0,title:'t',showDuration:true,showCategory:true},window.__vouz.S.sessions[0]))")
     ok("people: a shared card never carries who was there","bob" not in card and "people" not in card,card)
     replay(bb,bs[0]["id"]); act(bb,"personOff"); bb.wait_for_timeout(900); a.wait_for_timeout(600)
@@ -202,7 +215,7 @@ with sync_playwright() as pw:
     ok("people: declining saves nothing, and the sender sees Declined",len(S(a)["sessions"])==1 and "added you" not in home(a) and "Declined" in bb.inner_text(".scroll"))
     act(bb,"editSession",id=bid); act(bb,"askDelete"); act(bb,"confirmYes"); bb.wait_for_timeout(900)
     ok("people: deleting a session withdraws its invites",STORE["invites/bob"]["items"]==[])
-    home(a); home(bb); act(a,"tab",tab="social"); act(a,"socSeg",v="people"); a.wait_for_timeout(300); feed(c)
+    home(a); home(bb); nav(a,"social"); act(a,"socSeg",v="people"); a.wait_for_timeout(300); feed(c)
     # tamper: bob cannot write alice's docs
     try: db_set(None,"bob","posts/alice",'{"items":[]}'); tam=False
     except Exception: tam=True
@@ -215,85 +228,116 @@ with sync_playwright() as pw:
     act(c,"postMenu",a="alice"); act(c,"report",a="alice"); act(c,"reportWhy",v="Harassment"); act(c,"reportSend"); c.wait_for_timeout(400)
     ok("report filed, unreadable by the reported user",len(STORE["reports/carol"]["items"])==1 and db_get(None,"alice","reports/carol") is None)
     # J8 social off (keep) -> nothing left in shared storage, stashed privately; back on -> restored
-    act(a,"tab",tab="profile"); act(a,"toggleSocial"); act(a,"socialOffYes"); a.wait_for_timeout(900)
-    ok("J8 Social off: nothing of mine left in shared storage, tracking intact",not any(k.endswith("/alice") and not k.startswith("data/") for k in STORE) and "data/users/alice/stash" in STORE and a.locator(".tab").count()==4 and len(S(a)["sessions"])==1,str([k for k in STORE if "alice" in k]))
+    nav(a,"profile"); act(a,"toggleSocial"); act(a,"socialOffYes"); a.wait_for_timeout(900)
+    ok("J8 Social off: nothing of mine left in shared storage, tracking intact",not any(k.endswith("/alice") and not k.startswith("data/") for k in STORE) and "data/users/alice/stash" in STORE and a.locator('[data-page="spaces"]').count()==0 and len(S(a)["sessions"])==1,str([k for k in STORE if "alice" in k]))
     ok("others no longer see my cards","PUBLICCAP" not in feed(c))
-    act(a,"toggleSocial"); a.fill("#s-handle","ali"); act(a,"socialOnYes"); a.wait_for_selector('.tab[data-tab="social"]'); a.wait_for_timeout(900)
+    act(a,"toggleSocial"); a.fill("#s-handle","ali"); act(a,"socialOnYes"); a.wait_for_function("window.__vouz.S.settings.social===true"); a.wait_for_timeout(900)
     ok("Social back on restores my cards","posts/alice" in STORE and "data/users/alice/stash" not in STORE and "PUBLICCAP" in feed(c))
-    act(a,"tab",tab="profile"); act(a,"toggleSocial"); act(a,"sheetWipe"); act(a,"socialOffYes"); a.wait_for_timeout(900)
+    nav(a,"profile"); act(a,"toggleSocial"); act(a,"sheetWipe"); act(a,"socialOffYes"); a.wait_for_timeout(900)
     ok("J8 Social off with delete: shared content, stash and keys gone",not any("alice" in k for k in STORE if k!="data/users/alice/vault"),str([k for k in STORE if "alice" in k]))
     # sync merge across devices
     ca2,a2=newctx(b,"alice"); a2.goto(URL); a2.wait_for_timeout(400); act(a2,"obNext"); act(a2,"obAdult"); act(a2,"obNext"); act(a2,"obMode",mode="account"); a2.wait_for_selector('[data-act="obRestore"]'); act(a2,"obRestore"); a2.wait_for_timeout(300)
     ok("second device restores from private sync",len(S(a2)["sessions"])==1 and S(a2)["sessions"][0]["notes"]=="SECRETNOTE")
     log(a2,"fromdevice2",12); a2.wait_for_timeout(1700)
-    act(a,"tab",tab="home"); act(a,"page",page="history"); act(a,"openReplay",id=sid); act(a,"editSession",id=sid); act(a,"askDelete"); act(a,"confirmYes"); a.wait_for_timeout(1700)
+    nav(a,"history"); act(a,"openReplay",id=sid); act(a,"editSession",id=sid); act(a,"askDelete"); act(a,"confirmYes"); a.wait_for_timeout(1700)
     a.reload(); a.wait_for_timeout(2200); a2.reload(); a2.wait_for_timeout(2200)
     t1=sorted(x["title"] for x in S(a)["sessions"]); t2=sorted(x["title"] for x in S(a2)["sessions"])
     ok("sync merges: new session arrives, deletion propagates",t1==["fromdevice2"] and t2==["fromdevice2"],f"{t1} {t2}")
     # J10
-    act(a,"tab",tab="profile"); act(a,"sheet",s="deleteAccount"); a.fill("#del-in","DELETE"); act(a,"deleteAccountYes"); a.wait_for_selector(".ob"); a.wait_for_timeout(600)
+    nav(a,"profile"); act(a,"sheet",s="deleteAccount"); a.fill("#del-in","DELETE"); act(a,"deleteAccountYes"); a.wait_for_selector(".ob"); a.wait_for_timeout(600)
     ok("J10 account deletion removes vault and every document of mine",not any("alice" in k for k in STORE),str([k for k in STORE if "alice" in k]))
     for x in (ca,cb,cc,ca2): x.close()
 
-    # ---------- categories: existing data, every category, filters ----------
+    # ---------- earlier data: conversion to Couple/Poly and removal of Solo/Partnered ----------
+    NOW=int(time.time()*1000); D=86400000
+    def L(i,cat,days,**kw): return {"id":i,"title":i.upper(),"start":NOW-days*D,"durationSec":900,"segments":None,"category":cat,"tags":[],"mood":"","notes":"keep-"+i,"hrAvg":"","hrPeak":"","createdAt":1,"updatedAt":1,**kw}
     LEG={"v":1,"onboarded":True,"stamp":1,"user":{"name":"Sid","mode":"local","createdAt":1},"settings":{"social":False,"privateProfile":True,"defaultVis":"connections","regular":None,"pinHash":None,"pinSalt":None},
-         "sessions":[{"id":"old1","title":"OLDSOLO","start":int(time.time()*1000)-3*86400000,"durationSec":900,"segments":None,"category":"solo","tags":[],"mood":"","notes":"keepme","hrAvg":"","hrPeak":"","createdAt":1,"updatedAt":1},
-                     {"id":"old2","title":"OLDPARTNERED","start":int(time.time()*1000)-2*86400000,"durationSec":1800,"segments":None,"category":"partnered","tags":["x"],"mood":"Tender","notes":"","hrAvg":"","hrPeak":"","createdAt":1,"updatedAt":1}],
+         "sessions":[L("osolo","solo",3),L("opart","partnered",2),L("oduo","duo",4),L("otrio","trio",5),L("ogrp","group",6,groupSize=6),L("ogrpx","group",7),L("onone",None,8)],
          "active":None,"draft":None,"blocks":[],"ignored":[]}
     ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script("if(!localStorage.getItem('vouz.v1'))localStorage.setItem('vouz.v1',"+json.dumps(json.dumps(LEG))+")")
-    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e))); p.goto(URL); p.wait_for_selector(".tabs")
-    ok("cat: app opens on saved data from the earlier version",p.locator(".trio b").first.inner_text()=="2")
-    act(p,"page",page="history"); h=p.inner_text(".scroll")
-    ok("cat: earlier solo and partnered sessions still listed with their labels","OLDSOLO" in h and "OLDPARTNERED" in h and "Partnered" in h and "Solo" in h)
-    act(p,"openReplay",id="old2"); ok("cat: Replay works for an earlier partnered session",p.locator(".pill.c").first.inner_text()=="Partnered")
-    act(p,"editSession",id="old2"); ok("cat: edit form keeps Partnered selected for an earlier session",p.locator('[data-act="dCat"][data-v="partnered"]').get_attribute("aria-pressed")=="true" and p.locator('[data-act="dCat"]').count()==5)
-    p.fill("#d-title","OLDPARTNERED2"); act(p,"saveSession"); p.wait_for_timeout(200)
-    raw=json.loads(p.evaluate("localStorage.getItem('vouz.v1')")); by={x["id"]:x for x in raw["sessions"]}
-    ok("cat: editing an earlier session does not reclassify it",by["old2"]["category"]=="partnered" and by["old2"]["title"]=="OLDPARTNERED2" and by["old1"]["category"]=="solo" and by["old1"]["notes"]=="keepme")
-    act(p,"back")
-    act(p,"tab",tab="track"); act(p,"manual"); ok("cat: new sessions offer Solo, Duo, Trio, Group only",[x.inner_text() for x in p.locator('[data-act="dCat"]').all()]==["Solo","Duo","Trio","Group"]); act(p,"back")
-    for cat in ("solo","duo","trio"): log(p,"NEW"+cat,10,cat=cat)
-    act(p,"tab",tab="track"); act(p,"manual"); p.fill("#d-title","NEWgroup"); act(p,"dCat",v="group"); p.fill("#d-gsize","3"); act(p,"saveSession")
-    ok("cat: group count below 4 is rejected",p.locator(".err").count()==1)
-    p.fill("#d-gsize","5"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
-    ok("cat: Replay shows the group size privately",p.locator(".pill.c").first.inner_text()=="Group of 5"); gid=S(p)["sessions"][-1]["id"]; act(p,"back")
-    log(p,"NEWgroupblank",10,cat="group"); log(p,"NEWnone",10)
-    ss={x["title"]:x for x in S(p)["sessions"]}
-    ok("cat: every category saves; count optional; category optional",ss["NEWsolo"]["category"]=="solo" and ss["NEWduo"]["category"]=="duo" and ss["NEWtrio"]["category"]=="trio" and ss["NEWgroup"]["groupSize"]==5 and ss["NEWgroupblank"]["groupSize"] is None and ss["NEWnone"]["category"] is None)
-    # timer-based save with a category
-    act(p,"tab",tab="track"); act(p,"start"); p.wait_for_timeout(1200); act(p,"pause"); act(p,"resume"); p.wait_for_timeout(300); act(p,"finish"); act(p,"dCat",v="trio"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately"); act(p,"back")
-    ok("cat: timer start, pause, resume, finish saves with a category",S(p)["sessions"][-1]["category"]=="trio" and len(S(p)["sessions"][-1]["segments"])==2)
-    act(p,"tab",tab="home"); act(p,"page",page="history"); h=p.inner_text(".scroll")
-    ok("cat: history shows all labels",all(w in h for w in ["Solo","Duo","Trio","Group of 5","Group","Partnered"]))
-    act(p,"openReplay",id=gid); act(p,"rScope",v="cat"); ok("cat: Replay same-category comparison works for Group","your average" in p.inner_text(".scroll")); act(p,"back"); act(p,"back")
-    act(p,"tab",tab="insights"); act(p,"insRange",v="year"); cnt={}
-    for cat in ("all","solo","duo","trio","group","partnered"): act(p,"insCat",v=cat); cnt[cat]=p.locator(".tile b").first.inner_text()
-    ok("cat: Insights filters count each category",cnt=={"all":"9","solo":"2","duo":"1","trio":"2","group":"2","partnered":"1"},str(cnt))
-    act(p,"insCat",v="all"); act(p,"insTab",v="patterns"); t=p.inner_text(".scroll")
-    ok("cat: Insights category breakdown lists all, plus not set",all(w in t for w in ["Solo 2","Duo 1","Trio 2","Group 2","Partnered 1","Not set 1"]))
-    card=p.evaluate("id=>JSON.stringify(window.__vouz.buildCard({kind:'recap',showCategory:true,showDuration:true,style:0},window.__vouz.S.sessions.find(s=>s.id===id)))",gid)
-    ok("cat: a shared card says Group and never the head count",'"category":"Group"' in card and "5" not in card.replace("About 5 min","").replace('"arc":5',""),card)
-    p.reload(); p.wait_for_selector(".tabs"); ok("cat: all data still there after reload, key unchanged",len(S(p)["sessions"])==9 and p.evaluate("Object.keys(localStorage).join()")=="vouz.v1")
-    act(p,"tab",tab="profile"); ok("cat: privacy settings unchanged (Social off, tab hidden)",S(p)["settings"]["social"] is False and p.locator(".tab").count()==4)
-    p.screenshot(path=SH+"cat_profile.png"); act(p,"tab",tab="track"); act(p,"manual"); act(p,"dCat",v="group"); p.screenshot(path=SH+"cat_form.png")
-    # quick category on the Track screen
-    act(p,"back"); act(p,"tab",tab="track")
-    ok("quick: Track offers the four categories before starting",[x.inner_text() for x in p.locator('[data-act="tCat"]').all()]==["Solo","Duo","Trio","Group"])
-    act(p,"tCat",v="duo"); p.screenshot(path=SH+"cat_track.png"); act(p,"start"); p.wait_for_timeout(1100)
-    ok("quick: choice made before start is carried into the running session",S(p)["active"]["category"]=="duo" and p.locator('[data-act="tCat"][data-v="duo"]').get_attribute("aria-pressed")=="true")
-    act(p,"pause"); act(p,"tCat",v="trio"); act(p,"resume"); p.screenshot(path=SH+"cat_live.png"); p.reload(); p.wait_for_selector(".tabs"); act(p,"tab",tab="track")
-    ok("quick: change during a session survives a reload, timer intact",S(p)["active"]["category"]=="trio" and len(S(p)["active"]["segments"])==2)
-    act(p,"finish"); ok("quick: save form opens with it selected, category first",p.locator('[data-act="dCat"][data-v="trio"]').get_attribute("aria-pressed")=="true" and p.locator(".scroll h3").first.inner_text().startswith("CATEGORY") or p.locator(".scroll h3").first.inner_text().lower().startswith("category"))
-    p.screenshot(path=SH+"cat_save.png"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately"); act(p,"back")
-    ok("quick: timer session saved with the Track choice",S(p)["sessions"][-1]["category"]=="trio" and len(S(p)["sessions"][-1]["segments"])==2)
-    act(p,"tab",tab="track"); act(p,"start"); p.wait_for_timeout(1100); act(p,"finish"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately"); act(p,"back")
-    ok("quick: skipping it still saves with no category, and the earlier pick does not stick",S(p)["sessions"][-1]["category"] is None)
+    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e))); p.goto(URL); p.wait_for_selector(".sheet")
+    t=p.inner_text(".sheet"); ok("legacy: a notice explains the change before anything is removed","1 Solo session and 1 Partnered session" in t and len(S(p)["sessions"])==7,t[:160])
+    by={x["id"]:x for x in S(p)["sessions"]}
+    ok("legacy: Duo becomes Couple, Trio and Group become Poly with their head count",[by[k]["category"] for k in ("oduo","otrio","ogrp","ogrpx")]==["couple","poly","poly","poly"] and [by[k]["participants"] for k in ("oduo","otrio","ogrp","ogrpx")]==[2,3,6,4] and "groupSize" not in by["ogrp"])
+    ok("legacy: sessions with no mode stay unset, private fields kept",by["onone"]["category"] is None and by["oduo"]["notes"]=="keep-oduo")
+    p.keyboard.press("Escape"); p.wait_for_timeout(100); ok("legacy: the notice can't be skipped",p.locator(".sheet").count()==1)
+    act(p,"legacyExport"); p.wait_for_selector("#exp-out"); ok("legacy: a copy can be downloaded first, including the sessions about to go","OSOLO" in p.input_value("#exp-out") and "OPART" in p.input_value("#exp-out")); act(p,"closeSheet"); p.wait_for_selector('[data-act="legacyRemove"]')
+    act(p,"legacyRemove"); p.wait_for_timeout(200); st=S(p)
+    ok("legacy: Solo and Partnered removed, with tombstones so other devices remove them too",len(st["sessions"])==5 and "osolo" in st["deleted"] and "opart" in st["deleted"] and p.locator(".sheet").count()==0)
+    p.reload(); p.wait_for_selector(".tabs"); ok("legacy: removal is final and the storage key is unchanged",p.locator(".sheet").count()==0 and len(S(p)["sessions"])==5 and p.evaluate("Object.keys(localStorage).join()")=="vouz.v1")
+    # ---------- Couple and Poly ----------
+    nav(p,"track"); act(p,"manual")
+    ok("modes: only Couple and Poly are offered, Couple by default",[x.inner_text() for x in p.locator('[data-act="dCat"]').all()]==["Couple","Poly"] and p.locator('[data-act="dCat"][data-v="couple"]').get_attribute("aria-pressed")=="true" and "Who was involved?".upper() in p.inner_text(".scroll").upper())
+    act(p,"dCat",v="poly"); ok("modes: Poly starts at 3 and can't go below",p.locator(".stepper b").inner_text()=="3" and p.locator('[data-act="dP"][data-d="-1"]').is_disabled())
+    for _ in range(25):
+        if p.locator('[data-act="dP"][data-d="1"]').is_disabled(): break
+        act(p,"dP",d="1")
+    ok("modes: Poly stops at the maximum of 20",p.locator(".stepper b").inner_text()=="20")
+    for _ in range(16): act(p,"dP",d="-1")
+    p.fill("#d-title","NEWPOLY"); act(p,"dSat",v="4"); p.fill("#d-shared","SHAREDLINE"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
+    x=S(p)["sessions"][-1]; ok("modes: Poly saves its head count, satisfaction and shared note",x["category"]=="poly" and x["participants"]==4 and x["satisfaction"]==4 and x["sharedNote"]=="SHAREDLINE")
+    t=p.inner_text(".scroll"); ok("replay: mode, status, estimate label and satisfaction shown","Poly · 4" in t and "Self-reported" in t and "Estimated" in t and "4 of 5" in t)
+    ok("replay: a Poly session can invite up to 3 others (Connections off: none offered)",p.locator('[data-act="addPeople"]').count()==1); act(p,"back")
+    nav(p,"track"); act(p,"manual"); p.evaluate("()=>{const d=window.__vouz.S.draft;d.category='poly';d.participants=2}"); act(p,"saveSession")
+    ok("modes: Poly with fewer than 3 people is refused",p.locator(".err").count()==1 and "3 to 20" in p.inner_text(".err"))
+    p.evaluate("()=>{const d=window.__vouz.S.draft;d.category='trio'}"); act(p,"saveSession"); ok("modes: an unknown mode is refused",p.locator(".err").count()==1); act(p,"dCat",v="couple"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
+    ok("modes: Couple is always exactly 2",S(p)["sessions"][-1]["participants"]==2); act(p,"back")
+    # timer with Poly chosen up front and changed mid-session
+    nav(p,"track"); act(p,"tCat",v="poly"); act(p,"tP",d="1"); act(p,"start"); p.wait_for_timeout(1100)
+    ok("timer: who-was-involved set before starting is kept",S(p)["active"]["category"]=="poly" and S(p)["active"]["participants"]==4)
+    act(p,"pause"); act(p,"tCat",v="couple"); act(p,"resume"); p.reload(); p.wait_for_selector(".tabs")
+    ok("timer: a change mid-session survives a reload",S(p)["active"]["category"]=="couple" and S(p)["active"]["participants"]==2 and len(S(p)["active"]["segments"])==2)
+    act(p,"finish"); ok("timer: the save form opens with it selected",p.locator('[data-act="dCat"][data-v="couple"]').get_attribute("aria-pressed")=="true"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
+    ok("timer: saved as timed, with its pause",S(p)["sessions"][-1]["category"]=="couple" and len(S(p)["sessions"][-1]["segments"])==2 and "Timed" in p.inner_text(".scroll")); act(p,"back")
+    # quick log: three taps
+    nav(p,"home"); n0=len(S(p)["sessions"]); act(p,"quick"); ok("quick log: Save waits for a duration",p.locator('[data-act="qSave"]').is_disabled())
+    act(p,"qDur",v="30"); act(p,"qSave"); p.wait_for_timeout(150); q=S(p)["sessions"][-1]
+    ok("quick log: open, pick a length, save; stored as an estimate",len(S(p)["sessions"])==n0+1 and q["durationSec"]==1800 and q["segments"] is None and q["category"]=="couple")
+    act(p,"quick"); act(p,"qDur",v="30"); act(p,"qSave"); p.wait_for_timeout(150); ok("quick log: an accidental second save is caught",len(S(p)["sessions"])==n0+1)
+    # insights
+    nav(p,"insights"); act(p,"insRange",v="year"); cnt={}
+    for cat in ("all","couple","poly"): act(p,"insCat",v=cat); cnt[cat]=p.locator(".tile b").first.inner_text()
+    ok("insights: counts for All, Couple and Poly",cnt=={"all":"9","couple":"4","poly":"4"},str(cnt))
+    act(p,"insCat",v="all"); t=p.inner_text(".scroll"); ok("insights: timed and estimated are kept apart","1 timed with VOUZ, 8 entered by hand" in t,t[t.find("timed")-40:t.find("timed")+60])
+    act(p,"insTab",v="patterns"); t=p.inner_text(".scroll"); ok("insights: Couple and Poly compared, earlier unset sessions counted","COUPLE AND POLY" in t.upper() and "1 earlier session with no mode set" in t)
+    sid=[x for x in S(p)["sessions"] if x.get("title")=="NEWPOLY"][0]["id"]
+    card=p.evaluate("id=>JSON.stringify(window.__vouz.buildCard({kind:'recap',showCategory:true,showDuration:true,style:0},window.__vouz.S.sessions.find(s=>s.id===id)))",sid)
+    ok("sharing: a card says Poly and never the head count, satisfaction or shared note",'"category":"Poly"' in card and "4" not in card.replace('"arc":15',"").replace("About 15 min","") and "SHAREDLINE" not in card,card)
+    # ---------- Discover, plans, Our Story ----------
+    nav(p,"ideas"); n_all=p.locator('[data-act="ideaSave"]').count(); act(p,"fOpen"); act(p,"fSet",k="b",v="0"); act(p,"fSet",k="ds",v="home")
+    titles=[x.inner_text() for x in p.locator(".idea .it").all()]
+    ok("discover: filters narrow the ideas to free, at-home ones",0<len(titles)<n_all and "Write each other letters" in titles and "Take a road trip" not in titles,str(titles))
+    act(p,"fClear"); ok("discover: clearing filters brings everything back",p.locator('[data-act="ideaSave"]').count()==n_all)
+    act(p,"ideaSave",v="picnic"); ok("discover: an idea saves to plans once",p.locator('[data-act="ideaSave"][data-v="picnic"]').is_disabled() and len([e for e in S(p)["exps"] if e["idea"]=="picnic"])==1)
+    nav(p,"home"); ok("home: the plan shows under Coming up","Pack a picnic" in p.inner_text(".scroll") and "Not scheduled" in p.inner_text(".scroll"))
+    pid=[e for e in S(p)["exps"] if e["idea"]=="picnic"][0]["id"]
+    act(p,"planSched",id=pid); p.fill("#sch-in",time.strftime("%Y-%m-%dT18:30",time.localtime(time.time()+3*86400))); act(p,"schedSave"); ok("plans: scheduling sets the date",S(p)["exps"][-1]["date"] is not None and "6:30pm" in p.inner_text(".scroll"))
+    act(p,"planDone",id=pid); ok("plans: marking done opens the memory form",p.locator("#x-title").input_value()=="Pack a picnic")
+    p.fill("#x-fav","FAVMOMENT"); p.fill("#x-notes","PRIVNOTE"); act(p,"xMood",v="Relaxed"); act(p,"expSave"); p.wait_for_timeout(150); e=[x for x in S(p)["exps"] if x["id"]==pid][0]
+    ok("plans: done moves it to Our Story with today's date",e["kind"]=="done" and e["favorite"]=="FAVMOMENT" and e["date"]<=time.time()*1000+86400000 and "Private: only you see this." in p.inner_text(".scroll"))
+    nav(p,"story"); ok("story: the memory is on the timeline","Pack a picnic" in p.inner_text(".scroll"))
+    act(p,"expNew",kind="done"); act(p,"expSave"); ok("memory: a title is required",p.locator(".err").count()==1)
+    p.fill("#x-title","FUTURE"); p.fill("#x-date",time.strftime("%Y-%m-%d",time.localtime(time.time()+9*86400))); act(p,"expSave"); ok("memory: can't be dated in the future",p.locator(".err").count()==1 and "plan" in p.inner_text(".err"))
+    ann=time.strftime("%Y-%m-%d",time.localtime(time.time()-365*86400+10*86400))
+    p.fill("#x-title","MOVEDIN"); p.fill("#x-date",ann); act(p,"xCat",v="milestone"); act(p,"xAnniv")
+    png=__import__("base64").b64decode("iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGM4YROFFTEMpAQAUDNBoan1CMYAAAAASUVORK5CYII=")
+    p.set_input_files("#x-photo",files=[{"name":"a.png","mimeType":"image/png","buffer":png}]); p.wait_for_function("document.querySelectorAll('.ph img').length===1"); p.wait_for_timeout(300)
+    ok("photos: added and shown from this device",p.evaluate("document.querySelector('.ph img').naturalWidth")>0)
+    act(p,"expSave"); p.wait_for_timeout(200); m=[x for x in S(p)["exps"] if x["title"]=="MOVEDIN"][0]; ph=m["photos"][0]
+    ok("photos: stored on the device, re-encoded",p.evaluate("id=>window.__vouz.Photos.get(id).then(b=>b&&b.type)",ph)=="image/jpeg")
+    nav(p,"story"); ok("story: anniversary reminder from a milestone","first anniversary in 10 days" in p.inner_text(".scroll"),p.inner_text(".scroll")[:300])
+    nav(p,"profile"); act(p,"exportData"); p.wait_for_selector("#exp-out"); ex=p.input_value("#exp-out")
+    ok("export: memories included, notes kept, photos left out","MOVEDIN" in ex and "PRIVNOTE" in ex and ph not in ex); act(p,"closeSheet")
+    nav(p,"story"); act(p,"expOpen",id=m["id"]); act(p,"expDelAsk",id=m["id"]); act(p,"confirmYes"); p.wait_for_timeout(300)
+    ok("memory: deleting removes its photos from the device",p.evaluate("id=>window.__vouz.Photos.get(id).then(b=>b===undefined)",ph) and m["id"] in S(p)["deleted"])
+    nav(p,"match"); ok("Mutual Match: explains it needs Connections when they're off","needs Connections" in p.inner_text(".scroll"))
     ctx.close()
     # screenshots with motion on
-    ctx,p=newctx(b,motion="no-preference"); p.goto(URL); p.wait_for_timeout(700); p.screenshot(path=SH+"ob.png"); onboard(p); act(p,"loadDemo"); p.wait_for_timeout(3600); p.screenshot(path=SH+"home.png")
+    ctx,p=newctx(b,motion="no-preference"); p.goto(URL); p.wait_for_timeout(700); p.screenshot(path=SH+"ob.png"); onboard(p); act(p,"loadDemo"); p.wait_for_timeout(600); p.screenshot(path=SH+"home.png"); nav(p,"history"); p.wait_for_timeout(1200)
     ok("count-up settles on the true value",p.locator(".trio b").first.inner_text()=="12")
-    sid=S(p)["sessions"][0]["id"]; act(p,"page",page="history"); act(p,"openReplay",id=sid); p.wait_for_timeout(1500); p.screenshot(path=SH+"replay.png"); p.locator(".scroll").evaluate("e=>e.scrollTop=560"); p.wait_for_timeout(200); p.screenshot(path=SH+"replay2.png")
-    act(p,"back"); act(p,"back"); act(p,"tab",tab="insights"); act(p,"insRange",v="year"); act(p,"insTab",v="patterns"); p.wait_for_timeout(3400); p.screenshot(path=SH+"patterns.png"); act(p,"insTab",v="mood"); p.screenshot(path=SH+"mood.png")
+    nav(p,"story"); p.screenshot(path=SH+"story.png"); nav(p,"ideas"); p.screenshot(path=SH+"ideas.png")
+    sid=S(p)["sessions"][0]["id"]; nav(p,"history"); act(p,"openReplay",id=sid); p.wait_for_timeout(1500); p.screenshot(path=SH+"replay.png"); p.locator(".scroll").evaluate("e=>e.scrollTop=560"); p.wait_for_timeout(200); p.screenshot(path=SH+"replay2.png")
+    nav(p,"insights"); act(p,"insRange",v="year"); act(p,"insTab",v="patterns"); p.wait_for_timeout(3400); p.screenshot(path=SH+"patterns.png"); act(p,"insTab",v="mood"); p.screenshot(path=SH+"mood.png")
     ok("no page overflow sideways",p.evaluate("document.documentElement.scrollWidth<=window.innerWidth"))
     ctx.close(); b.close()
     ok("no uncaught page errors",not errs,str(errs[:5]))
