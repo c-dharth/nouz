@@ -219,6 +219,8 @@ ul.plain li.p svg{color:var(--warn)}
 .idea .it{font-family:var(--display);font-size:23px;font-weight:400;line-height:1.15;display:block;margin-bottom:2px}
 .pick{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 0;min-height:60px;border-top:1px solid var(--line)}
 .pick:first-child{border-top:0}
+.pick[disabled]{opacity:.45}
+.steps-l{margin:8px 0 0 18px;padding:0;color:var(--muted);font-size:13px;display:flex;flex-direction:column;gap:3px}
 .pick .tick{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:var(--muted);flex:none;transition:background .15s,color .15s}
 .pick[aria-pressed="true"] .tick{background:var(--wine);color:var(--text)}
 .pick[aria-pressed="true"] b{color:var(--pink)}
@@ -268,14 +270,14 @@ const ic=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</sv
 
 /* ============ private store (this device, not encrypted by VOUZ) ============ */
 const LS="vouz.v1"; let storageOK=true;
-const fresh=()=>({v:1,onboarded:false,stamp:0,lastSync:0,syncBase:0,user:{name:"",mode:"local",createdAt:Date.now()},settings:{social:false,privateProfile:true,defaultVis:"connections",regular:null,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0},sessions:[],exps:[],picks:{},deleted:{},active:null,draft:null,blocks:[],ignored:[],keys:null});
+const fresh=()=>({v:1,onboarded:false,stamp:0,lastSync:0,syncBase:0,user:{name:"",mode:"local",createdAt:Date.now()},settings:{social:false,privateProfile:true,defaultVis:"connections",regular:null,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0},sessions:[],exps:[],picks:{},psi:{},deleted:{},active:null,draft:null,blocks:[],ignored:[],keys:null});
 function load(){try{const r=localStorage.getItem(LS);if(r){const o=JSON.parse(r);if(o&&o.v===1)return Object.assign(fresh(),o,{settings:Object.assign(fresh().settings,o.settings)})}}catch(e){storageOK=false}return fresh()}
 let S=load();
 function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){storageOK=false}}
 function save(){S.stamp=Date.now();saveLocal();Cloud.queueVault()}
 /* What sync and export carry: never demo rows, never social keys. */
 /* Photos are not in here: they stay on the device. */
-const vaultPayload=()=>({v:1,stamp:S.stamp,user:S.user,settings:S.settings,sessions:S.sessions.filter(s=>!s.demo),exps:S.exps.filter(e=>!e.demo).map(e=>({...e,photos:[]})),picks:S.picks,deleted:S.deleted,blocks:S.blocks,ignored:S.ignored});
+const vaultPayload=()=>({v:1,stamp:S.stamp,user:S.user,settings:S.settings,sessions:S.sessions.filter(s=>!s.demo),exps:S.exps.filter(e=>!e.demo).map(e=>({...e,photos:[]})),picks:S.picks,psi:S.psi,deleted:S.deleted,blocks:S.blocks,ignored:S.ignored});
 /* Two devices: keep the newer copy of each session, honour deletions from either side. */
 function mergeVault(v){const del=Object.assign({},v.deleted||{});for(const k in S.deleted)del[k]=Math.max(del[k]||0,S.deleted[k]);
   const m={};for(const s of (v.sessions||[]).concat(S.sessions)){const c=m[s.id];if(!c||(s.updatedAt||0)>(c.updatedAt||0))m[s.id]=s}
@@ -283,7 +285,7 @@ function mergeVault(v){const del=Object.assign({},v.deleted||{});for(const k in 
   /* Experiences merge the same way. A copy from another device has no photos, so keep this device's photo list. */
   const mx={};for(const e of (v.exps||[]).concat(S.exps||[])){const c=mx[e.id];if(!c||(e.updatedAt||0)>(c.updatedAt||0))mx[e.id]=Object.assign({},e,{photos:(c&&c.photos&&c.photos.length?c.photos:e.photos)||[]})}
   const local=Object.fromEntries((S.exps||[]).map(e=>[e.id,e]));S.exps=Object.values(mx).filter(e=>!(del[e.id]>=(e.updatedAt||0))).map(e=>local[e.id]&&local[e.id].photos&&local[e.id].photos.length?{...e,photos:local[e.id].photos}:e);
-  if((v.stamp||0)>S.stamp&&v.picks)S.picks=v.picks;
+  if((v.stamp||0)>S.stamp&&v.picks){S.picks=v.picks;S.psi=v.psi||{}}
   normCats();
   if((v.stamp||0)>S.stamp){S.settings=Object.assign(fresh().settings,v.settings);S.blocks=v.blocks||[];S.ignored=v.ignored||[];S.user=Object.assign({},v.user,{mode:"account"})}}
 
@@ -348,10 +350,10 @@ const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},spa
     try{await this.ensureKeys()}catch(e){this.status="error";return}
     const timer=setTimeout(()=>{if(this.status==="loading"){this.status="slow";render()}},10000);
     for(const c of SHARED)this.subs.push(Cloud.db.collection(c).onSnapshot(q=>{const m={};q.docs.forEach(d=>{m[d.id]=d.data()||{}});this[c]=m;if(c==="posts")clearTimeout(timer);this.sched()},()=>{clearTimeout(timer);this.status="error";render()}))},
-  stop(){this.subs.forEach(u=>{try{u()}catch(e){}});this.subs=[];this.status="off";clearTimeout(this.t);for(const c of SHARED)this[c]={};this.inbox=[];this.inv={};this.invSig="";this.sp={};this.shared=[];this.picks={};this.pubSig="";this.rel={};this.items=[];this.cm={};this.perms={};this.cache={};this.au={}},
+  stop(){this.subs.forEach(u=>{try{u()}catch(e){}});this.subs=[];this.status="off";clearTimeout(this.t);for(const c of SHARED)this[c]={};this.inbox=[];this.inv={};this.invSig="";this.sp={};this.shared=[];this.mres={};this.mdocs={};this.pubSig="";this.rel={};this.items=[];this.cm={};this.perms={};this.cache={};this.au={}},
   sched(){clearTimeout(this.t);this.t=setTimeout(async()=>{if(this.busy){this.again=true;return}this.busy=true;
     try{await this.recompute()}catch(e){}this.busy=false;if(this.status==="loading"||this.status==="slow")this.status="ready";
-    const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.picks]),moved=sig!==this.invSig;this.invSig=sig;
+    const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.mres]),moved=sig!==this.invSig;this.invSig=sig;
     if((ui.tab==="social"||ui.tab==="profile"||ui.page&&ui.page.type==="compose"||moved)&&!typing())render();
     if(this.again){this.again=false;this.sched()}},40)},
   write(coll,data){this[coll]=Object.assign({},this[coll]);if(data===null)delete this[coll][Cloud.uid];else this[coll][Cloud.uid]=data;
@@ -483,7 +485,7 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
 
 /* ============ ui state ============ */
 const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
-  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},int:{seg:"track"},disc:{seg:"match",f:{}},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"feed"},compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
+  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},int:{seg:"track"},disc:{seg:"ideas",f:{}},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"feed"},compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
 const TABS=()=>[["home","Home","home"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
@@ -1058,6 +1060,56 @@ const A={
       S=fresh();K.reset();ui.sheet=null;ui.page=null;ui.tab="home";ui.err="";ui.homeDay=null;ui.ob={step:0,adult:false,mode:"local",name:"",social:false,restore:null};ui.busy=false;render(true);toast("Everything is erased.")})}
 };
 document.addEventListener("click",ev=>{const e=ev.target.closest("[data-act]");if(!e||e.disabled||e.hasAttribute("disabled"))return;const f=A[e.dataset.act];if(f)f(e,ev)});
+/* PSI-START — Mutual Match without revealing picks.
+   Each person turns each of their picks into a group element (a hash of the idea, squared into the prime-order subgroup of the
+   RFC 3526 2048-bit safe-prime group) and raises it to a secret key only they hold. The set then travels round the space:
+   every other member raises it to their own key, keeping the order. Exponentiation commutes, so once a set has every member's
+   key on it, the same idea looks identical in everyone's final set, and nobody ever sees anyone else's picks in readable form.
+   Each person finds the positions of their own picks that appear in every other member's final set: those are the matches.
+   Sets are padded with random elements to a fixed size, so the number of picks is hidden too, and the size cap means nobody
+   can pick everything to learn everyone's list. */
+const PSI=(()=>{
+  const P=BigInt("0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF");
+  const CAP=8, enc=new TextEncoder();
+  const hx=u=>Array.from(new Uint8Array(u)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  const big=u=>BigInt("0x"+(hx(u)||"0"));
+  const pow=(b,e)=>{let r=1n;b%=P;while(e>0n){if(e&1n)r=r*b%P;b=b*b%P;e>>=1n}return r};
+  const toEl=x=>{x%=P;return pow(x<2n?2n:x,2n)};                                   // squaring lands in the subgroup
+  const sha=async s=>new Uint8Array(await crypto.subtle.digest("SHA-256",enc.encode(s)));
+  async function h2g(tag,item){const out=new Uint8Array(288);for(let i=0;i<9;i++)out.set(await sha("vouz-psi|"+i+"|"+tag+"|"+item),i*32);return toEl(big(out))}
+  const rand=n=>crypto.getRandomValues(new Uint8Array(n));
+  const newKey=()=>hx(rand(32));
+  const valid=v=>typeof v==="string"&&/^[0-9a-f]{1,520}$/.test(v)&&BigInt("0x"+v)>1n&&BigInt("0x"+v)<P;
+  const raise=(vals,k)=>{const e=BigInt("0x"+k);return vals.map(v=>pow(BigInt("0x"+v),e).toString(16))};
+  const digest=async vals=>hx(await crypto.subtle.digest("SHA-256",enc.encode(vals.join(",")))).slice(0,24);
+  const epoch=async(tag,members)=>digest([tag].concat(members.slice().sort()));
+  /* My own blinded set, padded and shuffled. `order` remembers which position holds which pick; it never leaves this device. */
+  async function own(tag,picks,k){const items=picks.slice(0,CAP).map(id=>({id})),e=BigInt("0x"+k);
+    for(const it of items)it.v=pow(await h2g(tag,it.id),e).toString(16);
+    while(items.length<CAP)items.push({id:null,v:pow(toEl(big(rand(288))),e).toString(16)});
+    for(let i=items.length-1;i>0;i--){const j=rand(1)[0]%(i+1);[items[i],items[j]]=[items[j],items[i]]}
+    return{order:items.map(x=>x.id),vals:items.map(x=>x.v)}}
+  const chain=(members,o)=>members.map((_,j)=>members[(o+j)%members.length]);
+  const okSet=s=>Array.isArray(s)&&s.length===CAP&&s.every(valid);
+  /* Apply my key to every set that has reached me in its chain. Re-uses earlier work when the input hasn't changed. */
+  async function forward(members,me,docs,k,prev){const fwd={},n=members.length;
+    for(let o=0;o<n;o++){const ch=chain(members,o),j=ch.indexOf(me);if(j<1)continue;const up=docs[ch[j-1]];if(!up)continue;
+      const input=j===1?up.own:up.fwd&&up.fwd[o]&&up.fwd[o].v;if(!okSet(input))continue;const from=await digest(input);
+      fwd[o]=prev&&prev[o]&&prev[o].from===from&&okSet(prev[o].v)?prev[o]:{from,v:raise(input,k)}}
+    return fwd}
+  /* Each origin's set once every member has applied their key, checked link by link; null where it isn't complete yet. */
+  async function finals(members,docs){const n=members.length,out=[];
+    for(let o=0;o<n;o++){const ch=chain(members,o);let cur=docs[ch[0]]&&docs[ch[0]].own,ok=okSet(cur);
+      for(let j=1;j<n&&ok;j++){const e=docs[ch[j]]&&docs[ch[j]].fwd&&docs[ch[j]].fwd[o];if(!e||!okSet(e.v)||e.from!==await digest(cur)){ok=false;break}cur=e.v}
+      out.push(ok?cur:null)}
+    return out}
+  /* My matches: my picks whose final value is in every other member's final set. */
+  function matches(members,me,fin,order){const i=members.indexOf(me);if(members.length<2||fin.some(f=>!f)||!order)return null;
+    const others=fin.filter((_,j)=>j!==i).map(f=>new Set(f));return order.map((id,pos)=>id&&others.every(s=>s.has(fin[i][pos]))?id:null).filter(Boolean)}
+  return{P,CAP,h2g,newKey,own,forward,finals,matches,epoch,digest,okSet,raise};
+})();
+/* PSI-END */
+
 /* ============ experiences, relationship spaces, Mutual Match ============ */
 const XCATS={dinner:"Dinner date",trip:"Trip",adventure:"Adventure",movie:"Movie",celebration:"Celebration",romantic:"Romantic",milestone:"Milestone",other:"Other"};
 /* Generic ideas only. VOUZ names no venue and claims no price, opening hours or availability. */
@@ -1120,7 +1172,7 @@ const shareX=e=>({id:e.id,kind:e.kind,title:e.title,date:e.date,cat:e.cat,locati
 function sanX(b,a,sp){if(!b||typeof b.id!=="string"||!["done","plan"].includes(b.kind))return null;const str=(v,n)=>typeof v==="string"?v.slice(0,n):"";
   return{id:b.id,a,sp,kind:b.kind,title:str(b.title,80)||"Untitled",date:typeof b.date==="number"&&isFinite(b.date)?b.date:null,cat:XCATS[b.cat]?b.cat:"other",location:str(b.location,80),sharedNote:str(b.sharedNote,500),mood:MC[b.mood]?b.mood:"",favorite:str(b.favorite,200),idea:IDEA[b.idea]?b.idea:null,anniv:!!b.anniv,updatedAt:+b.updatedAt||0,photos:[]}}
 
-Object.assign(Soc,{sp:{},shared:[],picks:{},accRaw:[],pubSig:"",
+Object.assign(Soc,{sp:{},shared:[],mres:{},mdocs:{},accRaw:[],pubSig:"",
   async open(key,c){const k="o"+c;if(k in this.cache)return this.cache[k];return this.cache[k]=await K.decJ(key,c)},
   /* A space: a random key, wrapped for the owner and for each person invited, plus an encrypted description.
      Only people holding the key can read the space's name, its member list, and anything shared into it. */
@@ -1140,14 +1192,28 @@ Object.assign(Soc,{sp:{},shared:[],picks:{},accRaw:[],pubSig:"",
           const role=owner===me?"owner":a&&!a.ok?null:(b.members||[]).includes(me)?"member":a&&a.ok?"joining":(b.invited||[]).includes(me)?"invited":null;
           if(role)sp[b.id]={id:b.id,name:String(b.name||"Our space").slice(0,40),owner,members:(b.members||[]).filter(u=>u!==owner),invited:(b.invited||[]).filter(u=>u!==owner),key:e.key,raw:e.raw,tag:e.tag,role,v:+b.v||1,item:it}}catch(x){}}}
     this.sp=sp;
-    const shared=[],picks={};
-    for(const x of Object.values(sp)){if(x.role==="invited")continue;picks[x.id]={};
-      for(const u of [x.owner,...x.members]){if(S.blocks.includes(u))continue;
-        for(const it of ((this.match[u]||{}).items||[]))if(it&&it.t===x.tag){try{const b=await this.open(x.key,it.c);if(Array.isArray(b.picks))picks[x.id][u]=b.picks.filter(p=>IDEA[p])}catch(e){}}
-        if(u===me)continue;
+    const shared=[];
+    for(const x of Object.values(sp)){if(x.role==="invited")continue;
+      for(const u of [x.owner,...x.members]){if(S.blocks.includes(u)||u===me)continue;
         for(const it of ((this.exps[u]||{}).items||[]))if(it&&it.t===x.tag){try{const v=sanX(await this.open(x.key,it.c),u,x.id);if(v)shared.push(v)}catch(e){}}}}
-    this.shared=shared;this.picks=picks;
-    await this.reconcileSpaces();await this.publishMine()},
+    this.shared=shared;
+    await this.reconcileSpaces();await this.runMatch();await this.publishMine()},
+  /* Mutual Match round for every space I'm in: refresh my own blinded set, forward everyone else's, work out matches. */
+  async runMatch(){const me=Cloud.uid,res={},docsOut={};
+    for(const x of this.inSpaces()){const members=this.people(x).filter(u=>!S.blocks.includes(u));if(!members.includes(me))members.push(me);members.sort();
+      const ep=await PSI.epoch(x.tag,members),docs={};
+      for(const u of members){if(u===me)continue;for(const it of ((this.match[u]||{}).items||[]))if(it&&it.t===x.tag){try{const b=await this.open(x.key,it.c);if(b&&b.ep===ep)docs[u]={own:b.own,fwd:b.fwd||{}}}catch(e){}}}
+      let st=S.psi[x.id];const picks=Array.isArray(S.picks[x.id])?S.picks[x.id].filter(p=>IDEA[p]).slice(0,PSI.CAP):null;
+      if(!st||st.ep!==ep){st={ep,k:PSI.newKey(),sig:null,order:null,own:null,fwd:{}}}
+      const sig=picks?picks.slice().sort().join(","):null;
+      if(picks&&st.sig!==sig){const o=await PSI.own(x.tag,picks,st.k);st.order=o.order;st.own=o.vals;st.sig=sig}
+      if(!picks){st.order=null;st.own=null;st.sig=null}
+      st.fwd=await PSI.forward(members,me,{...docs,[me]:{own:st.own,fwd:st.fwd}},st.k,st.fwd);
+      if(JSON.stringify(S.psi[x.id])!==JSON.stringify(st)){S.psi[x.id]=st;saveLocal()}
+      const all={...docs,[me]:{own:st.own,fwd:st.fwd}},fin=await PSI.finals(members,all);
+      res[x.id]={members,waiting:members.filter(u=>!(all[u]&&PSI.okSet(all[u].own))),matches:PSI.matches(members,me,fin,st.order)};
+      docsOut[x.id]=st.own||Object.keys(st.fwd).length?{t:x.tag,ep,own:st.own,fwd:st.fwd}:null}
+    this.mres=res;this.mdocs=docsOut},
   async answerFrom(u,id){const r=this.rel[u];if(!r)return null;let out=null;
     for(const x of ((this.spaces[u]||{}).acc||[])){if(!x||x.k!==r.in)continue;try{const b=await this.open(r.key,x.c);if(b&&b.id===id)out=!!b.ok}catch(e){}}return out},
   /* Owner only: move people who accepted into the member list, and drop anyone who declined, left, disconnected or was blocked.
@@ -1162,10 +1228,10 @@ Object.assign(Soc,{sp:{},shared:[],picks:{},accRaw:[],pubSig:"",
     if(changed){this.recSp=true;try{await this.write("spaces",{items,acc:cur.acc||[]})}finally{this.recSp=false}}},
   /* My shared experiences and Mutual Match picks are rebuilt from this device's records under each space's current key. */
   async publishMine(){const me=Cloud.uid,inSp=Object.values(this.sp).filter(x=>x.role!=="invited");
-    const sig=JSON.stringify([inSp.map(x=>x.tag),S.exps.filter(e=>!e.demo&&e.space).map(e=>[e.id,e.space,e.updatedAt]),inSp.map(x=>[x.id,S.picks[x.id]||null])]);
+    const md=this.mdocs||{},sig=JSON.stringify([inSp.map(x=>x.tag),S.exps.filter(e=>!e.demo&&e.space).map(e=>[e.id,e.space,e.updatedAt]),inSp.map(x=>md[x.id]||null)]);
     if(sig===this.pubSig)return;this.pubSig=sig;const ex=[],pk=[];
     for(const x of inSp){for(const e of S.exps.filter(e=>!e.demo&&e.space===x.id))ex.push({t:x.tag,c:await K.encJ(x.key,shareX(e))});
-      if(Array.isArray(S.picks[x.id]))pk.push({t:x.tag,c:await K.encJ(x.key,{picks:S.picks[x.id]})})}
+      if(md[x.id])pk.push({t:x.tag,c:await K.encJ(x.key,{ep:md[x.id].ep,own:md[x.id].own,fwd:md[x.id].fwd})})}
     if(ex.length||((this.exps[me]||{}).items||[]).length)await this.write("exps",{items:ex});
     if(pk.length||((this.match[me]||{}).items||[]).length)await this.write("match",{items:pk})},
   async answerSpace(x,ok){const r=this.rel[x.owner];if(!r)throw 0;const cur=this.spaces[Cloud.uid]||{};
@@ -1179,10 +1245,8 @@ Object.assign(Soc,{sp:{},shared:[],picks:{},accRaw:[],pubSig:"",
 });
 
 /* Mutual Match: an idea is shown only when every member of the space has picked it. */
-function matchFor(x){const me=Cloud.uid,ppl=Soc.people(x);if(!ppl.includes(me))ppl.push(me);const p=Soc.picks[x.id]||{},mine=S.picks[x.id];
-  const has=u=>u===me?Array.isArray(mine):Array.isArray(p[u]),waiting=ppl.filter(u=>!has(u)),sets=ppl.map(u=>new Set(u===me?mine||[]:p[u]||[]));
-  return{ppl,waiting,matches:waiting.length||ppl.length<2?[]:IDEAS.filter(i=>sets.every(st=>st.has(i.id)))}}
-
+function matchFor(x){const r=Soc.mres[x.id],me=Cloud.uid,ppl=r?r.members:Soc.people(x).concat(me).filter((u,i,a)=>a.indexOf(u)===i);
+  return{ppl,waiting:r?r.waiting:ppl,pending:!!(r&&!r.waiting.length&&!r.matches),matches:r&&r.matches?r.matches.map(id=>IDEA[id]).filter(Boolean):[]}}
 /* Everything for the timeline and plans: my own records plus what people shared into spaces I'm in. */
 function allExps(){const mine=S.exps.map(e=>({...e,a:"me",sp:e.space&&Soc.sp[e.space]&&Soc.sp[e.space].role!=="invited"?e.space:null}));
   const theirs=S.settings.social?Soc.shared.filter(x=>Soc.sp[x.sp]):[];return mine.concat(theirs)}
@@ -1280,7 +1344,7 @@ function vExpEdit(){const d=ui.xd;if(!d){ui.page=null;return vStory()+vTabs()}co
    <button class="btn primary block" data-act="expSave">${d.editing?"Save changes":"Save"}</button></div>`}
 
 function vDiscover(){const seg=ui.disc.seg,f=ui.disc.f;
-  const head=`<div><h3>Discover</h3><h1>Something to <em>do together.</em></h1></div><div class="seg3" role="group" aria-label="Discover section">${[["ideas","Ideas"],["match","Mutual Match"],["plans","Plans"]].map(([v,l])=>`<button data-act="discSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
+  const head=`<div><h3>Discover</h3><h1>Something to <em>do together.</em></h1></div><div class="seg3" role="group" aria-label="Discover section">${[["ideas","Ideas"],["planner","Planner"],["match","Match"],["plans","Plans"]].map(([v,l])=>`<button data-act="discSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
   const chipRow=(k,label,opts)=>`<div class="col" style="gap:6px"><span class="tiny">${label}</span><div class="chips sm" role="group" aria-label="${label}">${opts.map(([v,l])=>`<button class="chip" data-act="fSet" data-k="${k}" data-v="${v}" aria-pressed="${String(f[k]??"")===String(v)}">${l}</button>`).join("")}</div></div>`;
   const filters=`<details class="card filt" ${ui.disc.open?"open":""}><summary data-act="fOpen"><b>Filters</b><span class="sub small">${IDEAS.filter(x=>ideaOk(x,f)).length} of ${IDEAS.length}</span></summary>
     ${chipRow("b","Budget",[["","Any"],["0","Free"],["1","Up to $"],["2","Up to $$"]])}${chipRow("tm","Time you have",[["","Any"],["1","An hour"],["2","A few hours"],["3","Half a day"]])}
@@ -1289,15 +1353,16 @@ function vDiscover(){const seg=ui.disc.seg,f=ui.disc.f;
     <button class="link small" data-act="fClear">Clear filters</button></details>`;
   let body="";
   if(seg==="ideas"){const list=IDEAS.filter(x=>ideaOk(x,f));body=filters+(list.length?list.map(x=>ideaCard(x)).join(""):`<div class="card line"><p class="sub small">Nothing fits all of those. Loosen a filter.</p></div>`)}
+  else if(seg==="planner")body=vPlanner();
   else if(seg==="plans"){const pl=allPlans();body=`<button class="btn block" data-act="expNew" data-kind="plan">${ic("plus")} New plan</button>`+(pl.length?`<div class="sec"><div>${pl.map(planRow).join("")}</div></div><p class="tiny">Tap ${ic("clock").replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')} to schedule, ${ic("check").replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')} when it's done: it moves to Our Story.</p>`:`<div class="card line"><p class="sub small">No plans yet. Save an idea, or one you match on.</p></div>`)}
   else{if(!Soc.ready())body=`<div class="card"><h2>Pick privately. <em>Match together.</em></h2><p class="sub">Each of you chooses what you'd like to do, without seeing the other's choices. VOUZ shows only what everyone picked.</p><p class="sub small">${S.settings.social?"Connections can't be reached right now.":"This needs Connections, which is off. Turn it on in Profile, connect with your partner, and create a shared space."}</p><button class="btn sm" style="align-self:flex-start" data-act="tab" data-tab="profile">Profile</button></div>`;
     else{const sps=Soc.inSpaces();if(!sps.length)body=`<div class="card"><h2>Start a shared space.</h2><p class="sub">Mutual Match happens inside a space you share with a partner, or with everyone in a relationship who agrees to join.</p><button class="btn sm primary" style="align-self:flex-start" data-act="page" data-page="spaces">Shared spaces</button></div>`;
       else{const x=Soc.sp[ui.disc.space]&&Soc.sp[ui.disc.space].role!=="invited"?Soc.sp[ui.disc.space]:sps[0];ui.disc.space=x.id;const m=matchFor(x),mine=new Set(S.picks[x.id]||[]),list=IDEAS.filter(i=>ideaOk(i,f));
         body=`${sps.length>1?`<div class="chips" role="group" aria-label="Space">${sps.map(s=>`<button class="chip" data-act="pickSpace" data-v="${esc(s.id)}" aria-pressed="${s.id===x.id}">${esc(s.name)}</button>`).join("")}</div>`:""}
          <div class="card"><div class="row between"><h3>${esc(x.name)}</h3><span class="pill">${m.ppl.length} ${m.ppl.length===1?"person":"people"}</span></div><p class="sub small">Matching between ${esc(names(m.ppl.map(u=>u===Cloud.uid?"you":u)))}. An idea appears only when every one of you picked it.</p>
-          ${m.ppl.length<2?`<p class="sub small">Nobody else has joined yet.</p>`:m.waiting.length?`<p class="sub small">Waiting for ${esc(names(m.waiting.map(u=>u===Cloud.uid?"you":u)))} to pick.</p>`:m.matches.length?`<h3 style="margin-top:6px">You matched on ${m.matches.length}</h3>`:`<p class="sub small">No matches yet. Pick a few more, or come back after the others do.</p>`}</div>
+          ${m.ppl.length<2?`<p class="sub small">Nobody else has joined yet.</p>`:m.waiting.length?`<p class="sub small">Waiting for ${esc(names(m.waiting.map(u=>u===Cloud.uid?"you":u)))} to pick.</p>`:m.pending?`<p class="sub small" role="status">Comparing privately. This finishes as each of you opens VOUZ.</p>`:m.matches.length?`<h3 style="margin-top:6px">You matched on ${m.matches.length}</h3>`:`<p class="sub small">No matches yet. Change your picks, or come back after the others do.</p>`}</div>
          ${m.matches.map(i=>ideaCard(i,(()=>{const done=S.exps.some(e=>e.idea===i.id&&e.space===x.id);return`<button class="btn sm primary" style="align-self:flex-start" data-act="matchSave" data-v="${i.id}" ${done?"disabled":""}>${done?ic("check")+" Planned":ic("plus")+" Plan it together"}</button>`})())).join("")}
-         <div class="sec"><div class="row between"><h3>Your picks</h3><span class="sub small">${mine.size} chosen</span></div><p class="tiny">Only you see this list. Nobody sees what you picked unless they picked it too.</p>${filters}<div>${list.map(i=>`<button class="pick" data-act="pickToggle" data-v="${i.id}" aria-pressed="${mine.has(i.id)}"><span class="grow"><b>${esc(i.t)}</b><span class="sub small" style="display:block">${ideaMeta(i)}</span></span><span class="tick" aria-hidden="true">${ic(mine.has(i.id)?"check":"plus")}</span></button>`).join("")}</div></div>`}}}
+         <div class="sec"><div class="row between"><h3>Your picks</h3><span class="sub small">${mine.size} of ${PSI.CAP}</span></div><p class="tiny">Choose up to ${PSI.CAP}. Your picks are blinded on this device before anything is sent: nobody, VOUZ included, can read them, and an idea is revealed only when everyone in the space picked it.${m.ppl.length>2?" With three or more people, someone who inspected the data could tell which of their own picks each person shares.":""}</p>${filters}<div>${list.map(i=>`<button class="pick" data-act="pickToggle" data-v="${i.id}" aria-pressed="${mine.has(i.id)}" ${!mine.has(i.id)&&mine.size>=PSI.CAP?"disabled":""}><span class="grow"><b>${esc(i.t)}</b><span class="sub small" style="display:block">${ideaMeta(i)}</span></span><span class="tick" aria-hidden="true">${ic(mine.has(i.id)?"check":"plus")}</span></button>`).join("")}</div></div>`}}}
   return`<div class="scroll">${head}${body}</div>`}
 
 function vSpaces(){const ready=Soc.ready();
@@ -1330,7 +1395,7 @@ Object.assign(A,{
   matchSave(e){const x=IDEA[e.dataset.v],sp=ui.disc.space;if(!x||!Soc.sp[sp])return;const now=Date.now();
     S.exps.push({id:uid(),kind:"plan",title:x.t,date:null,cat:"other",location:"",favorite:"",mood:"",notes:"",sharedNote:"",space:sp,anniv:false,photos:[],idea:x.id,createdAt:now,updatedAt:now});save();Soc.sched();render();toast("Planned. Everyone in "+Soc.sp[sp].name+" can see it.")},
   pickSpace(e){ui.disc.space=e.dataset.v;render()},
-  pickToggle(e){const sp=ui.disc.space;if(!Soc.sp[sp])return;const cur=S.picks[sp]||[],v=e.dataset.v;S.picks[sp]=cur.includes(v)?cur.filter(x=>x!==v):cur.concat([v]);save();buzz(8);Soc.sched();render()},
+  pickToggle(e){const sp=ui.disc.space;if(!Soc.sp[sp])return;const cur=S.picks[sp]||[],v=e.dataset.v;if(!cur.includes(v)&&cur.length>=PSI.CAP)return toast("Up to "+PSI.CAP+" picks.");S.picks[sp]=cur.includes(v)?cur.filter(x=>x!==v):cur.concat([v]);save();buzz(8);Soc.sched();render()},
   planSched(e){const x=S.exps.find(z=>z.id===e.dataset.id);if(!x)return;ui.err="";sheet({type:"sched",id:x.id,val:x.date?toLocalInput(x.date):""})},
   schedSave(){const x=S.exps.find(z=>z.id===ui.sheet.id),v=($("#sch-in")||{}).value;if(!x)return A.closeSheet();if(!v){x.date=null}else{const t=new Date(v).getTime();if(isNaN(t)){ui.err="Pick a date and time.";return render()}x.date=t}
     x.updatedAt=Date.now();ui.sheet=null;ui.err="";save();Soc.sched();render();toast(x.date?"Scheduled for "+fmtDate(x.date)+".":"Unscheduled.")},
@@ -1376,7 +1441,7 @@ Object.assign(A,{
   spAccept(e){const x=Soc.sp[e.dataset.id];if(!x)return;busy(async()=>{try{await Soc.answerSpace(x,true);toast("You joined "+x.name+".")}catch(z){toast("That couldn't be saved. Try again.")}})},
   spDecline(e){const x=Soc.sp[e.dataset.id];if(!x)return;busy(async()=>{try{await Soc.answerSpace(x,false);toast("Declined.")}catch(z){toast("That couldn't be saved. Try again.")}})},
   spLeave(e){const x=Soc.sp[e.dataset.id];if(!x)return;sheet({type:"confirm",title:"Leave "+x.name+"?",body:"You stop seeing what others share there, your picks are withdrawn, and anything you shared into it becomes private again.",yes:"Leave",danger:true,fn(){busy(async()=>{
-    try{await Soc.answerSpace(x,false)}catch(z){return toast("That couldn't be saved. Try again.")}delete S.picks[x.id];S.exps.forEach(z=>{if(z.space===x.id){z.space=null;z.sharedNote="";z.updatedAt=Date.now()}});save();Soc.sched();toast("You left "+x.name+".")})}})},
+    try{await Soc.answerSpace(x,false)}catch(z){return toast("That couldn't be saved. Try again.")}delete S.picks[x.id];delete S.psi[x.id];S.exps.forEach(z=>{if(z.space===x.id){z.space=null;z.sharedNote="";z.updatedAt=Date.now()}});save();Soc.sched();toast("You left "+x.name+".")})}})},
   spRemove(e){const x=Soc.sp[e.dataset.id],u=e.dataset.u;if(!x||x.role!=="owner")return;sheet({type:"confirm",title:"Remove "+Soc.handle(u)+"?",body:"They lose access to "+x.name+", and the space gets a new key.",yes:"Remove",danger:true,fn(){busy(async()=>{
     const items=[];for(const it of ((Soc.spaces[Cloud.uid]||{}).items||[]))items.push(it===x.item?await Soc.sealSpace({id:x.id,name:x.name,owner:Cloud.uid,members:x.members.filter(v=>v!==u),invited:x.invited.filter(v=>v!==u),v:x.v+1}):it);
     await Soc.saveSpaces(items);toast("Removed.")})}})},
@@ -1386,7 +1451,52 @@ Object.assign(A,{
 document.addEventListener("change",async ev=>{const t=ev.target;if(t.id!=="x-photo"||!ui.xd)return;const files=Array.from(t.files||[]).slice(0,6-ui.xd.photos.length);
   for(const f of files){try{const b=await shrink(f),id=uid();await Photos.put(id,b);ui.xd.photos.push(id);ui.xd.added.push(id)}catch(e){toast("A photo couldn't be added.")}}render()});
 
-function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd}[o];if(!tgt)return;tgt[k]=e.value;
+/* ---------------- AI date planner (asks Claude through the platform; the viewer approves the first call) ---------------- */
+let SAMPLE=null;
+const PLAN_EX=["What should we do tonight?","Find something romantic nearby","Plan a date under $50","Suggest something we haven't tried","Help plan our anniversary"];
+const PB=[["","Any budget"],["0","Free"],["50","Under $50"],["100","Under $100"],["250","Under $250"]],PT=[["","Any time"],["1","About an hour"],["3","A few hours"],["day","A whole day"],["weekend","A weekend"]];
+function plannerPrompt(p){const titles=p.history?S.exps.filter(e=>!e.demo).map(e=>(e.kind==="plan"?"planned: ":"done: ")+String(e.title).slice(0,60)).slice(0,40):[];
+  return["You are the date planner inside VOUZ, a private app where couples and partners plan time together.",
+    "Suggest 3 to 5 experiences for them that fit the request.",
+    "Rules: do not name specific businesses or claim anything about a real place's opening hours, prices, reservations, events or availability; describe kinds of places instead (\"a small wine bar\", \"a trail with a view\"), so they can look up real places themselves. Never say you have booked, bought, reserved or contacted anything: you can't. Keep it warm, tasteful and non-explicit. Respect the budget and time if given. If an area is given, fit suggestions to that kind of area without inventing venues.",
+    'Reply with only JSON: {"suggestions":[{"title":"under 60 characters","why":"one sentence, under 160 characters","cost":"Free" or "$" or "$$" or "$$$","time":"short, e.g. 2 hours","setting":"Indoors" or "Outdoors" or "Either","steps":["up to 4 short steps"]}]}',
+    "",
+    "Request: "+(p.q.trim()||"Suggest something good to do together."),
+    "Budget: "+(PB.find(x=>x[0]===p.budget)||PB[0])[1],
+    "Time available: "+(PT.find(x=>x[0]===p.time)||PT[0])[1],
+    p.area.trim()?"Area (typed by them): "+p.area.trim().slice(0,60):"Area: not given",
+    titles.length?"Already done or planned, avoid repeating these:\n- "+titles.join("\n- "):""].filter(s=>s!=="").join("\n")}
+function cleanPlans(v){const arr=v&&Array.isArray(v.suggestions)?v.suggestions:Array.isArray(v)?v:[];const str=(x,n)=>typeof x==="string"?x.trim().slice(0,n):"";
+  return arr.map(x=>({title:str(x&&x.title,60),why:str(x&&x.why,160),cost:["Free","$","$$","$$$"].includes(x&&x.cost)?x.cost:"",time:str(x&&x.time,30),setting:["Indoors","Outdoors","Either"].includes(x&&x.setting)?x.setting:"",steps:Array.isArray(x&&x.steps)?x.steps.map(s=>str(s,100)).filter(Boolean).slice(0,4):[]})).filter(x=>x.title).slice(0,5)}
+const PLAN_ERR={rate_limited:"Too many requests right now. Try again in a little while.",refused:"Claude couldn't help with that one. Try asking a different way.",session_expired:"You've been signed out. Sign in again to use the planner.",prompt_too_large:"That request is too long. Try something shorter."};
+function vPlanner(){const p=ui.plan;
+  if(!SAMPLE||p.off)return`<div class="card"><h2>The planner isn't available here.</h2><p class="sub">It asks Claude for ideas, which this view can't do${p.off?" because it wasn't allowed":""}. Ideas and Mutual Match still work.</p></div>`;
+  const chip=(k,opts)=>opts.map(([v,l])=>`<button class="chip" data-act="plSet" data-k="${k}" data-v="${v}" aria-pressed="${String(p[k]??"")===v}">${l}</button>`).join("");
+  return`<div class="card"><label class="f" for="pl-q">What are you in the mood for?<textarea id="pl-q" data-bind="plan.q" maxlength="300" placeholder="Something low-key and outdoors this Sunday">${esc(p.q)}</textarea></label>
+     <div class="chips sm" role="group" aria-label="Examples">${PLAN_EX.map((t,i)=>`<button class="chip" data-act="plEx" data-i="${i}">${esc(t)}</button>`).join("")}</div>
+     <div class="col" style="gap:6px"><span class="tiny">Budget</span><div class="chips sm" role="group" aria-label="Budget">${chip("budget",PB)}</div></div>
+     <div class="col" style="gap:6px"><span class="tiny">Time you have</span><div class="chips sm" role="group" aria-label="Time">${chip("time",PT)}</div></div>
+     <label class="f" for="pl-area">Area <em>Optional: a city or neighborhood you type. VOUZ never reads your location.</em><input type="text" id="pl-area" data-bind="plan.area" maxlength="60" value="${esc(p.area)}" autocomplete="off"></label>
+     ${sw("plHist",p.history,"Avoid repeats","Also sends the titles of your memories and plans, so it suggests something new.")}
+     <p class="tiny">Sent to Claude: your request, budget, time${p.area.trim()?", the area you typed":""}${p.history?" and the titles of your memories and plans":""}. Never your intimacy records, notes, photos, partners or location.</p>
+     ${p.busy?`<div class="row"><span class="grow sub" role="status">Thinking…</span><button class="btn sm ghost" data-act="plStop">Stop</button></div>`:`<button class="btn primary block" data-act="plAsk">${ic("spark")} Get ideas</button>`}</div>
+   ${p.err?`<p class="err" role="alert">${esc(p.err)}</p>`:""}
+   ${p.res?(p.res.length?p.res.map((x,i)=>{const saved=S.exps.some(e=>e.kind==="plan"&&e.title===x.title);return`<div class="card idea"><div><b class="it">${esc(x.title)}</b>${x.why?`<p class="sub small">${esc(x.why)}</p>`:""}<p class="tiny">${[x.cost,x.time,x.setting].filter(Boolean).map(esc).join(" · ")}</p>${x.steps.length?`<ol class="steps-l">${x.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>`:""}</div><button class="btn sm ${saved?"ghost":""}" style="align-self:flex-start" data-act="plSave" data-i="${i}" ${saved?"disabled":""}>${saved?ic("check")+" In your plans":ic("plus")+" Save to plans"}</button></div>`}).join("")+`<p class="tiny">Ideas only. Nothing here has been checked for opening hours, prices or availability, and the planner can't book, buy or message anyone.</p><button class="link small" data-act="plAsk" data-again="1">Try again</button>`:`<div class="card line"><p class="sub small">No ideas came back. Try asking a different way.</p></div>`):""}`}
+Object.assign(A,{
+  plSet(e){ui.plan[e.dataset.k]=e.dataset.v===""?null:e.dataset.v;render()},
+  plEx(e){ui.plan.q=PLAN_EX[+e.dataset.i];render()},
+  plHist(){ui.plan.history=!ui.plan.history;render()},
+  plStop(){ui.plan.ctl&&ui.plan.ctl.abort()},
+  async plAsk(e){const p=ui.plan;if(p.busy||!SAMPLE)return;p.busy=true;p.err=null;p.ctl=new AbortController();render();
+    try{const opts={signal:p.ctl.signal};if(e&&e.dataset&&e.dataset.again)opts.cache=false;const v=await SAMPLE.json(plannerPrompt(p),opts);p.res=cleanPlans(v)}
+    catch(x){const c=x&&x.code;if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(c))p.off=true;else if(c!=="cancelled")p.err=PLAN_ERR[c]||"That didn't work. Try again."}
+    finally{p.busy=false;p.ctl=null;render()}},
+  plSave(e){const x=ui.plan.res&&ui.plan.res[+e.dataset.i];if(!x||S.exps.some(z=>z.kind==="plan"&&z.title===x.title))return;const now=Date.now();
+    S.exps.push({id:uid(),kind:"plan",title:x.title,date:null,cat:"other",location:"",favorite:"",mood:"",notes:[x.why].concat(x.steps.map((s,i)=>(i+1)+". "+s)).filter(Boolean).join("\n"),sharedNote:"",space:null,anniv:false,photos:[],idea:null,createdAt:now,updatedAt:now});
+    save();render();toast("Saved to your plans.")}
+});
+
+function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
 document.addEventListener("input",ev=>{bind(ev.target);if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
 document.addEventListener("change",ev=>{if(ev.target.dataset&&ev.target.dataset.live&&ev.target.type==="date"){bind(ev.target);render()}});
@@ -1401,7 +1511,8 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&S.onboarde
 window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.onboarded&&!ui.locked&&TABS().some(x=>x[0]===t)&&(t!==ui.tab||ui.page)&&!legacySessions().length){ui.tab=t;ui.page=null;ui.sheet=null;render(true)}});
 
 /* ============ boot ============ */
-(function boot(){normCats();const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
+(function boot(){normCats();
+  try{if(window.claude&&window.claude.use)window.claude.use("sample").then(f=>{SAMPLE=f||null;if(ui.tab==="discover"&&!typing())render()}).catch(()=>{})}catch(e){}const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
   if(S.onboarded&&S.settings.pinHash)ui.locked=true;
   if(S.active){ui.tab="intimacy";ui.int.seg="track"}
   render();

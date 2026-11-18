@@ -240,10 +240,17 @@ with sync_playwright() as pw:
     nav(a,"match"); [act(a,"pickToggle",v=v) for v in ("hike","cook","picnic")]; a.wait_for_timeout(1000)
     ok("match: waiting until everyone has picked","Waiting for bobby" in a.inner_text(".scroll") and a.locator('[data-act="matchSave"]').count()==0)
     raw=json.dumps(STORE["match/alice"]); ok("match: picks are encrypted in storage",not any(w in raw for w in ["hike","cook","picnic"]),raw[:120])
+    mem=bb.evaluate("JSON.stringify([window.__vouz.Soc.mres,window.__vouz.Soc.mdocs,Object.values(window.__vouz.Soc.cache).filter(v=>v&&typeof v==='object'&&('own' in v||'fwd' in v))])")
+    ok("match: the partner's browser holds only blinded numbers, never the other's picks",not any(w in mem for w in ["hike","cook","picnic"]) and len(mem)>100,mem[:120])
     nav(bb,"match"); ok("match: the partner can't see the other's picks","Go hiking" not in "".join(x.inner_text() for x in bb.locator(".idea").all()) and bb.locator('[data-act="pickToggle"][aria-pressed="true"]').count()==0)
     [act(bb,"pickToggle",v=v) for v in ("cook","picnic","museum")]; bb.wait_for_timeout(1000); a.wait_for_timeout(800)
     ma=sorted(x.inner_text() for x in a.locator(".idea .it").all()); mb=sorted(x.inner_text() for x in bb.locator(".idea .it").all())
     ok("match: only ideas everyone picked are revealed, to both sides",ma==mb==["Cook something new together","Pack a picnic"],f"{ma} {mb}")
+    for v in ("museum","stars","bike","garden","brunch","books","sport"): act(a,"pickToggle",v=v)
+    ok("match: picks are capped at 8, so nobody can pick everything",len(S(a)["picks"][spid])==8 and a.locator('[data-act="pickToggle"][data-v="dance"]').is_disabled())
+    a.wait_for_timeout(1500); bb.wait_for_timeout(800)
+    ma=sorted(x.inner_text() for x in a.locator(".idea .it").all())
+    ok("match: changing picks updates the result privately (museum now shared)",ma==["Cook something new together","Pack a picnic","Visit a museum or gallery"],str(ma))
     act(a,"matchSave",v="cook"); a.wait_for_timeout(1000); bb.wait_for_timeout(600)
     ok("match: a matched idea becomes a plan the partner sees","Cook something new together" in home(bb) and "planned by ali" in bb.inner_text(".scroll"))
     # leaving: key rotates, shared content disappears
@@ -366,6 +373,30 @@ with sync_playwright() as pw:
     nav(p,"story"); act(p,"expOpen",id=m["id"]); act(p,"expDelAsk",id=m["id"]); act(p,"confirmYes"); p.wait_for_timeout(300)
     ok("memory: deleting removes its photos from the device",p.evaluate("id=>window.__vouz.Photos.get(id).then(b=>b===undefined)",ph) and m["id"] in S(p)["deleted"])
     nav(p,"match"); ok("Mutual Match: explains it needs Connections when they're off","needs Connections" in p.inner_text(".scroll"))
+    ctx.close()
+    # ---------- AI planner (Claude mocked: records exactly what would be sent) ----------
+    PMOCK="""window.__prompts=[];window.__planFail=null;(()=>{const f=async()=>({text:''});f.json=async(input,opts)=>{window.__prompts.push({input,opts:Object.keys(opts||{})});if(window.__planFail)throw {code:window.__planFail};
+      return {suggestions:[{title:'<img src=x onerror="window.__xss=1">Sunset walk',why:'Easy and free',cost:'Free',time:'1 hour',setting:'Outdoors',steps:['Pick a spot','Bring a blanket']},{title:'Cook a new recipe',cost:'$',steps:[]},{bogus:1}]}};
+      window.claude={use:async n=>n==='sample'?f:null}})();"""
+    ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script(PMOCK); p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)))
+    p.goto(URL); p.wait_for_selector(".ob"); onboard(p)
+    log(p,"SESSIONTITLE",20,notes="SESSIONSECRET",cat="poly"); nav(p,"story"); act(p,"expNew",kind="done"); p.fill("#x-title","MEMTITLE"); p.fill("#x-notes","MEMNOTE"); act(p,"expSave")
+    nav(p,"planner"); ok("planner: offered in Discover, nothing sent until asked",p.locator('[data-act="plAsk"]').count()==1 and p.evaluate("window.__prompts.length")==0)
+    act(p,"plEx",i="2"); act(p,"plSet",k="budget",v="50"); p.fill("#pl-area","Oakland"); act(p,"plAsk"); p.wait_for_selector(".idea .it")
+    pr=p.evaluate("window.__prompts[0].input")
+    ok("planner: sends the request, budget and the area typed",all(w in pr for w in ["Plan a date under $50","Under $50","Oakland"]))
+    ok("planner: never sends intimacy records, notes or memories unless asked",not any(w in pr for w in ["SESSIONTITLE","SESSIONSECRET","Poly","MEMTITLE","MEMNOTE"]))
+    ok("planner: told not to claim availability or bookings","availability" in pr and "booked" in pr)
+    titles=[x.inner_text() for x in p.locator(".idea .it").all()]
+    ok("planner: answers are cleaned up and shown safely",len(titles)==2 and titles[0].endswith("Sunset walk") and "<img" in titles[0] and p.evaluate("window.__xss")is None)
+    ok("planner: says it hasn't checked availability and can't book","can't book" in p.inner_text(".scroll"))
+    act(p,"plSave",i="1"); x=[e for e in S(p)["exps"] if e["title"]=="Cook a new recipe"]
+    ok("planner: a suggestion saves to plans",len(x)==1 and x[0]["kind"]=="plan" and p.locator('[data-act="plSave"][data-i="1"]').is_disabled())
+    act(p,"plHist"); act(p,"plAsk",again="1"); p.wait_for_timeout(300); pr=p.evaluate("window.__prompts[1].input")
+    ok("planner: 'avoid repeats' adds memory titles only",("MEMTITLE" in pr) and "MEMNOTE" not in pr and "SESSIONTITLE" not in pr and "SESSIONSECRET" not in pr)
+    ok("planner: 'try again' asks afresh",p.evaluate("window.__prompts[1].opts").count("cache")==1)
+    p.evaluate("window.__planFail='rate_limited'"); act(p,"plAsk",again="1"); p.wait_for_selector(".err"); ok("planner: errors are explained, not retried",p.evaluate("window.__prompts.length")==3 and "Try again in a little while" in p.inner_text(".err"))
+    p.evaluate("window.__planFail='not_granted'"); act(p,"plAsk",again="1"); p.wait_for_timeout(300); ok("planner: hides itself if Claude isn't allowed","isn't available here" in p.inner_text(".scroll"))
     ctx.close()
     # screenshots with motion on
     ctx,p=newctx(b,motion="no-preference"); p.goto(URL); p.wait_for_timeout(700); p.screenshot(path=SH+"ob.png"); onboard(p); act(p,"loadDemo"); p.wait_for_timeout(600); p.screenshot(path=SH+"home.png"); nav(p,"history"); p.wait_for_timeout(1200)
