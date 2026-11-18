@@ -216,6 +216,41 @@ with sync_playwright() as pw:
     act(bb,"editSession",id=bid); act(bb,"askDelete"); act(bb,"confirmYes"); bb.wait_for_timeout(900)
     ok("people: deleting a session withdraws its invites",STORE["invites/bob"]["items"]==[])
     home(a); home(bb); nav(a,"social"); act(a,"socSeg",v="people"); a.wait_for_timeout(300); feed(c)
+    # ---------- shared spaces and Mutual Match (alice and bob connected, carol not) ----------
+    def sp_of(pg): return pg.evaluate("Object.values(window.__vouz.Soc.sp).map(x=>({id:x.id,name:x.name,role:x.role,members:x.members,invited:x.invited}))")
+    nav(a,"profile"); act(a,"page",page="spaces"); ok("spaces: only connections can be invited",[x.inner_text() for x in a.locator('[data-act="spPick"]').all()]==["bobby"])
+    act(a,"spCreate"); ok("spaces: a name and a person are required",a.locator(".err").count()==1)
+    a.fill("#sp-name","OURSPACE"); act(a,"spPick",v="bob"); act(a,"spCreate"); a.wait_for_timeout(900)
+    raw=json.dumps(STORE["spaces/alice"]); ok("spaces: name and members are encrypted in storage",len(STORE["spaces/alice"]["items"])==1 and not any(w in raw for w in ["OURSPACE","bob","alice"]),raw[:160])
+    hb=home(bb); ok("spaces: the invited person is asked first","invited you to OURSPACE" in hb and sp_of(bb)[0]["role"]=="invited")
+    ok("spaces: someone not invited sees nothing",sp_of(c)==[] and "OURSPACE" not in home(c))
+    act(bb,"spAccept"); bb.wait_for_timeout(900); a.wait_for_timeout(1200)
+    ok("spaces: accepting makes them a member",sp_of(a)[0]["members"]==["bob"] and sp_of(a)[0]["invited"]==[] and sp_of(bb)[0]["role"] in ("member","joining"))
+    spid=sp_of(a)[0]["id"]
+    # a memory shared into the space, and one kept private
+    nav(a,"story"); act(a,"expNew",kind="done"); a.fill("#x-title","BEACHDAY"); a.fill("#x-notes","PRIVNOTE"); act(a,"xSpace",v=spid); a.fill("#x-shared","SHAREDNOTE"); act(a,"expSave"); a.wait_for_timeout(300)
+    nav(a,"story"); act(a,"expNew",kind="done"); a.fill("#x-title","SECRETDINNER"); act(a,"expSave"); a.wait_for_timeout(1200)
+    raw=json.dumps(STORE.get("exps/alice",{})); ok("story: a shared memory is ciphertext in storage, and private ones aren't stored at all",len(STORE["exps/alice"]["items"])==1 and not any(w in raw for w in ["BEACHDAY","PRIVNOTE","SECRETDINNER","SHAREDNOTE"]),raw[:160])
+    bb.wait_for_timeout(600); nav(bb,"story"); t=bb.inner_text(".scroll")
+    ok("story: the partner sees what was shared to the space, not what was kept private","BEACHDAY" in t and "from ali" in t and "SECRETDINNER" not in t)
+    xid=[e for e in S(a)["exps"] if e["title"]=="BEACHDAY"][0]["id"]; act(bb,"expOpen",id=xid,a="alice"); t=bb.inner_text(".scroll")
+    ok("story: the shared note is visible, private notes are not","SHAREDNOTE" in t and "PRIVNOTE" not in t and bb.locator('[data-act="expEdit"]').count()==0)
+    nav(c,"story"); ok("story: someone outside the space sees nothing","BEACHDAY" not in c.inner_text(".scroll") and c.evaluate("window.__vouz.Soc.shared.length")==0)
+    # Mutual Match
+    nav(a,"match"); [act(a,"pickToggle",v=v) for v in ("hike","cook","picnic")]; a.wait_for_timeout(1000)
+    ok("match: waiting until everyone has picked","Waiting for bobby" in a.inner_text(".scroll") and a.locator('[data-act="matchSave"]').count()==0)
+    raw=json.dumps(STORE["match/alice"]); ok("match: picks are encrypted in storage",not any(w in raw for w in ["hike","cook","picnic"]),raw[:120])
+    nav(bb,"match"); ok("match: the partner can't see the other's picks","Go hiking" not in "".join(x.inner_text() for x in bb.locator(".idea").all()) and bb.locator('[data-act="pickToggle"][aria-pressed="true"]').count()==0)
+    [act(bb,"pickToggle",v=v) for v in ("cook","picnic","museum")]; bb.wait_for_timeout(1000); a.wait_for_timeout(800)
+    ma=sorted(x.inner_text() for x in a.locator(".idea .it").all()); mb=sorted(x.inner_text() for x in bb.locator(".idea .it").all())
+    ok("match: only ideas everyone picked are revealed, to both sides",ma==mb==["Cook something new together","Pack a picnic"],f"{ma} {mb}")
+    act(a,"matchSave",v="cook"); a.wait_for_timeout(1000); bb.wait_for_timeout(600)
+    ok("match: a matched idea becomes a plan the partner sees","Cook something new together" in home(bb) and "planned by ali" in bb.inner_text(".scroll"))
+    # leaving: key rotates, shared content disappears
+    nav(bb,"profile"); act(bb,"page",page="spaces"); act(bb,"spLeave",id=spid); act(bb,"confirmYes"); bb.wait_for_timeout(1000); a.wait_for_timeout(1500)
+    ok("spaces: leaving takes them out and the space gets a new key",sp_of(a)[0]["members"]==[] and list(STORE["spaces/alice"]["items"][0]["wk"].keys())==["self"])
+    bb.wait_for_timeout(800); nav(bb,"story"); ok("spaces: after leaving, shared memories are gone for them","BEACHDAY" not in bb.inner_text(".scroll") and bb.evaluate("window.__vouz.Soc.shared.length")==0)
+    home(bb); feed(c); nav(a,"social"); act(a,"socSeg",v="people"); a.wait_for_timeout(300)
     # tamper: bob cannot write alice's docs
     try: db_set(None,"bob","posts/alice",'{"items":[]}'); tam=False
     except Exception: tam=True

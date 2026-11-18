@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.4.0 — 2026-11-18
+
+Product: VOUZ becomes a relationship-experiences app. Tagline "Less scrolling. More together."
+
+Added (browser-tested unless marked):
+- Session modes Couple (2) and Poly (3–20, counter starting at 3) on Track, the save form, quick log, invites, Replay, Insights and sharing.
+- Satisfaction rating (1–5, optional, private) and a shared note that travels only with confirmation invites.
+- Verification statuses: Self-reported, Pending confirmation, Mutually confirmed. Invite limit follows the head count.
+- Quick log: three taps after a session; duplicate guard.
+- Timed vs estimated kept apart in Replay and Insights; Couple vs Poly comparison; satisfaction trend.
+- Memories and plans: title, date, kind, place (typed), favorite moment, mood, private notes, shared note, privacy.
+- Photos on memories: on this device only, re-encoded without location data, not synced or exported.
+- Our Story timeline with anniversary reminders for milestones.
+- Discover: 32 generic ideas with budget, time, distance, setting, energy and interest filters; save, schedule, complete.
+- Shared spaces: create, invite connections, accept, decline, leave, remove, delete. Encrypted in the browser; key changes when anyone leaves.
+- Mutual Match inside a space: private picks, only ideas every member picked are revealed.
+- New palette (near black, charcoal, ivory, wine, burgundy, muted rose) and five tabs.
+- Supabase migration 0003: Couple/Poly with constraints, satisfaction, shared notes, private experiences table (tested locally, not deployed).
+
+Changed:
+- Solo and Partnered sessions are removed on upgrade after a one-time notice offering a download. Duo, Trio and Group convert.
+- "Social" switch renamed Connections; the feed moved to a page under Profile.
+- Session cards can no longer be shared with Everyone (needs every participant's consent). Achievement cards still can.
+- Plus proposal updated to $3.99 a month / $29.99 a year.
+- Published as a new private artifact; the earlier one is public and could not be updated.
+
 ## 0.3.0 — 2026-11-14
 
 Added (all with automated tests unless marked):

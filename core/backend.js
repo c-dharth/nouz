@@ -21,9 +21,9 @@ export function backend(cfg, getToken, fetchImpl = globalThis.fetch) {
     // 401 = token expired (retry after refresh); 5xx / 429 = try later; other 4xx = the server will never accept this.
     throw Object.assign(new Error("http " + res.status), { retryable: res.status === 401 || res.status === 429 || res.status >= 500, status: res.status });
   };
-  const toRow = (s, deletedAt) => ({ id: s.id, start: s.start, durationSec: s.durationSec, segments: s.segments ?? null, category: s.category ?? null, groupSize: s.groupSize ?? null,
+  const toRow = (s, deletedAt) => ({ id: s.id, start: s.start, durationSec: s.durationSec, segments: s.segments ?? null, category: s.category ?? null, participants: s.participants ?? null, satisfaction: s.satisfaction ?? null, sharedNote: s.sharedNote || "",
     title: s.title || "", tags: s.tags || [], mood: s.mood || "", hrAvg: s.hrAvg || "", hrPeak: s.hrPeak || "", updatedAt: s.updatedAt || Date.now(), ...(deletedAt ? { deletedAt } : {}) });
-  const fromRow = (r) => ({ id: r.id, start: Date.parse(r.started_at), durationSec: r.duration_sec, segments: r.segments, category: r.category, groupSize: r.group_size, title: r.title,
+  const fromRow = (r) => ({ id: r.id, start: Date.parse(r.started_at), durationSec: r.duration_sec, segments: r.segments, category: r.category, participants: r.participants ?? null, satisfaction: r.satisfaction ?? null, sharedNote: r.shared_note || "", title: r.title,
     tags: r.tags || [], mood: r.mood || "", hrAvg: r.hr_avg == null ? "" : String(r.hr_avg), hrPeak: r.hr_peak == null ? "" : String(r.hr_peak), updatedAt: +r.client_updated_at, _deletedAt: r.deleted_at ? Date.parse(r.deleted_at) : null });
   return {
     // Notes travel separately from the session row and are never part of anything shared.

@@ -22,7 +22,7 @@ function fakeServer() {
     if (down) throw new Error("network");
     log.push({ url, body: init.body });
     const ok = (b) => ({ ok: true, status: 200, json: async () => b });
-    if (url.endsWith("/rpc/upsert_session")) { const s = JSON.parse(init.body).s, cur = rows.get(s.id); if (!cur || cur.client_updated_at < s.updatedAt) rows.set(s.id, { id: s.id, started_at: new Date(s.start).toISOString(), duration_sec: s.durationSec, segments: s.segments, category: s.category, group_size: s.groupSize, title: s.title, tags: s.tags, mood: s.mood, hr_avg: null, hr_peak: null, client_updated_at: s.updatedAt, deleted_at: s.deletedAt ? new Date(s.deletedAt).toISOString() : null }); return ok(true); }
+    if (url.endsWith("/rpc/upsert_session")) { const s = JSON.parse(init.body).s, cur = rows.get(s.id); if (!cur || cur.client_updated_at < s.updatedAt) rows.set(s.id, { id: s.id, started_at: new Date(s.start).toISOString(), duration_sec: s.durationSec, segments: s.segments, category: s.category, participants: s.participants, satisfaction: s.satisfaction, shared_note: s.sharedNote, title: s.title, tags: s.tags, mood: s.mood, hr_avg: null, hr_peak: null, client_updated_at: s.updatedAt, deleted_at: s.deletedAt ? new Date(s.deletedAt).toISOString() : null }); return ok(true); }
     if (url.includes("/session_notes?on_conflict")) { const n = JSON.parse(init.body); notes.set(n.session_id, n); return ok([]); }
     if (url.includes("/sessions?select")) return ok([...rows.values()]);
     if (url.includes("/session_notes?select")) return ok([...notes.values()]);
@@ -31,7 +31,7 @@ function fakeServer() {
   return { fetchImpl, rows, notes, log, set down(v) { down = v; } };
 }
 const cfg = { url: "https://x.supabase.co", key: "anon" };
-const sess = (id, updatedAt, extra = {}) => ({ id, start: 1763150000000, durationSec: 600, segments: null, category: "duo", tags: [], mood: "", notes: "", reflection: "", hrAvg: "", hrPeak: "", updatedAt, ...extra });
+const sess = (id, updatedAt, extra = {}) => ({ id, start: 1763150000000, durationSec: 600, segments: null, category: "couple", participants: 2, tags: [], mood: "", notes: "", reflection: "", hrAvg: "", hrPeak: "", updatedAt, ...extra });
 
 test("offline: changes stay queued and local data is untouched", async () => {
   const srv = fakeServer(); srv.down = true;
@@ -48,12 +48,13 @@ test("signed out: nothing is sent", async () => {
 
 test("back online: queue drains, notes go to their own table, other devices' sessions arrive", async () => {
   const srv = fakeServer();
-  srv.rows.set("remote", { id: "remote", started_at: new Date(1763000000000).toISOString(), duration_sec: 300, segments: null, category: "solo", group_size: null, title: "", tags: [], mood: "", hr_avg: 110, hr_peak: null, client_updated_at: 3, deleted_at: null });
+  srv.rows.set("remote", { id: "remote", started_at: new Date(1763000000000).toISOString(), duration_sec: 300, segments: null, category: "poly", participants: 3, shared_note: "", title: "", tags: [], mood: "", hr_avg: 110, hr_peak: null, client_updated_at: 3, deleted_at: null });
   const data = { sessions: [sess("a", 5, { notes: "PRIVATE NOTE" }), sess("d", 1, { demo: true })], deleted: {}, settings: {} };
   const r = await syncOnce(data, enqueue([], { kind: "upsert", id: "a", at: 5, userId: "u" }), backend(cfg, async () => "tok", srv.fetchImpl), 1000);
   assert.deepEqual([r.status, r.queue.length], ["ok", 0]);
   assert.deepEqual(r.data.sessions.map((s) => s.id).sort(), ["a", "d", "remote"]);
   assert.equal(r.data.sessions.find((s) => s.id === "remote").hrAvg, "110");
+  assert.deepEqual([r.data.sessions.find((s) => s.id === "remote").category, r.data.sessions.find((s) => s.id === "remote").participants], ["poly", 3]);
   assert.equal(r.data.sessions.find((s) => s.id === "a").notes, "PRIVATE NOTE");
   const upsert = srv.log.find((l) => l.url.endsWith("/rpc/upsert_session"));
   assert.ok(!upsert.body.includes("PRIVATE NOTE"), "the session row never carries notes");
