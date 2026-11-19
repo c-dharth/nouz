@@ -71,8 +71,8 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 1. Point values and caps (RW.VP, RW.CAPS) are first guesses: adjust after real use.
 2. Supabase: when to deploy, and whether notes are encrypted on the device first.
 3. Explore ranking weights (recency 40, engagement 25, interests 15, detail 10, repeat author −12) are first guesses.
-5. Whether to add a routing/weather connector (e.g. Mapbox, AccuWeather) for distances, travel time and weather.
 4. Who moderates, and the community rules they enforce, before any real public launch.
+5. Whether to add a routing/weather connector (e.g. Mapbox, AccuWeather) for distances, travel time and weather.
 
 ## Commands once Xcode is installed
 
