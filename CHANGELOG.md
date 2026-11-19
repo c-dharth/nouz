@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0 — 2026-11-18
+
+Added (tested):
+- Rewards: VOUZ Points with configurable values, daily and weekly caps, once-only award keys, points that follow your records.
+- Ten collectible badges with artwork, earned / up next / locked, progress bars; intimacy achievements kept in a separate private collection.
+- Twelve levels by points earned; spending never lowers a level.
+- Weekly challenges (never intimacy, no streaks) that fit budget, interests, energy and time; completed by choosing a qualifying memory.
+- Optional weekly experience goal; Together totals per shared space with no comparisons.
+- Rewards shop: three themes, two badge frames, two card styles, milestone keepsake cards. No coupons or partner offers.
+- History of every earning, uncounted entry and redemption. Celebration card with animation (reduced-motion aware).
+- Switches for points and achievements, and for celebrations.
+- Private Mutual Match: picks are blinded with a Diffie-Hellman set intersection over the RFC 3526 2048-bit group, padded to 8 and capped at 8.
+- AI Planner in Discover using the platform's ask-Claude capability, with explicit controls over what is sent.
+- Supabase migration 0004: trigger-written points ledger, caps, validated challenges, atomic redemption, partner-reward gating.
+
 ## 0.4.0 — 2026-11-18
 
 Product: VOUZ becomes a relationship-experiences app. Tagline "Less scrolling. More together."

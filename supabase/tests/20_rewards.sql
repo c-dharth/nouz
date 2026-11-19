@@ -1,0 +1,52 @@
+-- Points and rewards, run as signed-in users with row-level security in force.
+\set dana '''e0000000-0000-0000-0000-00000000000e'''
+\set eli  '''f0000000-0000-0000-0000-00000000000f'''
+insert into auth.users values (:dana), (:eli);
+select test.who(:dana); set role authenticated;
+insert into experiences (user_id, id, kind, title, happened_at, category, location, client_updated_at, created_at) select :dana, 'e1', 'done', 'Bistro', now(), 'dinner', 'Corner bistro', 1, now() where true;
+select test.ok('rewards: a memory earns 20 and a first kind 50, written by the database', (select earned from my_points) = 70);
+update experiences set title = 'Bistro again', client_updated_at = 2 where id = 'e1';
+select test.ok('rewards: editing a memory never awards it twice', (select earned from my_points) = 70);
+insert into experiences (user_id, id, kind, title, happened_at, category, client_updated_at) values (:dana,'e2','done','b',now(),'dinner',1),(:dana,'e3','done','c',now(),'dinner',1),(:dana,'e4','done','d',now(),'dinner',1);
+select test.ok('rewards: only 3 memories a day earn points', (select earned from my_points) = 3*20 + 50 and (select count(*) = 1 from vp_events where points = 0));
+select test.denied('rewards: the app can''t write points itself', format($$insert into vp_events values (%L, 'gift', 10000, 'free points')$$, :dana));
+select test.denied('rewards: the app can''t call the awarding function', format($$select vp_award(%L, 'gift', 'challenge', 'x')$$, :dana));
+select test.denied('rewards: nor change points it has', $$update vp_events set points = 9999$$);
+delete from experiences where id = 'e2';
+select test.ok('rewards: deleting a memory takes its points back', not exists (select 1 from vp_events where award_key = 'exp:e2'));
+insert into experiences (user_id, id, kind, title, happened_at, category, planned, client_updated_at) values (:dana,'p1','plan','Hike',null,'other',false,1);
+select test.ok('rewards: a plan earns nothing until it''s done', not exists (select 1 from vp_events where award_key like '%p1'));
+update experiences set kind = 'done', happened_at = now(), category = 'adventure', planned = true, done_at = now(), client_updated_at = 2 where id = 'p1';
+select test.ok('rewards: completing a planned date earns 75', (select points from vp_events where award_key = 'plan:p1') = 75);
+insert into sessions (user_id, id, started_at, duration_sec, category, participants, client_updated_at) values (:dana,'s1',now(),600,'couple',2,1),(:dana,'s2',now(),5400,'poly',6,1),(:dana,'s3',now(),60,'couple',2,1);
+select test.ok('rewards: intimacy earns 10 once a week, whatever the count, length or people', (select sum(points) from vp_events where award_key like 'ses:%') = 10 and (select reason from vp_events where award_key like 'ses:%') = 'Private log');
+delete from sessions where id in ('s1','s2');
+select test.ok('rewards: the weekly award stays while a session that week remains', exists (select 1 from vp_events where award_key like 'ses:%'));
+delete from sessions where id = 's3';
+select test.ok('rewards: and goes when none do', not exists (select 1 from vp_events where award_key like 'ses:%'));
+select test.denied('challenge: a memory of the wrong kind is refused', format($$insert into challenge_completions (user_id, week_start, challenge_id, experience_id) values (%L, date_trunc('week', now())::date, 'outdoor', 'e1')$$, :dana));
+insert into experiences (user_id, id, kind, title, happened_at, category, location, client_updated_at, created_at) values (:dana,'e9','done','Again','2026-01-01','dinner','corner bistro ',1,now());
+select test.denied('challenge: "somewhere new" must really be new', format($$insert into challenge_completions (user_id, week_start, challenge_id, experience_id) values (%L, date_trunc('week', now())::date, 'newrest', 'e9')$$, :dana));
+select test.denied('challenge: someone else''s memory can''t be used', format($$insert into challenge_completions (user_id, week_start, challenge_id, experience_id) values (%L, date_trunc('week', now())::date, 'brunch', 'e1')$$, :eli));
+select test.affects('challenge: a fitting memory from this week completes it', format($$insert into challenge_completions (user_id, week_start, challenge_id, experience_id) values (%L, date_trunc('week', now())::date, 'newrest', 'e1')$$, :dana), 1);
+select test.ok('challenge: worth 150', (select points from vp_events where award_key like 'ch:%') = 150);
+select test.denied('challenge: one a week', format($$insert into challenge_completions (user_id, week_start, challenge_id, experience_id) values (%L, date_trunc('week', now())::date, 'brunch', 'e3')$$, :dana));
+select test.ok('catalog: only virtual rewards are listed', (select bool_and(kind = 'virtual') from reward_catalog) and (select count(*) = 8 from reward_catalog));
+select test.denied('redeem: not enough points', $$select redeem_reward('th_champagne')$$);
+select redeem_reward('fr_rose');
+select test.ok('redeem: spending is recorded and lowers the balance', (select spent from my_points) = 150);
+select test.denied('redeem: a one-off reward can''t be bought twice', $$select redeem_reward('fr_rose')$$);
+select test.denied('redeem: the app can''t record a redemption itself', format($$insert into redemptions (user_id, reward_id, cost) values (%L, 'th_champagne', 0)$$, :dana));
+reset role;
+insert into reward_catalog (id, kind, name, cost, sponsor, terms_url, expires_at, verified) values ('p_unverified','partner','20% off somewhere',100,'Some sponsor','https://example.invalid/terms',now() + interval '30 days',false),
+  ('p_expired','partner','Expired offer',100,'Some sponsor','https://example.invalid/terms',now() - interval '1 day',true);
+select test.denied('catalog: a partner reward needs a sponsor, terms and expiry', $$insert into reward_catalog (id, kind, name, cost) values ('p_bad','partner','Mystery deal',10)$$);
+select test.who(:dana); set role authenticated;
+select test.ok('catalog: unverified or expired partner rewards are never shown', (select count(*) = 0 from reward_catalog where kind = 'partner'));
+select test.denied('redeem: nor can they be redeemed', $$select redeem_reward('p_unverified')$$);
+reset role;
+select test.who(:eli); set role authenticated;
+select test.ok('privacy: nobody else sees my points, challenges or redemptions', (select count(*) = 0 from vp_events) and (select count(*) = 0 from challenge_completions) and (select count(*) = 0 from redemptions) and (select earned from my_points) = 0);
+reset role;
+delete from auth.users where id in (:dana, :eli);
+select test.ok('deletion: points and redemptions go with the account', (select count(*) = 0 from vp_events) and (select count(*) = 0 from redemptions));

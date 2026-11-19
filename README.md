@@ -16,16 +16,16 @@ Private by default. Shared only by choice. No scores.
 | `supabase/migrations/` | Database schema and row-level security | Tested on local Postgres, not deployed |
 | `supabase/functions/` | Account deletion, purchase verification | Written, never run |
 | `watch/` | Apple Watch app source and iPhone bridge | Written, never compiled |
-| `e2e/run.py` | Browser tests for the app, including three simulated users | 147 checks |
+| `e2e/run.py` | Browser tests for the app, including three simulated users | 184 checks |
 
 The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in this repository. See CHECKLIST.md.
 
 ## Running the tests
 
 ```
-npm test            # 61 unit tests: timer, streaks, storage, sync, backend client, entitlements (Node 20+)
-npm run test:db     # 96 policy tests on a throwaway local Postgres (needs initdb and psql)
-npm run test:ui     # 147 browser checks (needs Python, Playwright and Chrome)
+npm test            # 84 unit tests (incl. private matching and rewards, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
+npm run test:db     # 124 policy tests on a throwaway local Postgres (needs initdb and psql)
+npm run test:ui     # 184 browser checks (needs Python, Playwright and Chrome)
 ```
 
 No packages are installed by any of these. There are no runtime dependencies.
@@ -50,9 +50,9 @@ The service role key and store credentials belong only in Supabase function secr
 |---|---|
 | Home | Greeting, quick actions, invitations, coming-up plans, an idea, recent memories, this week's intimacy count (private) |
 | Intimacy | Track (timer, Couple/Poly, quick log), History (week ring, calendar, list, achievements), Insights |
-| Discover | Ideas with filters, Mutual Match inside a shared space, Plans |
+| Discover | Ideas with filters, AI Planner, private Mutual Match inside a shared space, Plans |
 | Our Story | Timeline of memories, anniversary reminders, filter by shared space |
-| Profile | Storage and sync, Connections, shared spaces, social feed, passcode, export, VOUZ Plus, delete |
+| Profile | Rewards and achievements, storage and sync, Connections, shared spaces, social feed, passcode, export, VOUZ Plus, delete |
 
 Sessions are **Couple** (exactly 2) or **Poly** (3 to 20, with a counter). Confirmation status is Self-reported,
 Pending confirmation or Mutually confirmed. Confirmation is voluntary and is never described as proof.
@@ -63,3 +63,12 @@ Pending confirmation or Mutually confirmed. Confirmation is voluntary and is nev
 
 - VOUZ Pause (abstinence or celibacy tracking, reflection streaks).
 - Automatic or nearby detection of other people.
+
+## Rewards
+
+Points (VP) are worked out from the records that exist, under keys that can only be awarded once, so nothing is
+double-counted and deleting a record removes its points. Values and caps live in `RW.VP` and `RW.CAPS` in
+`web/index.html` (and in the `vp_rules` table on the server). Intimacy earns at most once a week regardless of
+frequency, duration or head count. Rewards are virtual only; partner rewards are gated off until a verified server
+feed exists. In the web app the ledger runs on the device; `supabase/migrations/0004_rewards.sql` moves it to
+database triggers so a client can't grant itself points.

@@ -25,13 +25,14 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 
 | Feature | State |
 |---|---|
-| AI experience planner | Not started. The platform offers a "sample" (ask Claude) capability that could power it; needs your go-ahead |
+| AI experience planner | Done. Discover → Planner. Sends only the request, budget, time, a typed area and (optional) memory titles |
 | Personalized recommendations | Not started (the Home idea is a daily rotation, not personalised) |
 | Monthly and yearly recaps | Not started |
 | Smart reminders, push notifications | Not started; web page can't send push here |
 | Shared wishlists | Not started (plans in a space cover part of it) |
 | Photo sync between partners | Not started; needs private object storage (Supabase Storage with RLS) |
-| Weekly streaks on screen | Logic only (`core/streaks.js`) |
+| Rewards, badges, levels, challenges, shop | Done (device); server ledger in migration 0004, tested locally |
+| Weekly streaks on screen | Logic only (`core/streaks.js`); intimacy is deliberately never part of a streak |
 | Apple Watch, HealthKit | Source only (`watch/`), never compiled |
 | Subscriptions | Logic only (`core/entitlements.js`); no purchase screen |
 | Supabase as the backend | Schema and policies tested locally (96 checks); not deployed; app not switched over |
@@ -39,7 +40,9 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 
 ## Known limits
 
-- **Mutual Match privacy:** picks are encrypted so storage and outsiders can't read them, and the app shows only full matches. But every member's browser downloads the space's encrypted picks, so a technically skilled member could read the others' picks. Real private matching needs a server-side or cryptographic protocol.
+- **Mutual Match privacy:** picks are blinded with a private set intersection, so no one (members, storage or VOUZ) can read them. With three or more people, a member who inspected the data could tell which of their own picks each other person shares, not just the full match. Matching completes as each member opens the app.
+- **Rewards in the web app** are computed on the device, so someone editing their own browser storage could give themselves points; that only affects their own virtual rewards. The Supabase migration moves awarding to the database.
+- **Intimacy points** are capped at once a week so frequency never earns more. The server version doesn't yet add the "confirmed" bonus, because confirmations don't live on the server yet.
 - **Leaving a space:** the space gets a new key, but someone who left may have kept copies of what they saw.
 - **Photos** are on one device only. Clearing browser data deletes them.
 - **Poly matching** requires every member to pick before anything is revealed.
@@ -48,9 +51,8 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 
 ## Decisions needed
 
-1. AI planner: OK to use the platform's ask-Claude capability, which sends what the person types to Claude?
-2. Should Mutual Match move to a server-side match so members can't read each other's picks?
-3. Supabase: when to deploy, and whether notes are encrypted on the device first.
+1. Point values and caps (RW.VP, RW.CAPS) are first guesses: adjust after real use.
+2. Supabase: when to deploy, and whether notes are encrypted on the device first.
 
 ## Commands once Xcode is installed
 
