@@ -32,10 +32,24 @@ const coll=(c)=>({path:c,doc:(id)=>doc(c+'/'+id),onSnapshot:(next)=>{let last=nu
 const yelpSchema={type:'object',additionalProperties:false,properties:{is_open_now:{type:'boolean'},latitude:{anyOf:[{type:'number',minimum:-90,maximum:90},{type:'null'}]},limit:{type:'integer',minimum:3,maximum:8},location:{anyOf:[{type:'string',maxLength:250},{type:'null'}]},longitude:{anyOf:[{type:'number'},{type:'null'}]},query:{anyOf:[{type:'string',maxLength:250},{type:'null'}]}}};
 window.__yelpCalls=[];
 const biz=(q,i,o)=>Object.assign({id:'t-'+q.replace(/\W/g,'')+'-'+i,name:'TEST '+q.toUpperCase().slice(0,14)+' '+i,rating:3.6+i*.3,review_count:20+i,is_closed:false,categories:[{alias:q.split(' ')[0]}],url:'https://www.yelp.com/biz/test-'+i,image_url:'https://example.com/p'+i+'.jpg',location:{address1:(100+i)+' Test St\nTestville, CA 90000',city:'Testville'},price:['$','$$','$$$'][i%3],distance_meters:0.2},o||{});
-const mcp={listTools:async()=>({servers:[{server:'Yelp',authStatus:'connected',tools:[{name:'yelp_search_local_businesses',description:''}]}]}),
+// Mapbox, AllTrails and AccuWeather stand-ins return the same shapes the real tools returned on 19 Nov 2026 (names are made up).
+window.__mcpCalls=[];
+const C0={lat:37.757,lon:-122.419},near=(i,d)=>({longitude:C0.lon+0.002*(i+1)*(d||1),latitude:C0.lat+0.002*(i+1)});
+const allDay={periods:[0,1,2,3,4,5,6].map(d=>({open:{day:d,time:'0700'},close:{day:d,time:'2300'}}))},never={periods:[{open:{day:0,time:'0000'},close:{day:0,time:'0001'}}]};
+const mbFeat=(name,i,cats,hours)=>{const c=near(i,cats[0]==='cafe'?1:-1);return{type:'Feature',geometry:{type:'Point',coordinates:[c.longitude,c.latitude]},properties:{name,mapbox_id:'mb-'+name.replace(/\W/g,''),feature_type:'poi',full_address:(200+i)+' Map St, Testville, California 90000, United States',coordinates:c,poi_category:cats,poi_category_ids:cats,metadata:{website:'http://example.com/'+i,open_hours:hours},distance:200*(i+1)}}};
+const tools={
+  Mapbox:{
+    category_search_tool:i=>{window.__mcpCalls.push(['Mapbox','category',i]);const k=i.category;const f=k==='cafe'?[mbFeat('TEST COFFEE 0',0,['café','coffee'],allDay),mbFeat('MAPBOX ONLY CAFE',1,['café','coffee'],never)]:[mbFeat('MB '+k.toUpperCase()+' A',2,[k],allDay),mbFeat('MB '+k.toUpperCase()+' B',3,[k],null)];return JSON.stringify({type:'FeatureCollection',features:f,attribution:'© Mapbox'},null,2)},
+    search_and_geocode_tool:i=>{window.__mcpCalls.push(['Mapbox','geocode',i]);return '1. Mission District\n   Address: San Francisco, California, United States\n   Coordinates: 37.757046, -122.41892\n   Type: neighborhood\n\nIf the user wants to see this on a map, pass this ref unchanged to render_map_tool:\n   render_map_tool({ "payload_refs": ["x"] })'},
+    directions_tool:i=>{window.__mcpCalls.push(['Mapbox','directions',i]);return JSON.stringify({routes:[{duration:481,distance:673}],waypoints:[]},null,2)+'\n\nIf the user wants to see this on a map, pass this ref unchanged to render_map_tool (not static_map_image_tool):\n   render_map_tool({ "payload_refs": ["mapbox://x"] })'}},
+  AllTrails:{find_trails_near_location:i=>{window.__mcpCalls.push(['AllTrails','trails',i]);return{trails:[{id:1,name:'TEST RIDGE LOOP',alltrails_web_url:'https://www.alltrails.com/trail/test',profile_photo_url:'https://www.alltrails.com/p.jpg',avg_rating:4.7,duration_minutes:52,elevation_gain_feet:314,length_miles:1.9,location_label:'Test Park, California',trail_head_distance_meters:2773,difficulty:'Moderate',route_type:'Loop'}],message:null}}},
+  AccuWeather:{'widgets-search-claude':i=>{window.__mcpCalls.push(['AccuWeather','search',i]);return{results:[{name:'Test District, CA',locationKey:'123'}]}},
+    'widgets-current-claude':i=>{window.__mcpCalls.push(['AccuWeather','current',i]);return{currentConditions:{phrase:window.__wxPhrase||'Cloudy',temperatureValue:52,realFeelPhrase:'Chilly'},alerts:[{name:'Coastal Flood Advisory',isActive:true}],location:{}}}}};
+const mcp={listTools:async()=>({servers:[{server:'Yelp',authStatus:'connected',tools:[{name:'yelp_search_local_businesses',description:''}]}].concat(window.__onlyYelp?[]:Object.keys(tools).map(k=>({server:k,authStatus:'unknown',tools:Object.keys(tools[k]).map(n=>({name:n,description:''}))})))}),
   // Like the platform: no description until the viewer has allowed the connector, which the first call asks for.
   describeTool:async(s,t)=>{if(!window.__yelpAllowed)throw{code:'not_in_manifest'};return{name:t,description:'',inputSchema:yelpSchema}},
-  callTool:async(s,t,input)=>{if(window.__yelpFail)throw{code:window.__yelpFail};window.__yelpAllowed=true;window.__yelpCalls.push(input);const q=input.query||'x';return{content:[],payload:{businesses:[biz(q,0),biz(q,1),biz(q,2,{is_closed:true,name:'TEST CLOSED '+q}),biz(q,3,{price:null})],status:'ok',error:null}}},
+  callTool:async(s,t,input)=>{if(window.__yelpFail)throw{code:window.__yelpFail};if(s!=='Yelp'){if(!tools[s]||!tools[s][t])throw{code:'server_not_connected'};return{content:[],payload:tools[s][t](input)}}
+    if(window.__yelpFail)throw{code:window.__yelpFail};window.__yelpAllowed=true;window.__yelpCalls.push(input);const q=input.query||'x';return{content:[],payload:{businesses:[biz(q,0),biz(q,1),biz(q,2,{is_closed:true,name:'TEST CLOSED '+q}),biz(q,3,{price:null})],status:'ok',error:null}}},
   invalidate:async()=>{}};
 window.claude={use:async(n)=>n==='mcp'&&U==='erin'?mcp:n==='db'?{doc,collection:coll}:n==='user'?{id:async()=>U,can:async()=>true,isOwner:async()=>U==='dave'}:null};})();
 """
@@ -658,17 +672,28 @@ with sync_playwright() as pw:
     ctx,e=newctx(b,"erin"); e.goto(URL); e.wait_for_timeout(400); onboard(e,account=True); nav(e,"discover"); e.wait_for_timeout(300)
     e.fill("#d-area","Mission District"); act(e,"dLocSet"); e.fill("#d-q","Find something romantic under $50"); act(e,"dAsk"); e.wait_for_selector(".rec")
     calls=e.evaluate("window.__yelpCalls")
-    ok("yelp: input built from Yelp's own schema (location, short query, limit 3-8, nothing else)",calls and all(c.get("location")=="Mission District" and 3<=c.get("limit",0)<=8 and set(c)<= {"location","query","limit","is_open_now","latitude","longitude"} and len(c.get("query",""))<=40 for c in calls),str(calls[:2]))
+    ok("yelp: input matches Yelp's schema (coordinates from Mapbox, short query, limit 3-8, nothing else)",calls and all((c.get("location") or c.get("latitude")) and 3<=c.get("limit",0)<=8 and set(c)<= {"location","query","limit","is_open_now","latitude","longitude"} and len(c.get("query",""))<=60 for c in calls),str(calls[:2]))
+    mc=e.evaluate("window.__mcpCalls")
+    ok("mapbox: area geocoded once, then category searches near it",any(c[1]=="geocode" and c[2]["q"]=="Mission District" for c in mc) and any(c[1]=="category" and c[2]["proximity"]["latitude"]==37.757 and c[2]["format"]=="json_string" for c in mc))
+    ok("accuweather: location key looked up, then current conditions",any(c[1]=="search" for c in mc) and any(c[1]=="current" and c[2]["queryParams"]["locationKey"]=="123" for c in mc))
     t=e.inner_text(".scroll")
-    ok("yelp: live results, labelled with their source, nothing demo","Live from Yelp" in t and "demo" not in t.lower() and "TEST" in t)
+    ok("live: results from several sources, labelled, nothing demo","Live from" in t and "demo" not in t.lower() and "TEST" in t and "MB " in t)
+    ok("weather and alerts shown from AccuWeather","52°F" in t and "Coastal Flood Advisory in effect" in t)
     ok("yelp: permanently closed places are dropped","TEST CLOSED" not in t)
-    ok("yelp: distance and hours not claimed when Yelp doesn't give them","Not provided by Yelp" in t and "Not verified" in t)
+    ok("yelp-only places: distance and hours not claimed","Not provided; searched near" in t and "Not verified" in t)
     ok("yelp: address cleaned, photo shown with credit",", Testville" in t and e.locator(".recph img").count()>=1 and "Photo: Yelp" in t)
     e.screenshot(path=SH+"foryou-yelp.png")
     act(e,"discSeg",v="nearby"); e.wait_for_timeout(200); act(e,"dNk",v="coffee"); e.wait_for_timeout(500)
     ok("yelp: nearby asks Yelp for that kind",e.evaluate("window.__yelpCalls.slice(-1)[0].query")=="coffee")
-    e.evaluate("window.__yelpFail='approval_required'"); act(e,"dNk",v="food"); e.wait_for_timeout(500); t=e.inner_text(".scroll")
-    ok("yelp: when Yelp fails, says why and shows labelled demo places","Couldn't get places from Yelp" in t and "needs your approval" in t and "demo place" in t)
+    t=e.inner_text(".scroll"); card=[x.inner_text() for x in e.locator(".rec").all() if "TEST COFFEE 0" in x.inner_text()]
+    ok("merge: the same café from Mapbox and Yelp is one card with both sources' facts",len(card)==1 and "Mapbox + Yelp" in card[0] and "★" in card[0] and "Yelp\nWebsite" in card[0] and "Open now" in card[0] and "per Mapbox" in card[0] and " mi" in card[0],str(card[:1]))
+    ok("mapbox hours: a closed place says so",any("Closed now" in x.inner_text() for x in e.locator(".rec").all() if "MAPBOX ONLY CAFE" in x.inner_text()))
+    act(e,"dNk",v="trail"); e.wait_for_timeout(500); t=e.inner_text(".scroll")
+    ok("alltrails: trails with length, time, gain and distance to the trailhead","TEST RIDGE LOOP" in t and "1.9 mi" in t and "314 ft gain" in t and "to the trailhead" in t)
+    act(e,"discSeg",v="foryou"); e.fill("#d-q","Plan our Saturday"); act(e,"dAsk"); e.wait_for_selector(".stops li")
+    ok("day plan: Mapbox walking/driving times between stops",any(c[1]=="directions" for c in e.evaluate("window.__mcpCalls")) and "via Mapbox" in e.inner_text(".itin"))
+    act(e,"discSeg",v="nearby"); e.evaluate("window.__yelpFail='approval_required'"); act(e,"dNk",v="food"); e.wait_for_timeout(500); t=e.inner_text(".scroll")
+    ok("yelp: when Yelp fails, says why and shows labelled demo places","Couldn't get places from" in t and "needs your approval" in t and "demo place" in t)
     e.evaluate("window.__yelpFail=null"); act(e,"dRetry"); e.wait_for_timeout(500); ok("yelp: try again recovers","Couldn't get places" not in e.inner_text(".scroll") and "TEST" in e.inner_text(".scroll"))
     ctx.close()
     # screenshots with motion on

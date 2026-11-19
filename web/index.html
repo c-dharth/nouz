@@ -184,6 +184,7 @@ textarea{min-height:84px;resize:vertical}
 .tabs .tab{font-size:10px;min-width:0}
 .chips.scrollx{flex:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px}.chips.scrollx::-webkit-scrollbar{display:none}.chips.scrollx .chip{flex:none}
 input[type=search]{-webkit-appearance:none;appearance:none}
+.wx{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--surface)}.wx>span:first-child{font-weight:700}
 .rec{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
 .rec .rt{display:block;font-size:17px;line-height:1.25}.recph{position:relative;margin:-14px -14px 4px;border-radius:var(--r) var(--r) 0 0;overflow:hidden;aspect-ratio:16/9;background:var(--surface2)}
 .recph img{width:100%;height:100%;object-fit:cover;display:block}.recph .tiny{position:absolute;right:8px;bottom:6px;background:rgba(14,11,12,.7);padding:2px 6px;border-radius:6px}
@@ -2242,101 +2243,119 @@ const kmTxt=k=>k==null?"Distance unknown":k<0.2?"Under 0.2 km":(k*0.621371).toFi
 /* Travel time without a routing service: labelled as an estimate everywhere it shows. */
 function travelEst(km,mode){if(km==null)return null;const m=mode==="walk"?km*1.3/4.8*60:mode==="transit"?km/18*60+10:km/30*60+6;return{min:Math.max(1,Math.round(m)),mode,est:true}}
 const modeFor=(km,pref)=>pref==="transit"?(km<1.2?"walk":"transit"):pref==="walk"?"walk":km<1.2?"walk":"drive";
-const YQ={coffee:"coffee",food:"restaurants",drinks:"cocktail bar wine bar",outdoors:"parks",trail:"hiking trails",culture:"museums art galleries",music:"live music",games:"arcade bowling",adventure:"fun activities",wellness:"spa",class:"classes workshops",shopping:"markets",romance:"romantic"};
 const PRICE_PP={1:[8,20],2:[20,45],3:[45,90],4:[90,180]};   // rough per-person ranges for a price level, shown as estimates
 
-/* ---------- connectors ---------- */
-const KNOWN_SCHEMAS={"Yelp|yelp_search_local_businesses":{type:"object",additionalProperties:false,properties:{
-  is_open_now:{default:false,type:"boolean"},latitude:{anyOf:[{maximum:90,minimum:-90,type:"number"},{type:"null"}]},limit:{default:5,maximum:8,minimum:3,type:"integer"},
-  location:{anyOf:[{maxLength:250,minLength:1,type:"string"},{type:"null"}]},longitude:{anyOf:[{maximum:180,minimum:-180,type:"number"},{type:"null"}]},query:{anyOf:[{maxLength:250,minLength:1,type:"string"},{type:"null"}]}}}};
-const CONN={YELP:"Yelp",TRAILS:"AllTrails",MAP:"Mapbox",WX:"AccuWeather®"};
-const Conn={mcp:null,ready:false,tools:{},schemas:{},err:{},
+/* ---------- connectors ----------
+   Four of the viewer's own connectors, each called with exactly the inputs its tool declares (checked against the
+   live tools on 19 Nov 2026). Each answers what it's good at:
+   Mapbox: places with coordinates, addresses, websites and opening hours; geocoding; walking/driving routes.
+   Yelp: ratings, review counts, photos and price levels.   AllTrails: trails.   AccuWeather: conditions and alerts. */
+const CONN={YELP:"Yelp",MAP:"Mapbox",TRAILS:"AllTrails",WX:"AccuWeather"};
+const WX_NAMES=["AccuWeather","AccuWeather®"];   // the connector's display name, with or without the mark
+const Conn={mcp:null,ready:false,tools:{},err:{},ok:{},first:{},
   async init(){if(this.ready)return;this.ready=true;try{this.mcp=window.claude&&window.claude.use?await window.claude.use("mcp"):null}catch(e){this.mcp=null}
     if(!this.mcp)return;try{const r=await this.mcp.listTools();for(const s of (r.servers||[]))if(s.kind!=="artifact")this.tools[s.server]={auth:s.authStatus,tools:(s.tools||[]).map(t=>t.name)}}catch(e){}
     if(ui.tab==="discover"&&!typing())render()},
   has(server,tool){const s=this.tools[server];return!!(s&&s.tools.includes(tool))},
-  pick(server,names){const s=this.tools[server];return s?names.find(n=>s.tools.includes(n))||null:null},
-  live(){return["YELP","TRAILS","MAP"].some(k=>{const s=this.tools[CONN[k]];return s&&s.tools.length})},
-  /* The platform describes a connector's tools only after the viewer has allowed it, and the first call is what asks.
-     So for Yelp, fall back to its published input schema (copied from the connector's own definition) until then. */
-  async schema(server,tool){const k=server+"|"+tool;if(this.schemas[k])return this.schemas[k];let p=null;try{const d=await this.mcp.describeTool(server,tool);p=d&&d.inputSchema||null}catch(e){p=null}
-    if(p)this.schemas[k]=p;return p||KNOWN_SCHEMAS[k]||null},
-  /* Fill a tool's input from its own schema: only properties it declares, never guessed names. */
-  async input(server,tool,want){const sc=await this.schema(server,tool);if(!sc||!sc.properties)throw{code:"no_schema"};const out={},props=sc.properties,req=sc.required||[];
-    for(const[p,def0] of Object.entries(props)){const def=def0&&def0.anyOf?Object.assign({},def0,def0.anyOf.find(x=>x&&x.type&&x.type!=="null")||{}):def0||{},n=p.toLowerCase(),t=def.type;let v;
-      if(/^(lat|latitude)$/.test(n))v=want.lat;else if(/^(lon|lng|longitude)$/.test(n))v=want.lon;
-      else if(/^(term|query|q|search|keyword|keywords|search_term|searchtext|prompt|text)$/.test(n))v=want.term;
-      else if(/location|near|address|place|city|where/.test(n)&&t!=="object")v=want.label||(want.lat!=null?want.lat+","+want.lon:undefined);
-      else if(/radius|distance/.test(n))v=want.radiusM!=null?(/km/.test(n)?want.radiusM/1000:/mile/.test(n)?want.radiusM/1609:Math.min(40000,Math.round(want.radiusM))):undefined;
-      else if(/^(limit|count|max_results|maxresults|num_results|size)$/.test(n))v=want.limit||10;
-      else if(/open_now|opennow/.test(n))v=want.openNow?true:undefined;
-      else if(/proximity/.test(n)&&want.lat!=null)v=t==="string"?want.lon+","+want.lat:t==="array"?[want.lon,want.lat]:{longitude:want.lon,latitude:want.lat};
-      else if(/^(category|categories|category_id)$/.test(n))v=want.category;
-      else if(/coordinates|waypoints/.test(n)&&want.coords)v=def.items&&def.items.type==="object"?want.coords.map(c=>({longitude:c.lon,latitude:c.lat})):want.coords.map(c=>[c.lon,c.lat]);
-      else if(/profile|mode/.test(n)&&want.mode){const en=def.enum||[];v=en.find(x=>String(x).includes(want.mode==="walk"?"walk":want.mode==="transit"?"walk":"driv"))||(en.length?undefined:want.mode==="drive"?"driving":"walking")}
-      if(v!==undefined&&v!==null&&v!==""){if(t==="number"||t==="integer"){v=+v;if(def.maximum!=null)v=Math.min(def.maximum,v);if(def.minimum!=null)v=Math.max(def.minimum,v);if(t==="integer")v=Math.round(v)}
-        else if(t==="string"){v=String(v);if(def.maxLength)v=v.slice(0,def.maxLength)}out[p]=v}}
-    if(req.some(r=>!(r in out)))throw{code:"no_schema"};return out},
-  async call(server,tool,want,opts){if(!this.mcp)throw{code:"not_granted"};const input=await this.input(server,tool,want);
-    try{const r=await this.mcp.callTool(server,tool,input,{cache:{staleTime:opts&&opts.stale||15*6e4,gcTime:6*36e5}});this.err[server]=null;return{payload:r.payload,at:r.cache?r.cache.storedAt:Date.now(),cached:!!r.cache}}
-    catch(e){this.err[server]=e&&e.code||"upstream_error";if(e&&e.retryable&&!(opts&&opts.retried)){await new Promise(r=>setTimeout(r,(e.retryAfterMs||800)+Math.random()*400));return this.call(server,tool,want,{...opts,retried:true})}throw e}}};
-const CONN_MSG={needs_reauth:s=>"Reconnect "+s+" in claude.ai Settings → Connectors.",server_not_connected:s=>"Add "+s+" in claude.ai Settings → Connectors.",selection_required:s=>"Choose which "+s+" connector to use when claude.ai asks.",not_in_manifest:s=>s+" isn't allowed for VOUZ in this view.",approval_required:s=>s+" needs your approval. Try again and allow it.",blocked_by_policy:s=>"Your organization blocks "+s+".",server_unavailable:s=>s+" isn't answering right now.",no_schema:s=>s+" didn't describe its search, so VOUZ won't guess at it.",tool_error:s=>s+" couldn't run that search."};
-/* Find the list of results in a connector's answer, wherever it puts it. */
-function findList(p,d=0){if(typeof p==="string"){try{return findList(JSON.parse(p),d)}catch(e){return null}}
-  if(Array.isArray(p))return p.length&&typeof p[0]==="object"&&p[0]&&("name" in p[0]||"title" in p[0]||(p[0].properties&&p[0].properties.name))?p:null;
-  if(p&&typeof p==="object"&&d<4){for(const k of ["businesses","results","trails","features","items","places","data","suggestions"])if(p[k]){const r=findList(p[k],d+1);if(r)return r}for(const v of Object.values(p)){const r=findList(v,d+1);if(r)return r}}return null}
+  wxName(){return WX_NAMES.find(n=>this.has(n,"widgets-current-claude")&&this.err[n]!=="server_not_connected")||null},
+  live(){return[CONN.YELP,CONN.MAP,CONN.TRAILS].some(s=>this.tools[s]&&this.tools[s].tools.length&&this.err[s]!=="server_not_connected")},
+  /* The first call to a connector is the one that asks the viewer, so it goes alone; later calls run side by side. */
+  async call(server,tool,input,opts){if(!this.mcp)throw{code:"not_granted"};
+    if(!this.ok[server]&&this.first[server])await this.first[server].catch(()=>{});
+    const run=async retried=>{try{const r=await this.mcp.callTool(server,tool,input,{cache:{staleTime:(opts&&opts.stale)||15*6e4,gcTime:6*36e5}});this.err[server]=null;this.ok[server]=true;return{payload:parseLoose(r.payload),at:r.cache?r.cache.storedAt:Date.now()}}
+      catch(e){this.err[server]=e&&e.code||"upstream_error";if(e&&e.retryable&&!retried){await new Promise(r=>setTimeout(r,(e.retryAfterMs||800)+Math.random()*400));return run(true)}throw e}};
+    const p=run(false);if(!this.ok[server])this.first[server]=p;return p}};
+const CONN_MSG={needs_reauth:s=>"Reconnect "+s+" in claude.ai Settings → Connectors.",server_not_connected:s=>"Add "+s+" in claude.ai Settings → Connectors.",selection_required:s=>"Choose which "+s+" connector to use when claude.ai asks.",not_in_manifest:s=>s+" isn't allowed for VOUZ in this view.",approval_required:s=>s+" needs your approval. Try again and allow it.",blocked_by_policy:s=>"Your organization blocks "+s+".",server_unavailable:s=>s+" isn't answering right now.",tool_error:s=>s+" couldn't run that search."};
+/* Connector answers can be JSON, JSON followed by a note, or plain text. Take leading JSON if there is any. */
+function parseLoose(p){if(typeof p!=="string")return p;const t=p.trim();try{return JSON.parse(t)}catch(e){}
+  if(t[0]!=="{")return p;const i=0;let j=t.length,tries=0;while(tries++<60){j=t.lastIndexOf("}",j-1);if(j<=i)break;try{return JSON.parse(t.slice(i,j+1))}catch(e){}}return p}
 const num=v=>typeof v==="number"&&isFinite(v)?v:typeof v==="string"&&v.trim()!==""&&isFinite(+v)?+v:null;
 const httpsUrl=u=>typeof u==="string"&&/^https:\/\//.test(u)?u:null;
-function normVenue(x,src,at){const pr=x.properties||{},name=String(x.name||x.title||pr.name||"").slice(0,80);if(!name)return null;
-  const c=x.coordinates||x.coords||pr.coordinates||x.location&&x.location.coordinates||(x.geometry&&Array.isArray(x.geometry.coordinates)?{longitude:x.geometry.coordinates[0],latitude:x.geometry.coordinates[1]}:null)||x;
-  const lat=num(c.latitude??c.lat),lon=num(c.longitude??c.lon??c.lng);
-  const loc=x.location||{},addr=String((Array.isArray(loc.display_address)?loc.display_address.join(", "):loc.address1||loc.formatted_address)||x.address||x.full_address||pr.full_address||pr.place_formatted||x.vicinity||"").replace(/\s*\n\s*/g,", ").slice(0,120);
-  const cats=(x.categories||pr.poi_category||[]).map(k=>typeof k==="string"?k:k.title||(k.alias?k.alias.replace(/[-_]/g," ").replace(/^./,c=>c.toUpperCase()):"")).filter(Boolean).slice(0,3);
-  const price=typeof x.price==="string"&&/^\$+$/.test(x.price)?x.price.length:num(x.price_level);
-  const ph=[x.image_url,x.photo,x.photo_url].concat(x.photos||[]).map(p=>httpsUrl(typeof p==="string"?p:p&&p.url)).filter(Boolean).slice(0,3);
-  const hrs=Array.isArray(x.business_hours)?x.business_hours[0]:Array.isArray(x.hours)?x.hours[0]:x.hours&&typeof x.hours==="object"?x.hours:null;
-  const openNow=typeof x.is_open_now==="boolean"?x.is_open_now:hrs&&typeof hrs.is_open_now==="boolean"?hrs.is_open_now:typeof x.open_now==="boolean"?x.open_now:null;
-  const lenKm=num(x.length_km)??(num(x.length_meters)!=null?num(x.length_meters)/1000:num(x.length)!=null&&num(x.length)>100?num(x.length)/1000:null);
-  return{id:src.toLowerCase().replace(/\W/g,"")+":"+String(x.id||x.alias||pr.mapbox_id||name+"@"+(lat||"")+","+(lon||"")).slice(0,120),src,name,cats,kind:kindOf([name].concat(cats).join(" "))==="other"&&src==="AllTrails"?"trail":kindOf([name].concat(cats).join(" ")),
-    addr,lat,lon,rating:num(x.rating),reviews:num(x.review_count??x.num_reviews),price:price&&price>=1&&price<=4?price:null,photos:ph,url:httpsUrl(x.url||x.website),
-    openNow,hoursText:hrs&&typeof hrs.text==="string"?hrs.text.slice(0,80):null,closedForGood:x.is_closed===true,distKm:(d=>d!=null&&d>=5?d/1000:null)(num(x.distance??x.distance_meters)),lenKm,at,demo:false}}
+const webUrl=u=>typeof u==="string"&&/^https?:\/\/[^\s]+$/.test(u)?u.replace(/^http:/,"https:"):null;
+const normName=s=>String(s||"").toLowerCase().replace(/&/g,"and").replace(/\b(the|cafe|café|coffee|bar|restaurant|sf|san francisco)\b/g,"").replace(/[^a-z0-9]/g,"");
 
-/* ---------- demo places: fictional, placed around wherever the search is centred ---------- */
+/* Mapbox opening hours: {periods:[{open:{day,time:"0700"},close:{day,time:"1600"}}]} */
+function hoursAt(h,date){if(!h||!Array.isArray(h.periods)||!h.periods.length)return null;const d=date.getDay(),m=date.getHours()*60+date.getMinutes(),t=x=>+String(x).slice(0,2)*60+ +String(x).slice(2,4);
+  for(const p of h.periods){if(!p||!p.open)continue;if(!p.close)return true;const od=p.open.day,cd=p.close.day,o=t(p.open.time),c=t(p.close.time);
+    if(od===cd){if(d===od&&m>=o&&m<c)return true}else{if((d===od&&m>=o)||(d===cd&&m<c))return true}}return false}
+function hoursToday(h,date){if(!h||!Array.isArray(h.periods))return null;const d=date.getDay(),f=x=>{const H=+String(x).slice(0,2),M=String(x).slice(2,4);return(H%12||12)+(M!=="00"?":"+M:"")+(H<12?"am":"pm")};
+  const ps=h.periods.filter(p=>p&&p.open&&p.open.day===d);return ps.length?ps.map(p=>f(p.open.time)+"–"+(p.close?f(p.close.time):"late")).join(", "):"Closed today"}
+
+/* ---------- each connector into one shape ---------- */
+function fromMapbox(f,at){const p=f&&f.properties||{},g=f&&f.geometry&&Array.isArray(f.geometry.coordinates)?f.geometry.coordinates:null,c=p.coordinates||{};const name=String(p.name||"").slice(0,80);if(!name)return null;
+  const cats=(p.poi_category||[]).slice(0,3),md=p.metadata||{};
+  return{id:"mapbox:"+String(p.mapbox_id||name).slice(0,100),srcs:["Mapbox"],src:"Mapbox",name,cats,kind:kindOf([name].concat(cats,p.poi_category_ids||[]).join(" ")),
+    addr:String(p.full_address||p.address||p.place_formatted||"").replace(/, United States$/,"").slice(0,120),lat:num(c.latitude)??(g?num(g[1]):null),lon:num(c.longitude)??(g?num(g[0]):null),
+    rating:null,reviews:null,price:null,photos:[],url:webUrl(md.website),site:webUrl(md.website),hours:md.open_hours&&Array.isArray(md.open_hours.periods)?md.open_hours:null,openNow:null,hoursText:null,distKm:num(p.distance)!=null?num(p.distance)/1000:null,at,demo:false}}
+function fromYelp(x,at){const name=String(x&&x.name||"").slice(0,80);if(!name||x.is_closed===true)return null;const loc=x.location||{};
+  const cats=(x.categories||[]).map(k=>typeof k==="string"?k:k.title||(k.alias?k.alias.replace(/[-_]/g," ").replace(/^./,c=>c.toUpperCase()):"")).filter(Boolean).slice(0,3);
+  const lat=num(x.coordinates&&x.coordinates.latitude),lon=num(x.coordinates&&x.coordinates.longitude),dm=num(x.distance_meters??x.distance);
+  return{id:"yelp:"+String(x.id||x.business_id||name).slice(0,100),srcs:["Yelp"],src:"Yelp",name,cats,kind:kindOf([name].concat(cats).join(" ")),
+    addr:String(Array.isArray(loc.display_address)?loc.display_address.join(", "):loc.address1||"").replace(/\s*\n\s*/g,", ").slice(0,120),lat,lon,
+    rating:num(x.rating),reviews:num(x.review_count),price:typeof x.price==="string"&&/^\$+$/.test(x.price)?Math.min(4,x.price.length):null,photos:[httpsUrl(x.image_url)].filter(Boolean),
+    url:httpsUrl(x.url),yelpUrl:httpsUrl(x.url),hours:null,openNow:typeof x.is_open_now==="boolean"?x.is_open_now:null,hoursText:null,distKm:dm!=null&&dm>=5?dm/1000:null,at,demo:false}}
+function fromTrail(t,at){const name=String(t&&t.name||"").slice(0,80);if(!name)return null;
+  return{id:"alltrails:"+String(t.id||name),srcs:["AllTrails"],src:"AllTrails",name,cats:[t.difficulty,t.route_type].filter(Boolean).map(String),kind:"trail",
+    addr:String(t.location_label||"").slice(0,120),lat:null,lon:null,rating:num(t.avg_rating),reviews:null,price:null,free:true,photos:[httpsUrl(t.profile_photo_url)].filter(Boolean),url:httpsUrl(t.alltrails_web_url),
+    hours:null,openNow:null,hoursText:null,distKm:num(t.trail_head_distance_meters)!=null?num(t.trail_head_distance_meters)/1000:null,
+    trail:{miles:num(t.length_miles),min:num(t.duration_minutes),gainFt:num(t.elevation_gain_feet),difficulty:t.difficulty||null},at,demo:false}}
+/* The same place from Mapbox and Yelp becomes one card: Mapbox's location and hours, Yelp's rating, photo and price. */
+function mergeVenues(list){const out=[];for(const v of list){const k=normName(v.name);
+    const m=k.length>=3&&out.find(o=>o.src!==v.src&&!o.srcs.includes(v.src)&&(()=>{const ok=normName(o.name);return ok===k||(ok.length>=4&&k.length>=4&&(ok.includes(k)||k.includes(ok)))})()&&(o.lat==null||v.lat==null||hav(o,v)<0.4));
+    if(!m){out.push(v);continue}
+    for(const f of ["lat","lon","hours","distKm","addr","url","site","yelpUrl"])if(m[f]==null||m[f]==="")m[f]=v[f];
+    if(v.src==="Yelp"){m.rating=v.rating;m.reviews=v.reviews;m.price=v.price;if(v.photos.length)m.photos=v.photos;m.yelpUrl=v.url;if(v.openNow!=null&&m.openNow==null)m.openNow=v.openNow}
+    else{m.lat=v.lat??m.lat;m.lon=v.lon??m.lon;m.hours=v.hours||m.hours;m.addr=v.addr||m.addr;m.site=v.url}
+    const ORD=["Mapbox","Yelp","AllTrails"];m.srcs=m.srcs.concat(v.srcs).sort((a,b)=>ORD.indexOf(a)-ORD.indexOf(b));m.src=m.srcs.join(" + ")}
+  return out}
+
+/* demo places: fictional, placed around wherever the search is centred */
 const DEMO=[["Sample Café","coffee",0.4,40,2,4.5],["Demo Bakery & Tea","coffee",1.1,200,1,4.2],["Example Bistro","food",0.9,120,2,4.4],["Placeholder Ramen","food",2.3,300,2,4.6],["Mock Rooftop Wine Bar","drinks",1.6,20,3,4.3],["Sample City Gallery","culture",1.3,250,1,4.7],["Demo Cinema","culture",2.8,90,2,4.1],["Example Jazz Room","music",3.1,160,2,4.5],["Sample Park & Garden","outdoors",0.7,330,0,4.8],["Demo Waterfront Walk","outdoors",2.0,70,0,4.6],["Example Ridge Trail","trail",6.5,30,0,4.7],["Placeholder Arcade","games",1.9,280,2,4.0],["Sample Climbing Gym","adventure",3.6,110,2,4.4],["Demo Pottery Studio","class",2.6,200,3,4.9],["Mock Day Spa","wellness",4.2,180,3,4.3],["Example Night Market","shopping",1.4,60,1,4.2],["Sample Dessert Bar","food",1.0,350,2,4.5],["Demo Bookshop","culture",0.5,140,1,4.6]];
 function demoVenues(center){const c=center&&center.lat!=null?center:{lat:37.7749,lon:-122.4194};
   return DEMO.map(([name,kind,km,deg,price,rating],i)=>{const r=deg*Math.PI/180,lat=c.lat+km/111*Math.cos(r),lon=c.lon+km/(111*Math.cos(c.lat*Math.PI/180))*Math.sin(r);
-    return{id:"demo:"+i,src:"Demo",name,cats:[DKIND[kind]],kind,addr:"Demo address — not a real place",lat,lon,rating,reviews:null,price:price||null,free:price===0,photos:[],url:null,openNow:null,hoursText:null,distKm:null,at:Date.now(),demo:true}})}
+    return{id:"demo:"+i,srcs:["Demo"],src:"Demo",name,cats:[DKIND[kind]],kind,addr:"Demo address — not a real place",lat,lon,rating,reviews:null,price:price||null,free:price===0,photos:[],url:null,hours:null,openNow:null,hoursText:null,distKm:null,at:Date.now(),demo:true}})}
 
-/* ---------- search: connectors first, demo only when there is nothing live ---------- */
-const Disc={wx:null,wxAt:0,
+/* ---------- search: every connected source at once, merged, varied ---------- */
+const MB_CAT={coffee:["cafe","bakery"],food:["restaurant","dessert_shop"],drinks:["cocktail_bar","wine_bar"],outdoors:["park","viewpoint"],trail:["trailhead"],culture:["museum","art_gallery"],music:["music_venue","concert_hall"],games:["arcade","bowling_alley"],adventure:["climbing_gym","go_kart_racing"],wellness:["spa","yoga_studio"],class:["dance_studio","arts_center"],shopping:["market","book_store"],romance:["wine_bar","viewpoint"],other:["tourist_attraction"]};
+const YQ={coffee:"coffee",food:"restaurants",drinks:"cocktail bar wine bar",outdoors:"parks",trail:"hiking trails",culture:"museums art galleries",music:"live music",games:"arcade bowling",adventure:"fun activities",wellness:"spa",class:"classes workshops",shopping:"markets",romance:"romantic",other:"things to do"};
+const MIX=["food","culture","outdoors","drinks","coffee","music","games","trail"];
+const Disc={wx:null,wxAt:0,wxKey:null,
   center(){const l=S.disc.loc;return l&&l.lat!=null?{lat:l.lat,lon:l.lon}:null},
-  async places(q){const c=this.center(),label=S.disc.loc&&S.disc.loc.label||"",term=q.term||(q.kinds&&q.kinds.length?q.kinds.map(k=>DKIND[k]).join(" "):"things to do"),radiusM=Math.round((q.km||S.disc.maxKm||8)*1000),out=[],notes=[];
-    let live=false;
-    if(Conn.has(CONN.YELP,"yelp_search_local_businesses")&&(c||label)){live=true;
-      /* Yelp returns up to 8 a search, so ask once per kind of place (at most 4), each with a short keyword query. */
-      const asks=q.term?[[q.term,kindOf(q.term)]]:(q.kinds&&q.kinds.length?q.kinds:["food","culture","outdoors","drinks"]).slice(0,4).map(k=>[YQ[k]||DKIND[k],k]);
-      await Promise.all(asks.map(async([qq,k])=>{try{const r=await Conn.call(CONN.YELP,"yelp_search_local_businesses",{term:qq,label,lat:c&&c.lat,lon:c&&c.lon,limit:8,openNow:q.now});const p=typeof r.payload==="string"?(()=>{try{return JSON.parse(r.payload)}catch(e){return r.payload}})():r.payload;
-          if(p&&p.error){notes.push({src:"Yelp",err:"tool_error"});return}const L=findList(p);
-          if(L)L.forEach((x,i)=>{const v=normVenue(x,"Yelp",r.at);if(v){if(v.kind==="other"&&k!=="other")v.kind=k;v.rank=i;out.push(v)}});else if(typeof p==="string"&&p.trim())notes.push({src:"Yelp",text:p.trim().slice(0,600)})}catch(e){notes.push({src:"Yelp",err:e&&e.code})}}))}
-    if((q.kinds||[]).some(k=>k==="trail"||k==="outdoors")&&Conn.has(CONN.TRAILS,"find_trails_near_location")&&c){live=true;try{const r=await Conn.call(CONN.TRAILS,"find_trails_near_location",{lat:c.lat,lon:c.lon,radiusM,limit:6,term:"trail"});(findList(r.payload)||[]).forEach(x=>{const v=normVenue(x,"AllTrails",r.at);if(v){v.kind="trail";out.push(v)}})}catch(e){notes.push({src:"AllTrails",err:e&&e.code})}}
-    const mbx=Conn.pick(CONN.MAP,["category_search_tool","poi_search_tool"]);
-    if(!out.length&&mbx&&c){live=true;try{const r=await Conn.call(CONN.MAP,mbx,{term,category:(q.kinds&&q.kinds[0]||"restaurant"),lat:c.lat,lon:c.lon,limit:10});(findList(r.payload)||[]).forEach(x=>{const v=normVenue(x,"Mapbox",r.at);if(v)out.push(v)})}catch(e){notes.push({src:"Mapbox",err:e&&e.code})}}
-    let list=out,demo=false,liveErr=null;
-    if(live&&!out.length){const e=notes.find(n=>n.err);if(e){liveErr={src:e.src,code:e.err};list=demoVenues(c);demo=true}}
-    if(!live||(!out.length&&S.disc.demo)){list=demoVenues(c);demo=true}
-    const seen=new Set();list=list.filter(v=>{const k=v.name.toLowerCase()+"|"+(v.addr||"").toLowerCase().slice(0,20);if(seen.has(k)||v.closedForGood)return false;seen.add(k);return true});
-    const ref=c||(demo?{lat:37.7749,lon:-122.4194}:null);for(const v of list){const d=hav(ref,v);if(d!=null)v.distKm=d}
-    return{list,demo,live:live&&!liveErr,liveErr,notes}},
-  async weather(){const c=this.center();if(!c&&!(S.disc.loc&&S.disc.loc.label))return null;if(this.wx&&Date.now()-this.wxAt<30*6e4)return this.wx;
-    const t=Conn.pick(CONN.WX,["widgets-current-claude"]);if(!t)return null;
-    try{const r=await Conn.call(CONN.WX,t,{label:S.disc.loc&&S.disc.loc.label,lat:c&&c.lat,lon:c&&c.lon,term:S.disc.loc&&S.disc.loc.label},{stale:30*6e4});const p=typeof r.payload==="string"?(()=>{try{return JSON.parse(r.payload)}catch(e){return{text:r.payload}}})():r.payload||{};
-      const deep=(o,re,d=0)=>{if(!o||typeof o!=="object"||d>5)return undefined;for(const[k,v] of Object.entries(o)){if(re.test(k)&&(typeof v==="string"||typeof v==="number"))return v;const x=deep(v,re,d+1);if(x!==undefined)return x}};
-      const text=deep(p,/^(weathertext|condition|phrase|iconphrase|summary)$/i),temp=deep(p,/^(value|temperature|temp)$/i),wet=/rain|shower|storm|snow|sleet|drizzle/i.test(String(text||""));
-      this.wx=text||temp!=null?{text:text?String(text).slice(0,40):null,temp:num(temp),wet,at:r.at,src:"AccuWeather"}:null;this.wxAt=Date.now();return this.wx}catch(e){return null}},
-  async route(a,b,mode){const t=Conn.pick(CONN.MAP,["directions_tool"]);const km=hav(a,b);if(t&&a&&b&&a.lat!=null&&b.lat!=null){try{const r=await Conn.call(CONN.MAP,t,{coords:[a,b],mode},{stale:6*36e5});const p=typeof r.payload==="string"?JSON.parse(r.payload):r.payload;const rt=p&&(p.routes&&p.routes[0]||p.route||p);const s=num(rt&&rt.duration);if(s!=null)return{min:Math.max(1,Math.round(s/60)),km:num(rt.distance)!=null?num(rt.distance)/1000:km,mode,est:false,src:"Mapbox"}}catch(e){}}
+  async places(q){const c=this.center(),label=S.disc.loc&&S.disc.loc.label||"",radiusM=Math.round((q.km||S.disc.maxKm||8)*1000),out=[],notes=[],used=[];
+    const kinds=q.kinds&&q.kinds.length?q.kinds.slice(0,4):q.term?[kindOf(q.term)]:MIX.slice(0,q.wide?6:5);
+    const jobs=[];let live=false;
+    const yelp=Conn.has(CONN.YELP,"yelp_search_local_businesses")&&Conn.err[CONN.YELP]!=="server_not_connected"&&(c||label);
+    const mbx=Conn.has(CONN.MAP,"category_search_tool")&&Conn.err[CONN.MAP]!=="server_not_connected"&&c;
+    const trails=Conn.has(CONN.TRAILS,"find_trails_near_location")&&Conn.err[CONN.TRAILS]!=="server_not_connected"&&c;
+    for(const k of kinds){
+      if(yelp){live=true;jobs.push(Conn.call(CONN.YELP,"yelp_search_local_businesses",{query:(q.term&&kinds.length===1?q.term:YQ[k]||DKIND[k]).slice(0,60),...(c?{latitude:c.lat,longitude:c.lon}:{location:label.slice(0,250)}),limit:6,...(q.now?{is_open_now:true}:{})})
+        .then(r=>{const p=r.payload;if(p&&p.error)throw{code:"tool_error"};(p&&p.businesses||[]).forEach((x,i)=>{const v=fromYelp(x,r.at);if(v){if(v.kind==="other")v.kind=k;v.rank=i;out.push(v)}});used.push("Yelp")}).catch(e=>notes.push({src:"Yelp",err:e&&e.code})))}
+      if(mbx&&k!=="trail"){live=true;jobs.push(Conn.call(CONN.MAP,"category_search_tool",{category:(MB_CAT[k]||MB_CAT.other)[0],proximity:{longitude:c.lon,latitude:c.lat},limit:6,format:"json_string",language:"en"},{stale:6*36e5})
+        .then(r=>{const p=r.payload;(p&&p.features||[]).forEach(f=>{const v=fromMapbox(f,r.at);if(v){if(v.kind==="other")v.kind=k;out.push(v)}});used.push("Mapbox")}).catch(e=>notes.push({src:"Mapbox",err:e&&e.code})))}}
+    if(trails&&(kinds.includes("trail")||kinds.includes("outdoors")||kinds.includes("adventure"))){live=true;jobs.push(Conn.call(CONN.TRAILS,"find_trails_near_location",{input:{latitude:c.lat,longitude:c.lon,limit:5,max_radius_meters:Math.max(2000,Math.min(40000,radiusM*2)),locale:"en-US"}},{stale:24*36e5})
+      .then(r=>{(r.payload&&r.payload.trails||[]).forEach(t=>{const v=fromTrail(t,r.at);if(v)out.push(v)});used.push("AllTrails")}).catch(e=>notes.push({src:"AllTrails",err:e&&e.code})))}
+    await Promise.all(jobs);
+    let list=mergeVenues(out),demo=false,liveErr=null;
+    if(live&&!list.length){const e=notes.find(n=>n.err);if(e){liveErr={src:e.src,code:e.err};list=demoVenues(c);demo=true}}
+    if(!live){list=demoVenues(c);demo=true}
+    const ref=c||(demo?{lat:37.7749,lon:-122.4194}:null),now=new Date();
+    for(const v of list){const d=hav(ref,v);if(d!=null)v.distKm=d;if(v.hours){v.openNow=hoursAt(v.hours,now);v.hoursText=hoursToday(v.hours,now)}}
+    return{list,demo,live:live&&!liveErr,liveErr,notes,used:Array.from(new Set(used))}},
+  async weather(){const label=S.disc.loc&&S.disc.loc.label;const srv=Conn.wxName();if(!srv||!label||label==="Near you")return null;
+    if(this.wx&&this.wx.label===label&&Date.now()-this.wxAt<30*6e4)return this.wx;
+    try{if(!this.wxKey||this.wxKey.label!==label){const r=await Conn.call(srv,"widgets-search-claude",{queryParams:{query:label.slice(0,80)}},{stale:7*24*36e5});const hit=r.payload&&r.payload.results&&r.payload.results[0];if(!hit||!hit.locationKey)return null;this.wxKey={label,key:String(hit.locationKey),name:hit.name}}
+      const r=await Conn.call(srv,"widgets-current-claude",{queryParams:{locationKey:this.wxKey.key,unit:"imperial",lang:"en"}},{stale:20*6e4}),cc=r.payload&&r.payload.currentConditions;if(!cc)return null;
+      const alerts=(r.payload.alerts||[]).filter(a=>a&&a.isActive!==false).map(a=>String(a.name||a.alertName||"").slice(0,50)).filter(Boolean);
+      this.wx={label,text:String(cc.phrase||"").slice(0,40),temp:num(cc.temperatureValue),feels:String(cc.realFeelPhrase||"").slice(0,20),wet:/rain|shower|storm|snow|sleet|drizzle|t-storm/i.test(String(cc.phrase||"")),
+        alerts:Array.from(new Set(alerts)).slice(0,2),place:String(this.wxKey.name||"").slice(0,40),at:r.at,src:"AccuWeather"};this.wxAt=Date.now();return this.wx}catch(e){return null}},
+  async route(a,b,mode){const km=hav(a,b);if(Conn.has(CONN.MAP,"directions_tool")&&a&&b&&a.lat!=null&&b.lat!=null&&mode!=="transit"){
+      try{const r=await Conn.call(CONN.MAP,"directions_tool",{coordinates:[{longitude:a.lon,latitude:a.lat},{longitude:b.lon,latitude:b.lat}],routing_profile:mode==="walk"?"mapbox/walking":"mapbox/driving"},{stale:6*36e5});
+        const rt=r.payload&&r.payload.routes&&r.payload.routes[0],s=num(rt&&rt.duration);if(s!=null)return{min:Math.max(1,Math.round(s/60)),km:num(rt.distance)!=null?num(rt.distance)/1000:km,mode,est:false,src:"Mapbox"}}catch(e){}}
     const e=travelEst(km,mode);return e&&{...e,km}},
-  async geocode(text){const t=Conn.pick(CONN.MAP,["search_and_geocode_tool","forward_geocode_tool","geocode_tool"]);if(!t)return null;
-    try{const r=await Conn.call(CONN.MAP,t,{term:text,label:text,limit:1});const L=findList(r.payload)||[];const v=L[0]&&normVenue(L[0],"Mapbox",r.at);return v&&v.lat!=null?{lat:+v.lat.toFixed(3),lon:+v.lon.toFixed(3)}:null}catch(e){return null}}};
+  async geocode(text){if(!Conn.has(CONN.MAP,"search_and_geocode_tool"))return null;
+    try{const r=await Conn.call(CONN.MAP,"search_and_geocode_tool",{q:text.slice(0,200),types:["neighborhood","place","locality","postcode","address"]},{stale:30*24*36e5});const p=r.payload;
+      if(p&&typeof p==="object"){const f=(p.features||[])[0],g=f&&f.geometry&&f.geometry.coordinates;if(g)return{lat:+(+g[1]).toFixed(3),lon:+(+g[0]).toFixed(3)}}
+      const m=typeof p==="string"&&p.match(/Coordinates:\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);return m?{lat:+(+m[1]).toFixed(3),lon:+(+m[2]).toFixed(3)}:null}catch(e){return null}}};
 
 /* ---------- requests in plain words ---------- */
 function parseAsk(s){const t=String(s||"").toLowerCase(),q={raw:String(s||"").slice(0,200),kinds:[]};let m;
@@ -2379,7 +2398,8 @@ function scoreVenue(v,q,ctx){const f={},maxKm=q.km||S.disc.maxKm||8,hr=new Date(
   if(budget!=null&&est)f.budget=est[0]*people>budget?-200:est[1]*people<=budget?10:0;
   if(v.rating)f.rating=Math.round((v.rating-3.8)*8);if(v.rank!=null)f.relevance=Math.max(0,6-v.rank);
   if(q.now)f.open=v.openNow===true?10:v.openNow===false?-80:0;
-  if(ctx.wx&&ctx.wx.wet&&["outdoors","trail"].includes(v.kind))f.weather=-20;
+  if(ctx.wx&&["outdoors","trail"].includes(v.kind)){if(ctx.wx.wet)f.weather=-20;else if(ctx.wx.alerts&&ctx.wx.alerts.length)f.weather=-8;else if(ctx.wx.temp!=null&&ctx.wx.temp>=60&&ctx.wx.temp<=82)f.weather=6}
+  if(ctx.wx&&ctx.wx.wet&&["culture","games","coffee","class","wellness"].includes(v.kind))f.weather=5;
   if(v.kind==="coffee")f.time=hr<12?6:hr>17?-10:0;else if(["drinks","music"].includes(v.kind))f.time=hr>=17?6:-8;
   const fb=(S.disc.fb||{})[v.id];if(fb)f.feedback=fb>0?15:-200;const kfb=(S.disc.kinds||{})[v.kind];if(kfb)f.feedback=(f.feedback||0)+Math.max(-30,Math.min(10,kfb*5));
   if(q.novel)f.novelty=visited(v)?-40:ctx.tried.has(v.kind)?0:15;else if(visited(v))f.novelty=-8;
@@ -2410,13 +2430,14 @@ async function aiNotes(recs,q,group){if(!SAMPLE||!recs.length||S.disc.ai===false
 /* ---------- running a search ---------- */
 async function runDisc(kind){const d=ui.dsc,q=kind==="nearby"?{kinds:d.nk?[d.nk]:[],km:d.nkm||S.disc.maxKm||5,raw:""}:parseAsk(d.q);
   d.busy=true;d.err="";d.notes=[];render();
+  if(kind==="foryou"&&!q.kinds.length&&!q.term)q.wide=true;
   try{const people=d.who.length+1,tastes=[myTaste()],all=await readTastes().catch(()=>[]);for(const p of all)if(d.who.includes(p.id))tastes.push(p.t);
     const[res,wx]=await Promise.all([Disc.places(q),Disc.weather().catch(()=>null)]);
     const ctx={tastes,tried:tried(),wx,people,when:Date.now()};
     let recs=res.list.map(v=>{const s=scoreVenue(v,q,ctx);return{v,s,why:reasons(s,tastes.length>1)}}).filter(r=>r.s.total>-50&&(kind!=="nearby"||!d.nk||r.v.kind===d.nk));
     recs.sort((a,b)=>kind==="nearby"&&d.nsort==="dist"?(a.v.distKm??99)-(b.v.distKm??99):b.s.total-a.s.total);
     const seenK={};if(kind!=="nearby")recs=recs.filter(r=>(seenK[r.v.kind]=(seenK[r.v.kind]||0)+1)<=3);   // variety: at most 3 of a kind
-    d[kind]={q,recs:recs.slice(0,kind==="nearby"?20:8),demo:res.demo,live:res.live,liveErr:res.liveErr,wx,notes:res.notes,at:Date.now(),group:tastes.length>1};
+    d[kind]={q,recs:recs.slice(0,kind==="nearby"?20:10),demo:res.demo,live:res.live,liveErr:res.liveErr,used:res.used,wx,notes:res.notes,at:Date.now(),group:tastes.length>1};
     S.disc.hist=(S.disc.hist||[]).concat([{at:Date.now(),q:q.raw||"(nearby)",n:recs.length}]).slice(-50);saveLocal();
     if(kind==="foryou"){render();const h=document.getElementById("fy-res");if(h&&h.scrollIntoView)h.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"start"});const notes=await aiNotes(d.foryou.recs,q,tastes.length>1);if(d.foryou&&d.foryou.q===q)d.foryou.ai=notes}}
   catch(e){d.err="That search didn't work. Try again."}
@@ -2434,11 +2455,12 @@ async function buildItin(it,keepIdx){const d=ui.dsc,q=it.q,dp=q.daypart||(q.day=
   const out=[];let prev=Disc.center();
   for(let i=0;i<slots.length;i++){if(keepIdx&&keepIdx.includes(i)&&stops[i]){out.push(stops[i]);used.add(stops[i].v.id);prev=stops[i].v;continue}
     const[time,kind]=slots[i],cands=res.list.filter(v=>(v.kind===kind||(kind==="music"&&v.kind==="culture")||(kind==="culture"&&v.kind==="class"))&&!used.has(v.id)&&!(it.skip||[]).includes(v.id));
-    const sc=cands.map(v=>{const s=scoreVenue(v,{...q,kinds:[kind],budget:per,now:false},ctx),hop=hav(prev,v);return{v,t:s.total-(hop!=null?hop*4:0),s}}).sort((a,b)=>b.t-a.t);
+    const at=new Date(date);const[hh,mm]=time.split(":").map(Number);at.setHours(hh,mm,0,0);
+    const sc=cands.map(v=>{const s=scoreVenue(v,{...q,kinds:[kind],budget:per,now:false},ctx),hop=hav(prev,v),shut=v.hours&&hoursAt(v.hours,at)===false;return{v,t:s.total-(hop!=null?hop*4:0)-(shut?120:0)+(v.hours&&!shut?6:0),s,shut}}).sort((a,b)=>b.t-a.t);
     const pick=sc[it.shuffle?Math.min(sc.length-1,Math.floor(Math.random()*Math.min(3,sc.length))):0];
     if(!pick){out.push({time,kind,v:null});continue}
     used.add(pick.v.id);const mode=modeFor(hav(prev,pick.v)||0,S.disc.travel);const leg=prev&&prev.lat!=null?await Disc.route(prev,pick.v,mode):null;
-    out.push({time,kind,v:pick.v,leg,cost:costTxt(pick.v,people),why:reasons(pick.s,tastes.length>1)});prev=pick.v}
+    out.push({time,kind,v:pick.v,leg,cost:costTxt(pick.v,people),why:reasons(pick.s,tastes.length>1),openAt:pick.v.hours?!pick.shut:null,hoursDay:pick.v.hours?hoursToday(pick.v.hours,at):null});prev=pick.v}
   it.stops=out;it.shuffle=false;it.people=people;
   const lo=out.reduce((a,s)=>a+(s.v&&s.v.price?PRICE_PP[s.v.price][0]*people:0),0),hi=out.reduce((a,s)=>a+(s.v&&s.v.price?PRICE_PP[s.v.price][1]*people:0),0);it.cost=hi?{t:"≈ $"+lo+"–"+hi,est:true}:null;
   d.ibusy=false;render()}
@@ -2452,46 +2474,50 @@ const mapsUrl=v=>!v||v.demo?null:v.lat!=null?"https://www.google.com/maps/dir/?a
 function locCard(){const l=S.disc.loc,d=ui.dsc;
   return`<div class="card line loc"><div class="row between"><span class="grow"><span class="tiny">Searching around</span><b style="display:block">${l?esc(l.label||"Your location"):"No area set"}</b>${l&&l.precise?`<span class="sub small">From your device, rounded to about 1 km. Not shared.</span>`:""}</span><button class="btn sm ghost" data-act="dLocEdit">${l?"Change":"Set area"}</button></div>
    ${d.locOpen||!l?`<div class="row"><input type="text" id="d-area" maxlength="60" placeholder="Neighborhood or city" aria-label="Neighborhood or city" autocomplete="off" value="${esc(d.area||"")}"><button class="btn sm" data-act="dLocSet">Use</button></div><button class="link small" data-act="dLocGPS">${ic("pin")} Use my precise location instead</button>${d.locErr?`<p class="err" role="alert">${esc(d.locErr)}</p>`:""}`:""}</div>`}
+function wxLine(wx){if(!wx)return Conn.wxName()?"":`<p class="tiny">Weather: connect AccuWeather to factor it in.</p>`;
+  return`<div class="wx"><span>${esc([wx.temp!=null?Math.round(wx.temp)+"°F":"",wx.text].filter(Boolean).join(" · "))}${wx.place?` <span class="tiny">in ${esc(wx.place)}</span>`:""}</span>${wx.alerts.length?`<span class="tiny warn-t">${esc(wx.alerts.join(", "))} in effect</span>`:""}<span class="tiny">AccuWeather${wx.wet?" · indoor ideas ranked higher":""}</span></div>`}
 function connStrip(r){if(r&&r.liveErr){const m=(CONN_MSG[r.liveErr.code]||(x=>x+" didn't answer ("+r.liveErr.code+")."))(r.liveErr.src);
     return`<div class="card line" role="alert"><p class="sub small"><b>Couldn't get places from ${esc(r.liveErr.src)}.</b> ${esc(m)} Showing made-up demo places meanwhile.</p><button class="btn sm" style="align-self:flex-start" data-act="dRetry">Try again</button></div>`}
-  const live=Conn.live(),srcs=Object.entries(CONN).filter(([k,s])=>Conn.tools[s]&&Conn.tools[s].tools.length).map(([k,s])=>s);
+  const live=Conn.live(),srcs=r&&r.used&&r.used.length?r.used:Object.values(CONN).filter(s=>Conn.tools[s]&&Conn.tools[s].tools.length);
   const errs=Object.entries(Conn.err).filter(([s,c])=>c).map(([s,c])=>(CONN_MSG[c]||(x=>x+" had a problem."))(s));
-  return live?`<p class="tiny">Live from ${esc(srcs.join(", "))}.${errs.length?" "+esc(errs.join(" ")):""}</p>`:`<div class="card line"><p class="sub small"><b>Showing demo places.</b> They're made up, to show how this works. For real places, connect Yelp in claude.ai Settings → Connectors, then reopen VOUZ and allow it when asked.</p></div>`}
+  return live?`<p class="tiny">Live from ${esc(srcs.join(", "))}.${errs.length?" "+esc(errs.join(" ")):""}</p>`:`<div class="card line"><p class="sub small"><b>Showing demo places.</b> They're made up, to show how this works. For real places, connect Mapbox, Yelp and AllTrails (and AccuWeather for weather) in claude.ai Settings → Connectors, then reopen VOUZ and allow them when asked.</p></div>`}
 function whoChips(){const d=ui.dsc,shared=Soc.ready()?Soc.conns().filter(id=>{const r=Soc.rel[id],p=(Soc.prefs||{})[id];return r&&p&&(p.items||[]).some(x=>x&&x.k===r.in)}):[];if(!Soc.ready()||!shared.length)return"";
   return`<div class="col" style="gap:6px"><span class="tiny">Who's coming? Only people who shared their taste with you.</span><div class="chips sm" role="group" aria-label="Who's coming">${shared.map(id=>`<button class="chip" data-act="dWho" data-v="${esc(id)}" aria-pressed="${d.who.includes(id)}">${esc(Soc.handle(id))}</button>`).join("")}</div></div>`}
-function recCard(r,ctx){const v=r.v,saved=(S.disc.saved||[]).some(x=>x.id===v.id),fb=(S.disc.fb||{})[v.id],cost=costTxt(v,ctx.people),tr=v.distKm!=null?travelEst(v.distKm,modeFor(v.distKm,S.disc.travel)):null,note=ctx.ai&&ctx.ai[v.id];
-  const stale=v.at&&Date.now()-v.at>24*36e5;
-  return`<article class="rec" aria-label="${esc(v.name)}">${v.photos[0]?`<div class="recph"><img src="${esc(v.photos[0])}" alt="${esc(v.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"><span class="tiny">Photo: ${esc(v.src)}</span></div>`:""}
-   <div class="row between"><span class="grow"><span class="tiny">${esc(DKIND[v.kind])}${v.demo?" · demo place":" · "+esc(v.src)}</span><b class="rt">${esc(v.name)}</b></span>${v.rating?`<span class="pill">★ ${v.rating.toFixed(1)}${v.reviews?` <span class="sub">(${v.reviews})</span>`:""}</span>`:""}</div>
+function recCard(r,ctx){const v=r.v,saved=(S.disc.saved||[]).some(x=>x.id===v.id),fb=(S.disc.fb||{})[v.id],cost=costTxt(v,ctx.people),tr=v.distKm!=null&&!v.trail?travelEst(v.distKm,modeFor(v.distKm,S.disc.travel)):null,note=ctx.ai&&ctx.ai[v.id];
+  const stale=v.at&&Date.now()-v.at>24*36e5,hrsSrc=v.hours?"Mapbox":v.src,photoSrc=v.srcs&&v.srcs.includes("Yelp")&&v.photos.length?"Yelp":v.src;
+  const hours=v.openNow===true?"Open now"+(v.hoursText?" · today "+esc(v.hoursText):"")+", per "+esc(hrsSrc):v.openNow===false?"Closed now"+(v.hoursText?" · today "+esc(v.hoursText):"")+", per "+esc(hrsSrc):v.trail?"Trails are usually open; check the trail page":"Not verified. Check before you go.";
+  const links=[v.yelpUrl?["Yelp",v.yelpUrl]:null,v.site?["Website",v.site]:null,v.src==="AllTrails"&&v.url?["AllTrails",v.url]:null,mapsUrl(v)?["Directions",mapsUrl(v)]:null].filter(Boolean);
+  return`<article class="rec" aria-label="${esc(v.name)}">${v.photos[0]?`<div class="recph"><img src="${esc(v.photos[0])}" alt="${esc(v.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"><span class="tiny">Photo: ${esc(photoSrc)}</span></div>`:""}
+   <div class="row between"><span class="grow"><span class="tiny">${esc(DKIND[v.kind])}${v.demo?" · demo place":" · "+esc((v.srcs||[v.src]).join(" + "))}</span><b class="rt">${esc(v.name)}</b></span>${v.rating?`<span class="pill">★ ${v.rating.toFixed(1)}${v.reviews?` <span class="sub">(${v.reviews})</span>`:""}</span>`:""}</div>
    ${note?`<p class="ainote">${esc(note)} <span class="tiny">AI</span></p>`:""}
    ${r.why&&r.why.length?`<p class="sub small">Why: ${esc(r.why.join(", "))}.</p>`:""}
    <dl class="facts"><div><dt>Where</dt><dd>${esc(v.addr||"Address not provided")}</dd></div>
-    <div><dt>Distance</dt><dd>${v.distKm==null&&!v.demo?"Not provided by "+esc(v.src)+"; searched near "+esc(S.disc.loc&&S.disc.loc.label||"your area"):kmTxt(v.distKm)}${tr?` · about ${tr.min} min ${tr.mode==="walk"?"walk":tr.mode==="transit"?"by transit":"drive"} <span class="est">est.</span>`:""}</dd></div>
-    <div><dt>Cost</dt><dd>${esc(cost.t)} ${cost.t!=="Cost unknown"?`<span class="est">est.</span>`:""}</dd></div>
-    <div><dt>Hours</dt><dd>${v.openNow===true?"Open now, per "+esc(v.src):v.openNow===false?"Closed now, per "+esc(v.src):v.hoursText?esc(v.hoursText)+", per "+esc(v.src):"Not verified. Check before you go."}</dd></div></dl>
+    <div><dt>Distance</dt><dd>${v.distKm==null&&!v.demo?"Not provided; searched near "+esc(S.disc.loc&&S.disc.loc.label||"your area"):kmTxt(v.distKm)+(v.trail?" to the trailhead":"")}${tr?` · about ${tr.min} min ${tr.mode==="walk"?"walk":tr.mode==="transit"?"by transit":"drive"} <span class="est">est.</span>`:""}</dd></div>
+    ${v.trail?`<div><dt>Trail</dt><dd>${[v.trail.miles!=null?v.trail.miles+" mi":null,v.trail.min!=null?"about "+v.trail.min+" min":null,v.trail.gainFt!=null?Math.round(v.trail.gainFt)+" ft gain":null,v.trail.difficulty].filter(Boolean).map(esc).join(" · ")}, per AllTrails</dd></div>`:`<div><dt>Cost</dt><dd>${esc(cost.t)} ${cost.t!=="Cost unknown"?`<span class="est">est.</span>`:""}</dd></div>`}
+    <div><dt>Hours</dt><dd>${hours}</dd></div></dl>
    ${stale?`<p class="tiny warn-t">Details from ${ago(v.at)} ago; they may have changed.</p>`:""}
+   ${links.length?`<div class="row wrap" style="gap:12px">${links.map(([l,u])=>`<a class="link small" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(l)}</a>`).join("")}</div>`:""}
    <div class="row wrap rbtn"><button class="btn sm ${saved?"ghost":""}" data-act="dSave" data-id="${esc(v.id)}" aria-pressed="${saved}">${ic("bookmark")} ${saved?"Saved":"Save"}</button><button class="btn sm" data-act="dPlan" data-id="${esc(v.id)}">${ic("clock")} Plan it</button>
-    <span class="grow"></span><button class="ib bare" data-act="dFb" data-id="${esc(v.id)}" data-v="1" aria-pressed="${fb>0}" aria-label="More like this">${ic("heart")}</button><button class="ib bare" data-act="dFb" data-id="${esc(v.id)}" data-v="-1" aria-pressed="${fb<0}" aria-label="Not for us">${ic("x")}</button>
-    ${v.url?`<a class="ib bare" href="${esc(v.url)}" target="_blank" rel="noopener noreferrer" aria-label="Open on ${esc(v.src)}">${ic("next")}</a>`:""}</div></article>`}
+    <span class="grow"></span><button class="ib bare" data-act="dFb" data-id="${esc(v.id)}" data-v="1" aria-pressed="${fb>0}" aria-label="More like this">${ic("heart")}</button><button class="ib bare" data-act="dFb" data-id="${esc(v.id)}" data-v="-1" aria-pressed="${fb<0}" aria-label="Not for us">${ic("x")}</button></div></article>`}
 function findV(id){const d=ui.dsc;for(const k of ["foryou","nearby"])if(d[k]){const r=d[k].recs.find(r=>r.v.id===id);if(r)return r.v}if(d.itin)for(const s of d.itin.stops||[])if(s.v&&s.v.id===id)return s.v;return(S.disc.saved||[]).find(v=>v.id===id)||null}
 const DISC_EX=["What can we do within 2 miles?","Find something romantic under $50","We're bored. Suggest something fun.","Plan a spontaneous date tonight","Find something adventurous nearby","We have three hours and $100","Suggest something we haven't tried before","Somewhere nice we can reach by public transit","Plan our Saturday"];
 function vForYou(){const d=ui.dsc,r=d.foryou,need=d.need;
   return`${locCard()}<div class="card ask"><label class="f" for="d-q"><span>${ic("spark")} Ask VOUZ</span><textarea id="d-q" data-bind="dsc.q" maxlength="200" placeholder="Plan our Saturday, or find something romantic under $50">${esc(d.q)}</textarea></label>
     <div class="chips sm scrollx" role="group" aria-label="Examples">${DISC_EX.map((t,i)=>`<button class="chip" data-act="dEx" data-i="${i}">${esc(t)}</button>`).join("")}</div>${whoChips()}
     ${d.busy||d.ibusy?`<p class="sub small" role="status">Looking…</p>`:`<button class="btn primary block" data-act="dAsk">${ic("spark")} ${parseAsk(d.q).plan?"Plan it":"Find"}</button>`}
-    <p class="tiny">VOUZ ranks real places from Yelp and explains the ranking. Claude may write a one-line note using only those facts. Your intimacy records, health data and notes are never used.</p></div>
+    <p class="tiny">VOUZ ranks real places from Mapbox, Yelp and AllTrails, checks AccuWeather, and explains the ranking. Claude may write a one-line note using only those facts. Your intimacy records, health data and notes are never used.</p></div>
    ${need?`<div class="card line"><h3>${esc(need.title)}</h3><div class="chips">${need.opts.map(([v,l])=>`<button class="chip" data-act="dNeed" data-k="${need.k}" data-v="${esc(v)}">${esc(l)}</button>`).join("")}</div></div>`:""}
    ${d.err?`<p class="err" role="alert">${esc(d.err)}</p>`:""}
    ${d.itin?vItin():""}
    ${connStrip(r)}
-   ${r&&!d.itin&&r.q.km&&r.live&&r.recs.length&&r.recs.every(x=>x.v.distKm==null)?`<p class="tiny warn-t">Yelp didn't give distances, so VOUZ couldn't check the ${(r.q.km*0.621371).toFixed(1)}-mile limit. These are Yelp's results near ${esc(S.disc.loc.label)}.</p>`:""}
-   ${r&&!d.itin?(r.recs.length?`<div class="row between" id="fy-res"><h3>${r.group?"For all of you":"For you"}</h3>${r.wx?`<span class="tiny">${esc([r.wx.text,r.wx.temp!=null?Math.round(r.wx.temp)+"°":""].filter(Boolean).join(" "))} · AccuWeather</span>`:`<span class="tiny">Weather not connected</span>`}</div>${r.recs.map(x=>recCard(x,{people:d.who.length+1,ai:r.ai})).join("")}`:`<div class="card line"><p class="sub small">Nothing fits all of that. Try a wider distance or a bigger budget.</p></div>`):""}
+   ${r&&!d.itin&&r.q.km&&r.live&&r.recs.length&&r.recs.every(x=>x.v.distKm==null)?`<p class="tiny warn-t">These results came without map locations, so VOUZ couldn't check the ${(r.q.km*0.621371).toFixed(1)}-mile limit. Connect Mapbox for distances.</p>`:""}
+   ${r&&!d.itin?(r.recs.length?`<div class="row between" id="fy-res"><h3>${r.group?"For all of you":"For you"}</h3></div>${wxLine(r.wx)}${r.recs.map(x=>recCard(x,{people:d.who.length+1,ai:r.ai})).join("")}`:`<div class="card line"><p class="sub small">Nothing fits all of that. Try a wider distance or a bigger budget.</p></div>`):""}
    ${r&&r.notes&&r.notes.filter(n=>n.text).map(n=>`<div class="card line"><span class="tiny">${esc(n.src)} answered in words</span><p class="sub small" style="white-space:pre-wrap">${esc(n.text)}</p></div>`).join("")||""}`}
 function vItin(){const it=ui.dsc.itin,d=ui.dsc,day=it.date?fmtDate(new Date(it.date+"T12:00").getTime()):"";
   return`<div class="card itin"><div class="row between"><span><span class="tiny">${it.demo?"Demo plan · made-up places":"Date plan"}</span><h2>${esc(day)}</h2></span><button class="ib bare" data-act="dItinClose" aria-label="Close plan">${ic("x")}</button></div>${it.liveErr?connStrip(it):""}
    ${d.ibusy?`<p class="sub small" role="status">Putting it together…</p>`:`<ol class="stops">${it.stops.map((s,i)=>`<li><span class="tm">${fmtHM(s.time)}</span><div class="grow">${s.v?`<b>${esc(s.v.name)}</b><span class="sub small" style="display:block">${esc(DKIND[s.v.kind])}${s.v.demo?" · demo":""} · ${esc(s.v.addr||"Address not provided")}</span>
-      ${!s.leg&&!s.v.demo?`<span class="tiny">Travel time unavailable: ${esc(s.v.src)} doesn't give coordinates. Use Directions.</span>`:""}${s.leg?`<span class="tiny">${i?"From the last stop":"From your area"}: ${kmTxt(s.leg.km)}, about ${s.leg.min} min ${s.leg.mode==="walk"?"walking":s.leg.mode==="transit"?"by transit":"driving"}${s.leg.est?" (estimate)":", via "+esc(s.leg.src)}</span>`:""}
-      <span class="tiny" style="display:block">${esc(s.cost.t)}${s.cost.t!=="Cost unknown"?" (estimate)":""} · ${s.v.openNow===true?"open now":"hours not verified"}</span>
+      ${!s.leg&&!s.v.demo?`<span class="tiny">Travel time unavailable: no map location for this one. Use Directions.</span>`:""}${s.leg?`<span class="tiny">${i?"From the last stop":"From your area"}: ${kmTxt(s.leg.km)}, about ${s.leg.min} min ${s.leg.mode==="walk"?"walking":s.leg.mode==="transit"?"by transit":"driving"}${s.leg.est?" (estimate)":", via "+esc(s.leg.src)}</span>`:""}
+      <span class="tiny" style="display:block">${esc(s.cost.t)}${s.cost.t!=="Cost unknown"?" (estimate)":""} · ${s.openAt===true?"open then ("+esc(s.hoursDay)+", per Mapbox)":s.openAt===false?"likely closed then ("+esc(s.hoursDay)+"). Replace it?":"hours not verified"}</span>
       <div class="row" style="gap:4px"><button class="link small" data-act="dSwap" data-i="${i}">Replace</button>${mapsUrl(s.v)?`<a class="link small" href="${esc(mapsUrl(s.v))}" target="_blank" rel="noopener noreferrer">Directions</a>`:""}</div>`
       :`<b>No ${esc(DKIND[s.kind].toLowerCase())} nearby fits.</b><button class="link small" data-act="dSwap" data-i="${i}">Try again</button>`}</div></li>`).join("")}</ol>
     ${it.cost?`<p class="sub small">Total ${esc(it.cost.t)} for ${it.people} (estimate). Nothing is booked or paid.</p>`:`<p class="sub small">Nothing is booked or paid.</p>`}
@@ -2502,7 +2528,7 @@ const fmtHM=hm=>{const[h,m]=hm.split(":").map(Number);return(h%12||12)+(m?":"+St
 function vNearby(){const d=ui.dsc,r=d.nearby;
   return`${locCard()}<div class="chips sm scrollx" role="group" aria-label="Kind">${[["","Everything"],["coffee","Coffee"],["food","Food"],["drinks","Drinks"],["outdoors","Outdoors"],["trail","Trails"],["culture","Culture"],["music","Music"],["games","Games"],["class","Classes"],["wellness","Wellness"]].map(([v,l])=>`<button class="chip" data-act="dNk" data-v="${v}" aria-pressed="${(d.nk||"")===v}">${l}</button>`).join("")}</div>
    <div class="row between"><div class="chips sm" role="group" aria-label="Distance">${[[1.6,"1 mi"],[5,"3 mi"],[16,"10 mi"]].map(([v,l])=>`<button class="chip" data-act="dNkm" data-v="${v}" aria-pressed="${(d.nkm||5)===v}">${l}</button>`).join("")}</div><button class="link small" data-act="dNsort">${d.nsort==="dist"?"Best match":"Closest first"}</button></div>
-   ${r&&r.live&&r.recs.length&&r.recs.every(x=>x.v.distKm==null)?`<p class="tiny">Yelp doesn't give distances here, so the distance chips can't filter. Results are Yelp's, near ${esc(S.disc.loc.label)}.</p>`:""}${connStrip(r)}${d.busy?`<div class="skel"></div>`:""}
+   ${r&&r.live&&r.recs.length&&r.recs.every(x=>x.v.distKm==null)?`<p class="tiny">These results came without map locations, so the distance chips can't filter. Connect Mapbox for distances.</p>`:""}${r?wxLine(r.wx):""}${connStrip(r)}${d.busy?`<div class="skel"></div>`:""}
    ${r?(r.recs.length?r.recs.map(x=>recCard(x,{people:d.who.length+1})).join(""):`<div class="card line"><p class="sub small">Nothing found within that distance.</p></div>`):S.disc.loc?"":`<p class="sub small">Set an area to see what's around.</p>`}`}
 function vSavedD(){const sv=S.disc.saved||[],plans=allPlans().filter(e=>e.venue||e.stops);
   return`${sv.length?`<div class="sec"><h3>Saved places</h3>${sv.map(v=>`<div class="hist"><span class="grow"><b>${esc(v.name)}</b><span class="sub small" style="display:block">${esc(DKIND[v.kind])}${v.demo?" · demo":" · "+esc(v.src)} · ${esc(v.addr||"")}</span></span><button class="btn sm" data-act="dPlan" data-id="${esc(v.id)}">Plan</button><button class="ib bare" data-act="dSave" data-id="${esc(v.id)}" aria-label="Remove ${esc(v.name)}">${ic("x")}</button></div>`).join("")}</div>`:`<div class="card line"><p class="sub small">Nothing saved yet. Tap Save on anything in For You or Nearby: it stays here, like a bucket list.</p></div>`}
@@ -2568,7 +2594,7 @@ Object.assign(A,{
   hwSkip(e){const x=S.exps.find(z=>z.id===e.dataset.id);if(!x)return;x.asked=true;x.updatedAt=Date.now();save();render()}
 });
 /* What a saved place keeps: provider facts only, with the time they were fetched. */
-const snapV=v=>({id:v.id,src:v.src,name:v.name,kind:v.kind,cats:v.cats,addr:v.addr,lat:v.lat,lon:v.lon,rating:v.rating,reviews:v.reviews,price:v.price,free:v.free,photos:(v.photos||[]).slice(0,1),url:v.url,openNow:null,hoursText:null,distKm:null,at:v.at,demo:!!v.demo});
+const snapV=v=>({id:v.id,src:v.src,srcs:(v.srcs||[v.src]).slice(0,3),name:v.name,kind:v.kind,cats:v.cats,addr:v.addr,lat:v.lat,lon:v.lon,rating:v.rating,reviews:v.reviews,price:v.price,free:v.free,photos:(v.photos||[]).slice(0,1),url:v.url,yelpUrl:v.yelpUrl||null,site:v.site||null,hours:v.hours||null,trail:v.trail||null,openNow:null,hoursText:null,distKm:null,at:v.at,demo:!!v.demo});
 
 function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={dsc:ui.dsc,feed:ui.feed,pc:ui.pc,me:ui.me,cp:ui.cp,soc:ui.soc,ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
@@ -2595,7 +2621,7 @@ window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.on
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 })();
-window.__vouz={Disc,Conn,parseAsk,scoreVenue,normVenue,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+window.__vouz={Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>

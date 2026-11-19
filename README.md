@@ -18,16 +18,16 @@ Working with an AI assistant? Start with [AGENTS.md](AGENTS.md): it holds the pr
 | `supabase/migrations/` | Database schema and row-level security | Tested on local Postgres, not deployed |
 | `supabase/functions/` | Account deletion, purchase verification | Written, never run |
 | `watch/` | Apple Watch app source and iPhone bridge | Written, never compiled |
-| `e2e/run.py` | Browser tests for the app, including simulated users and a Yelp stand-in | 274 checks |
+| `e2e/run.py` | Browser tests for the app, including simulated users and connector stand-ins | 283 checks |
 
 The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in this repository. See CHECKLIST.md.
 
 ## Running the tests
 
 ```
-npm test            # 94 unit tests (incl. private matching, rewards, feed and discover helpers, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
+npm test            # 96 unit tests (incl. private matching, rewards, feed and discover helpers, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
 npm run test:db     # 176 policy tests on a throwaway local Postgres (needs initdb and psql)
-npm run test:ui     # 274 browser checks (needs Python, Playwright and Chrome)
+npm run test:ui     # 283 browser checks (needs Python, Playwright and Chrome)
 ```
 
 No packages are installed by any of these. There are no runtime dependencies.
@@ -106,13 +106,19 @@ Supabase backend (migration 0005 plus a private Storage bucket), which isn't dep
 
 ## Discover
 
-Places come from the viewer's own **Yelp** connector (`yelp_search_local_businesses`), called through the artifact's
-`mcp` capability. VOUZ fills Yelp's input only from the fields Yelp's schema declares (query, location or coordinates,
-limit 3–8, open now) and asks once per kind of place. Yelp's search returns name, rating, review count, price level,
-categories, address, photo and link; it doesn't return coordinates or opening hours, so VOUZ shows distance and hours
-as "not provided" / "not verified" rather than guessing, and travel time is shown only for demo places or where a
-distance exists. Without Yelp, made-up demo places are shown and labelled on every card.
+Discover combines four of the viewer's own connectors, called through the artifact's `mcp` capability with exactly the
+inputs each live tool declares:
+
+| Connector | Tools | What VOUZ uses |
+|---|---|---|
+| Mapbox | `category_search_tool`, `search_and_geocode_tool`, `directions_tool` | places, coordinates, addresses, websites, opening hours; area lookup; walking/driving times |
+| Yelp | `yelp_search_local_businesses` | ratings, review counts, photos, price level |
+| AllTrails | `find_trails_near_location` | trails: length, time, gain, distance to trailhead |
+| AccuWeather | `widgets-search-claude`, `widgets-current-claude` | current conditions, official alerts |
+
+A place found by both Mapbox and Yelp becomes one card. Anything a source doesn't give is labelled as not provided or
+not verified, never filled in. Each person has to connect the connectors themselves and allow VOUZ to use them; without
+any, Discover shows made-up demo places labelled on every card.
 
 The ranking is in `scoreVenue()` and every factor is visible. Claude (the `sample` capability) only writes one-line notes
-from the facts it's given, and any place it mentions that wasn't sent is dropped. Recommendations never read intimacy
-records, notes or health data.
+from the facts it's given. Recommendations never read intimacy records, notes or health data.

@@ -56,9 +56,10 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 - **Video** location scrubbing covers the standard boxes (©xyz, loci) and ISO 6709 coordinate strings; it is checked with test files, not with every phone's format. Videos aren't re-encoded.
 - **Moderation** in the web app is for the page owner only; there's no appeals flow or automated screening.
 - **Notifications** are in-app only. No push.
-- **Yelp results** carry no coordinates or opening hours, so "within 2 miles" can't be checked, travel times aren't shown for Yelp places, and hours say "not verified". A routing/geocoding connector would fill this in.
-- **Yelp in VOUZ** is tested against a stand-in built from Yelp's real schema and a real result, not yet with a live account inside the artifact. Each person using VOUZ must connect Yelp themselves and allow it when asked.
-- **Weather, events and transit** aren't connected (you chose Yelp only). The weather slot says "not connected".
+- **Connectors in VOUZ** (Mapbox, Yelp, AllTrails, AccuWeather) are tested against stand-ins built from each tool's real inputs and real responses, not yet with live accounts inside the artifact. Each person must connect them and allow VOUZ when asked.
+- **Places only Yelp finds** have no map location or hours, so they show "not provided" for distance and "not verified" for hours. Mapbox's hours are used where it has them.
+- **Events** (concerts, shows, markets) aren't covered: none of these connectors lists events. Planned: Ticketmaster and a Claude web-search agent once there's a funded backend.
+- **Public transit** times are estimates; Mapbox gives walking and driving only.
 - **Precise location** in the artifact depends on the browser allowing it; typing an area always works.
 - **Merchant rewards:** none. VOUZ has no merchant partners and doesn't reward claimed visits.
 - **Photos** are on one device only. Clearing browser data deletes them.
@@ -72,7 +73,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 2. Supabase: when to deploy, and whether notes are encrypted on the device first.
 3. Explore ranking weights (recency 40, engagement 25, interests 15, detail 10, repeat author −12) are first guesses.
 4. Who moderates, and the community rules they enforce, before any real public launch.
-5. Whether to add a routing/weather connector (e.g. Mapbox, AccuWeather) for distances, travel time and weather.
+5. When to fund the backend for events (Ticketmaster key, Claude API with web search).
 
 ## Commands once Xcode is installed
 

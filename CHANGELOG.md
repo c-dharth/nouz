@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 — 2026-11-19
+
+Discover now uses four connectors together (each called with the inputs its live tool declares, checked on 19 Nov 2026):
+- Mapbox: places with coordinates, addresses, websites and opening hours; turns the typed area into a map location; walking and driving times between plan stops.
+- Yelp: ratings, review counts, photos and price levels.
+- AllTrails: trails with length, time, elevation gain and distance to the trailhead.
+- AccuWeather: current conditions and official alerts. Rain ranks indoor ideas higher; alerts lower outdoor ones.
+- The same place from Mapbox and Yelp is merged into one card with both sources named.
+- Results mix more kinds of places by default; "within 2 miles" and open-now are checked wherever Mapbox gives a location and hours.
+- Day plans skip places Mapbox says are closed at that stop's time.
+
 ## 0.8.1 — 2026-11-19
 
 Fixed:
