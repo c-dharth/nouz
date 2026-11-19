@@ -33,8 +33,9 @@ const yelpSchema={type:'object',additionalProperties:false,properties:{is_open_n
 window.__yelpCalls=[];
 const biz=(q,i,o)=>Object.assign({id:'t-'+q.replace(/\W/g,'')+'-'+i,name:'TEST '+q.toUpperCase().slice(0,14)+' '+i,rating:3.6+i*.3,review_count:20+i,is_closed:false,categories:[{alias:q.split(' ')[0]}],url:'https://www.yelp.com/biz/test-'+i,image_url:'https://example.com/p'+i+'.jpg',location:{address1:(100+i)+' Test St\nTestville, CA 90000',city:'Testville'},price:['$','$$','$$$'][i%3],distance_meters:0.2},o||{});
 const mcp={listTools:async()=>({servers:[{server:'Yelp',authStatus:'connected',tools:[{name:'yelp_search_local_businesses',description:''}]}]}),
-  describeTool:async(s,t)=>({name:t,description:'',inputSchema:yelpSchema}),
-  callTool:async(s,t,input)=>{window.__yelpCalls.push(input);const q=input.query||'x';return{content:[],payload:{businesses:[biz(q,0),biz(q,1),biz(q,2,{is_closed:true,name:'TEST CLOSED '+q}),biz(q,3,{price:null})],status:'ok',error:null}}},
+  // Like the platform: no description until the viewer has allowed the connector, which the first call asks for.
+  describeTool:async(s,t)=>{if(!window.__yelpAllowed)throw{code:'not_in_manifest'};return{name:t,description:'',inputSchema:yelpSchema}},
+  callTool:async(s,t,input)=>{if(window.__yelpFail)throw{code:window.__yelpFail};window.__yelpAllowed=true;window.__yelpCalls.push(input);const q=input.query||'x';return{content:[],payload:{businesses:[biz(q,0),biz(q,1),biz(q,2,{is_closed:true,name:'TEST CLOSED '+q}),biz(q,3,{price:null})],status:'ok',error:null}}},
   invalidate:async()=>{}};
 window.claude={use:async(n)=>n==='mcp'&&U==='erin'?mcp:n==='db'?{doc,collection:coll}:n==='user'?{id:async()=>U,can:async()=>true,isOwner:async()=>U==='dave'}:null};})();
 """
@@ -666,6 +667,9 @@ with sync_playwright() as pw:
     e.screenshot(path=SH+"foryou-yelp.png")
     act(e,"discSeg",v="nearby"); e.wait_for_timeout(200); act(e,"dNk",v="coffee"); e.wait_for_timeout(500)
     ok("yelp: nearby asks Yelp for that kind",e.evaluate("window.__yelpCalls.slice(-1)[0].query")=="coffee")
+    e.evaluate("window.__yelpFail='approval_required'"); act(e,"dNk",v="food"); e.wait_for_timeout(500); t=e.inner_text(".scroll")
+    ok("yelp: when Yelp fails, says why and shows labelled demo places","Couldn't get places from Yelp" in t and "needs your approval" in t and "demo place" in t)
+    e.evaluate("window.__yelpFail=null"); act(e,"dRetry"); e.wait_for_timeout(500); ok("yelp: try again recovers","Couldn't get places" not in e.inner_text(".scroll") and "TEST" in e.inner_text(".scroll"))
     ctx.close()
     # screenshots with motion on
     ctx,p=newctx(b,motion="no-preference"); p.goto(URL); p.wait_for_timeout(700); p.screenshot(path=SH+"ob.png"); onboard(p); act(p,"loadDemo"); p.wait_for_timeout(600); p.screenshot(path=SH+"home.png"); nav(p,"history"); p.wait_for_timeout(1200)

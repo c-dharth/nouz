@@ -2246,6 +2246,9 @@ const YQ={coffee:"coffee",food:"restaurants",drinks:"cocktail bar wine bar",outd
 const PRICE_PP={1:[8,20],2:[20,45],3:[45,90],4:[90,180]};   // rough per-person ranges for a price level, shown as estimates
 
 /* ---------- connectors ---------- */
+const KNOWN_SCHEMAS={"Yelp|yelp_search_local_businesses":{type:"object",additionalProperties:false,properties:{
+  is_open_now:{default:false,type:"boolean"},latitude:{anyOf:[{maximum:90,minimum:-90,type:"number"},{type:"null"}]},limit:{default:5,maximum:8,minimum:3,type:"integer"},
+  location:{anyOf:[{maxLength:250,minLength:1,type:"string"},{type:"null"}]},longitude:{anyOf:[{maximum:180,minimum:-180,type:"number"},{type:"null"}]},query:{anyOf:[{maxLength:250,minLength:1,type:"string"},{type:"null"}]}}}};
 const CONN={YELP:"Yelp",TRAILS:"AllTrails",MAP:"Mapbox",WX:"AccuWeather®"};
 const Conn={mcp:null,ready:false,tools:{},schemas:{},err:{},
   async init(){if(this.ready)return;this.ready=true;try{this.mcp=window.claude&&window.claude.use?await window.claude.use("mcp"):null}catch(e){this.mcp=null}
@@ -2254,7 +2257,10 @@ const Conn={mcp:null,ready:false,tools:{},schemas:{},err:{},
   has(server,tool){const s=this.tools[server];return!!(s&&s.tools.includes(tool))},
   pick(server,names){const s=this.tools[server];return s?names.find(n=>s.tools.includes(n))||null:null},
   live(){return["YELP","TRAILS","MAP"].some(k=>{const s=this.tools[CONN[k]];return s&&s.tools.length})},
-  async schema(server,tool){const k=server+"|"+tool;if(k in this.schemas)return this.schemas[k];let p=null;try{const d=await this.mcp.describeTool(server,tool);p=d&&d.inputSchema||null}catch(e){p=null}return this.schemas[k]=p},
+  /* The platform describes a connector's tools only after the viewer has allowed it, and the first call is what asks.
+     So for Yelp, fall back to its published input schema (copied from the connector's own definition) until then. */
+  async schema(server,tool){const k=server+"|"+tool;if(this.schemas[k])return this.schemas[k];let p=null;try{const d=await this.mcp.describeTool(server,tool);p=d&&d.inputSchema||null}catch(e){p=null}
+    if(p)this.schemas[k]=p;return p||KNOWN_SCHEMAS[k]||null},
   /* Fill a tool's input from its own schema: only properties it declares, never guessed names. */
   async input(server,tool,want){const sc=await this.schema(server,tool);if(!sc||!sc.properties)throw{code:"no_schema"};const out={},props=sc.properties,req=sc.required||[];
     for(const[p,def0] of Object.entries(props)){const def=def0&&def0.anyOf?Object.assign({},def0,def0.anyOf.find(x=>x&&x.type&&x.type!=="null")||{}):def0||{},n=p.toLowerCase(),t=def.type;let v;
@@ -2315,10 +2321,12 @@ const Disc={wx:null,wxAt:0,
     if((q.kinds||[]).some(k=>k==="trail"||k==="outdoors")&&Conn.has(CONN.TRAILS,"find_trails_near_location")&&c){live=true;try{const r=await Conn.call(CONN.TRAILS,"find_trails_near_location",{lat:c.lat,lon:c.lon,radiusM,limit:6,term:"trail"});(findList(r.payload)||[]).forEach(x=>{const v=normVenue(x,"AllTrails",r.at);if(v){v.kind="trail";out.push(v)}})}catch(e){notes.push({src:"AllTrails",err:e&&e.code})}}
     const mbx=Conn.pick(CONN.MAP,["category_search_tool","poi_search_tool"]);
     if(!out.length&&mbx&&c){live=true;try{const r=await Conn.call(CONN.MAP,mbx,{term,category:(q.kinds&&q.kinds[0]||"restaurant"),lat:c.lat,lon:c.lon,limit:10});(findList(r.payload)||[]).forEach(x=>{const v=normVenue(x,"Mapbox",r.at);if(v)out.push(v)})}catch(e){notes.push({src:"Mapbox",err:e&&e.code})}}
-    let list=out,demo=false;if(!live||(!out.length&&S.disc.demo)){list=demoVenues(c);demo=true}
+    let list=out,demo=false,liveErr=null;
+    if(live&&!out.length){const e=notes.find(n=>n.err);if(e){liveErr={src:e.src,code:e.err};list=demoVenues(c);demo=true}}
+    if(!live||(!out.length&&S.disc.demo)){list=demoVenues(c);demo=true}
     const seen=new Set();list=list.filter(v=>{const k=v.name.toLowerCase()+"|"+(v.addr||"").toLowerCase().slice(0,20);if(seen.has(k)||v.closedForGood)return false;seen.add(k);return true});
     const ref=c||(demo?{lat:37.7749,lon:-122.4194}:null);for(const v of list){const d=hav(ref,v);if(d!=null)v.distKm=d}
-    return{list,demo,live,notes}},
+    return{list,demo,live:live&&!liveErr,liveErr,notes}},
   async weather(){const c=this.center();if(!c&&!(S.disc.loc&&S.disc.loc.label))return null;if(this.wx&&Date.now()-this.wxAt<30*6e4)return this.wx;
     const t=Conn.pick(CONN.WX,["widgets-current-claude"]);if(!t)return null;
     try{const r=await Conn.call(CONN.WX,t,{label:S.disc.loc&&S.disc.loc.label,lat:c&&c.lat,lon:c&&c.lon,term:S.disc.loc&&S.disc.loc.label},{stale:30*6e4});const p=typeof r.payload==="string"?(()=>{try{return JSON.parse(r.payload)}catch(e){return{text:r.payload}}})():r.payload||{};
@@ -2408,7 +2416,7 @@ async function runDisc(kind){const d=ui.dsc,q=kind==="nearby"?{kinds:d.nk?[d.nk]
     let recs=res.list.map(v=>{const s=scoreVenue(v,q,ctx);return{v,s,why:reasons(s,tastes.length>1)}}).filter(r=>r.s.total>-50&&(kind!=="nearby"||!d.nk||r.v.kind===d.nk));
     recs.sort((a,b)=>kind==="nearby"&&d.nsort==="dist"?(a.v.distKm??99)-(b.v.distKm??99):b.s.total-a.s.total);
     const seenK={};if(kind!=="nearby")recs=recs.filter(r=>(seenK[r.v.kind]=(seenK[r.v.kind]||0)+1)<=3);   // variety: at most 3 of a kind
-    d[kind]={q,recs:recs.slice(0,kind==="nearby"?20:8),demo:res.demo,live:res.live,wx,notes:res.notes,at:Date.now(),group:tastes.length>1};
+    d[kind]={q,recs:recs.slice(0,kind==="nearby"?20:8),demo:res.demo,live:res.live,liveErr:res.liveErr,wx,notes:res.notes,at:Date.now(),group:tastes.length>1};
     S.disc.hist=(S.disc.hist||[]).concat([{at:Date.now(),q:q.raw||"(nearby)",n:recs.length}]).slice(-50);saveLocal();
     if(kind==="foryou"){render();const h=document.getElementById("fy-res");if(h&&h.scrollIntoView)h.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"start"});const notes=await aiNotes(d.foryou.recs,q,tastes.length>1);if(d.foryou&&d.foryou.q===q)d.foryou.ai=notes}}
   catch(e){d.err="That search didn't work. Try again."}
@@ -2420,7 +2428,7 @@ function planDate(q){const now=new Date();let d=new Date(now);if(q.day==="tomorr
 async function buildItin(it,keepIdx){const d=ui.dsc,q=it.q,dp=q.daypart||(q.day==="today"&&new Date().getHours()>=15?"evening":"day"),slots=it.slots||SLOTS[dp],date=planDate(q);
   it.slots=slots;it.date=dayKey(date.getTime());it.daypart=dp;d.ibusy=true;render();
   const tastes=[myTaste()].concat((await readTastes().catch(()=>[])).filter(p=>d.who.includes(p.id)).map(p=>p.t)),people=d.who.length+1;
-  const pools={},res=await Disc.places({...q,kinds:Array.from(new Set(slots.map(s=>s[1]))),term:null});it.demo=res.demo;
+  const pools={},res=await Disc.places({...q,kinds:Array.from(new Set(slots.map(s=>s[1]))),term:null});it.demo=res.demo;it.liveErr=res.liveErr;
   const ctx={tastes,tried:tried(),wx:await Disc.weather().catch(()=>null),people};
   const stops=it.stops||[],used=new Set(stops.filter((s,i)=>keepIdx&&keepIdx.includes(i)).map(s=>s.v.id)),per=q.budget!=null?q.budget/slots.length:null;
   const out=[];let prev=Disc.center();
@@ -2444,7 +2452,9 @@ const mapsUrl=v=>!v||v.demo?null:v.lat!=null?"https://www.google.com/maps/dir/?a
 function locCard(){const l=S.disc.loc,d=ui.dsc;
   return`<div class="card line loc"><div class="row between"><span class="grow"><span class="tiny">Searching around</span><b style="display:block">${l?esc(l.label||"Your location"):"No area set"}</b>${l&&l.precise?`<span class="sub small">From your device, rounded to about 1 km. Not shared.</span>`:""}</span><button class="btn sm ghost" data-act="dLocEdit">${l?"Change":"Set area"}</button></div>
    ${d.locOpen||!l?`<div class="row"><input type="text" id="d-area" maxlength="60" placeholder="Neighborhood or city" aria-label="Neighborhood or city" autocomplete="off" value="${esc(d.area||"")}"><button class="btn sm" data-act="dLocSet">Use</button></div><button class="link small" data-act="dLocGPS">${ic("pin")} Use my precise location instead</button>${d.locErr?`<p class="err" role="alert">${esc(d.locErr)}</p>`:""}`:""}</div>`}
-function connStrip(){const live=Conn.live(),srcs=Object.entries(CONN).filter(([k,s])=>Conn.tools[s]&&Conn.tools[s].tools.length).map(([k,s])=>s);
+function connStrip(r){if(r&&r.liveErr){const m=(CONN_MSG[r.liveErr.code]||(x=>x+" didn't answer ("+r.liveErr.code+")."))(r.liveErr.src);
+    return`<div class="card line" role="alert"><p class="sub small"><b>Couldn't get places from ${esc(r.liveErr.src)}.</b> ${esc(m)} Showing made-up demo places meanwhile.</p><button class="btn sm" style="align-self:flex-start" data-act="dRetry">Try again</button></div>`}
+  const live=Conn.live(),srcs=Object.entries(CONN).filter(([k,s])=>Conn.tools[s]&&Conn.tools[s].tools.length).map(([k,s])=>s);
   const errs=Object.entries(Conn.err).filter(([s,c])=>c).map(([s,c])=>(CONN_MSG[c]||(x=>x+" had a problem."))(s));
   return live?`<p class="tiny">Live from ${esc(srcs.join(", "))}.${errs.length?" "+esc(errs.join(" ")):""}</p>`:`<div class="card line"><p class="sub small"><b>Showing demo places.</b> They're made up, to show how this works. For real places, connect Yelp in claude.ai Settings → Connectors, then reopen VOUZ and allow it when asked.</p></div>`}
 function whoChips(){const d=ui.dsc,shared=Soc.ready()?Soc.conns().filter(id=>{const r=Soc.rel[id],p=(Soc.prefs||{})[id];return r&&p&&(p.items||[]).some(x=>x&&x.k===r.in)}):[];if(!Soc.ready()||!shared.length)return"";
@@ -2473,12 +2483,12 @@ function vForYou(){const d=ui.dsc,r=d.foryou,need=d.need;
    ${need?`<div class="card line"><h3>${esc(need.title)}</h3><div class="chips">${need.opts.map(([v,l])=>`<button class="chip" data-act="dNeed" data-k="${need.k}" data-v="${esc(v)}">${esc(l)}</button>`).join("")}</div></div>`:""}
    ${d.err?`<p class="err" role="alert">${esc(d.err)}</p>`:""}
    ${d.itin?vItin():""}
-   ${connStrip()}
+   ${connStrip(r)}
    ${r&&!d.itin&&r.q.km&&r.live&&r.recs.length&&r.recs.every(x=>x.v.distKm==null)?`<p class="tiny warn-t">Yelp didn't give distances, so VOUZ couldn't check the ${(r.q.km*0.621371).toFixed(1)}-mile limit. These are Yelp's results near ${esc(S.disc.loc.label)}.</p>`:""}
    ${r&&!d.itin?(r.recs.length?`<div class="row between" id="fy-res"><h3>${r.group?"For all of you":"For you"}</h3>${r.wx?`<span class="tiny">${esc([r.wx.text,r.wx.temp!=null?Math.round(r.wx.temp)+"°":""].filter(Boolean).join(" "))} · AccuWeather</span>`:`<span class="tiny">Weather not connected</span>`}</div>${r.recs.map(x=>recCard(x,{people:d.who.length+1,ai:r.ai})).join("")}`:`<div class="card line"><p class="sub small">Nothing fits all of that. Try a wider distance or a bigger budget.</p></div>`):""}
    ${r&&r.notes&&r.notes.filter(n=>n.text).map(n=>`<div class="card line"><span class="tiny">${esc(n.src)} answered in words</span><p class="sub small" style="white-space:pre-wrap">${esc(n.text)}</p></div>`).join("")||""}`}
 function vItin(){const it=ui.dsc.itin,d=ui.dsc,day=it.date?fmtDate(new Date(it.date+"T12:00").getTime()):"";
-  return`<div class="card itin"><div class="row between"><span><span class="tiny">${it.demo?"Demo plan · made-up places":"Date plan"}</span><h2>${esc(day)}</h2></span><button class="ib bare" data-act="dItinClose" aria-label="Close plan">${ic("x")}</button></div>
+  return`<div class="card itin"><div class="row between"><span><span class="tiny">${it.demo?"Demo plan · made-up places":"Date plan"}</span><h2>${esc(day)}</h2></span><button class="ib bare" data-act="dItinClose" aria-label="Close plan">${ic("x")}</button></div>${it.liveErr?connStrip(it):""}
    ${d.ibusy?`<p class="sub small" role="status">Putting it together…</p>`:`<ol class="stops">${it.stops.map((s,i)=>`<li><span class="tm">${fmtHM(s.time)}</span><div class="grow">${s.v?`<b>${esc(s.v.name)}</b><span class="sub small" style="display:block">${esc(DKIND[s.v.kind])}${s.v.demo?" · demo":""} · ${esc(s.v.addr||"Address not provided")}</span>
       ${!s.leg&&!s.v.demo?`<span class="tiny">Travel time unavailable: ${esc(s.v.src)} doesn't give coordinates. Use Directions.</span>`:""}${s.leg?`<span class="tiny">${i?"From the last stop":"From your area"}: ${kmTxt(s.leg.km)}, about ${s.leg.min} min ${s.leg.mode==="walk"?"walking":s.leg.mode==="transit"?"by transit":"driving"}${s.leg.est?" (estimate)":", via "+esc(s.leg.src)}</span>`:""}
       <span class="tiny" style="display:block">${esc(s.cost.t)}${s.cost.t!=="Cost unknown"?" (estimate)":""} · ${s.v.openNow===true?"open now":"hours not verified"}</span>
@@ -2492,7 +2502,7 @@ const fmtHM=hm=>{const[h,m]=hm.split(":").map(Number);return(h%12||12)+(m?":"+St
 function vNearby(){const d=ui.dsc,r=d.nearby;
   return`${locCard()}<div class="chips sm scrollx" role="group" aria-label="Kind">${[["","Everything"],["coffee","Coffee"],["food","Food"],["drinks","Drinks"],["outdoors","Outdoors"],["trail","Trails"],["culture","Culture"],["music","Music"],["games","Games"],["class","Classes"],["wellness","Wellness"]].map(([v,l])=>`<button class="chip" data-act="dNk" data-v="${v}" aria-pressed="${(d.nk||"")===v}">${l}</button>`).join("")}</div>
    <div class="row between"><div class="chips sm" role="group" aria-label="Distance">${[[1.6,"1 mi"],[5,"3 mi"],[16,"10 mi"]].map(([v,l])=>`<button class="chip" data-act="dNkm" data-v="${v}" aria-pressed="${(d.nkm||5)===v}">${l}</button>`).join("")}</div><button class="link small" data-act="dNsort">${d.nsort==="dist"?"Best match":"Closest first"}</button></div>
-   ${r&&r.live&&r.recs.length&&r.recs.every(x=>x.v.distKm==null)?`<p class="tiny">Yelp doesn't give distances here, so the distance chips can't filter. Results are Yelp's, near ${esc(S.disc.loc.label)}.</p>`:""}${connStrip()}${d.busy?`<div class="skel"></div>`:""}
+   ${r&&r.live&&r.recs.length&&r.recs.every(x=>x.v.distKm==null)?`<p class="tiny">Yelp doesn't give distances here, so the distance chips can't filter. Results are Yelp's, near ${esc(S.disc.loc.label)}.</p>`:""}${connStrip(r)}${d.busy?`<div class="skel"></div>`:""}
    ${r?(r.recs.length?r.recs.map(x=>recCard(x,{people:d.who.length+1})).join(""):`<div class="card line"><p class="sub small">Nothing found within that distance.</p></div>`):S.disc.loc?"":`<p class="sub small">Set an area to see what's around.</p>`}`}
 function vSavedD(){const sv=S.disc.saved||[],plans=allPlans().filter(e=>e.venue||e.stops);
   return`${sv.length?`<div class="sec"><h3>Saved places</h3>${sv.map(v=>`<div class="hist"><span class="grow"><b>${esc(v.name)}</b><span class="sub small" style="display:block">${esc(DKIND[v.kind])}${v.demo?" · demo":" · "+esc(v.src)} · ${esc(v.addr||"")}</span></span><button class="btn sm" data-act="dPlan" data-id="${esc(v.id)}">Plan</button><button class="ib bare" data-act="dSave" data-id="${esc(v.id)}" aria-label="Remove ${esc(v.name)}">${ic("x")}</button></div>`).join("")}</div>`:`<div class="card line"><p class="sub small">Nothing saved yet. Tap Save on anything in For You or Nearby: it stays here, like a bucket list.</p></div>`}
@@ -2515,6 +2525,7 @@ function howWasCard(){const due=S.exps.filter(e=>!e.demo&&e.kind==="plan"&&e.dat
 
 Object.assign(A,{
   dEx(e){ui.dsc.q=DISC_EX[+e.dataset.i];render()},
+  dRetry(){Conn.err={};runDisc(ui.disc.seg==="nearby"?"nearby":"foryou")},
   dWho(e){const d=ui.dsc,v=e.dataset.v;d.who=d.who.includes(v)?d.who.filter(x=>x!==v):d.who.concat([v]);render()},
   async dAsk(){const d=ui.dsc,q=parseAsk(d.q);d.need=null;d.itin=null;
     if(!S.disc.loc){d.locOpen=true;d.err="Set an area first, so VOUZ looks in the right place.";return render()}

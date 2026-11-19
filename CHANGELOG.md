@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1 — 2026-11-19
+
+Fixed:
+- Discover returned nothing with Yelp connected. Before a viewer has allowed Yelp, the platform won't describe Yelp's search, so VOUZ refused to call it, and the call is what asks for approval. VOUZ now uses Yelp's published input schema until the description is available.
+- When Yelp fails, Discover now says why (for example, needs approval or reconnect), shows labelled demo places, and offers Try again.
+
 ## 0.8.0 — 2026-11-19
 
 Added (browser-tested; Yelp tested against a stand-in using Yelp's real input schema and result shape):
