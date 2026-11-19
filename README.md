@@ -3,6 +3,8 @@
 Relationship experiences, intimacy tracking and personal analytics for adults. "Less scrolling. More together."
 Private by default. Shared only by choice. No scores.
 
+Working with an AI assistant? Start with [AGENTS.md](AGENTS.md): it holds the project rules every tool should follow.
+
 ## What is in this repository
 
 | Path | What it is | State |
