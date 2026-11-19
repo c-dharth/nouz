@@ -18,16 +18,16 @@ Working with an AI assistant? Start with [AGENTS.md](AGENTS.md): it holds the pr
 | `supabase/migrations/` | Database schema and row-level security | Tested on local Postgres, not deployed |
 | `supabase/functions/` | Account deletion, purchase verification | Written, never run |
 | `watch/` | Apple Watch app source and iPhone bridge | Written, never compiled |
-| `e2e/run.py` | Browser tests for the app, including four simulated users | 249 checks |
+| `e2e/run.py` | Browser tests for the app, including simulated users and a Yelp stand-in | 274 checks |
 
 The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in this repository. See CHECKLIST.md.
 
 ## Running the tests
 
 ```
-npm test            # 89 unit tests (incl. private matching, rewards and feed helpers, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
-npm run test:db     # 167 policy tests on a throwaway local Postgres (needs initdb and psql)
-npm run test:ui     # 249 browser checks (needs Python, Playwright and Chrome)
+npm test            # 94 unit tests (incl. private matching, rewards, feed and discover helpers, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
+npm run test:db     # 176 policy tests on a throwaway local Postgres (needs initdb and psql)
+npm run test:ui     # 274 browser checks (needs Python, Playwright and Chrome)
 ```
 
 No packages are installed by any of these. There are no runtime dependencies.
@@ -53,7 +53,7 @@ The service role key and store credentials belong only in Supabase function secr
 | Feed | Explore (public posts, ranked or latest, search, filters) and Friends (newest first); compose, notifications, saved, friends |
 | Home | Greeting, quick actions, invitations, coming-up plans, an idea, recent memories, this week's intimacy count (private) |
 | Intimacy | Track (timer, Couple/Poly, quick log), History (week ring, calendar, list, achievements), Insights |
-| Discover | Ideas with filters, AI Planner, private Mutual Match inside a shared space, Plans |
+| Discover | For You (Ask VOUZ, ranked real places, day plans), Nearby, Saved; Ideas with filters, AI Planner, private Mutual Match inside a shared space, Plans |
 | Our Story | Timeline of memories, anniversary reminders, filter by shared space |
 | Profile | Rewards and achievements, storage and sync, Connections, shared spaces, friends, public and couple profiles, moderation (owner), passcode, export, VOUZ Plus, delete |
 
@@ -103,3 +103,16 @@ never part of a post. Place tags are a neighborhood or city only.
 **Scale.** In the web app, "public" means everyone the page is shared with, and on a personal plan only people
 invited as editors can write. Media is stored in 180 KB pieces in the page's database. Real public use needs the
 Supabase backend (migration 0005 plus a private Storage bucket), which isn't deployed.
+
+## Discover
+
+Places come from the viewer's own **Yelp** connector (`yelp_search_local_businesses`), called through the artifact's
+`mcp` capability. VOUZ fills Yelp's input only from the fields Yelp's schema declares (query, location or coordinates,
+limit 3–8, open now) and asks once per kind of place. Yelp's search returns name, rating, review count, price level,
+categories, address, photo and link; it doesn't return coordinates or opening hours, so VOUZ shows distance and hours
+as "not provided" / "not verified" rather than guessing, and travel time is shown only for demo places or where a
+distance exists. Without Yelp, made-up demo places are shown and labelled on every card.
+
+The ranking is in `scoreVenue()` and every factor is visible. Claude (the `sample` capability) only writes one-line notes
+from the facts it's given, and any place it mentions that wasn't sent is dropped. Recommendations never read intimacy
+records, notes or health data.

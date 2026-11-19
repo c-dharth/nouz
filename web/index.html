@@ -184,6 +184,16 @@ textarea{min-height:84px;resize:vertical}
 .tabs .tab{font-size:10px;min-width:0}
 .chips.scrollx{flex:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px}.chips.scrollx::-webkit-scrollbar{display:none}.chips.scrollx .chip{flex:none}
 input[type=search]{-webkit-appearance:none;appearance:none}
+.rec{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
+.rec .rt{display:block;font-size:17px;line-height:1.25}.recph{position:relative;margin:-14px -14px 4px;border-radius:var(--r) var(--r) 0 0;overflow:hidden;aspect-ratio:16/9;background:var(--surface2)}
+.recph img{width:100%;height:100%;object-fit:cover;display:block}.recph .tiny{position:absolute;right:8px;bottom:6px;background:rgba(14,11,12,.7);padding:2px 6px;border-radius:6px}
+.facts{display:grid;gap:4px;margin:0}.facts div{display:grid;grid-template-columns:72px 1fr;gap:8px;font-size:13px}.facts dt{color:var(--dim)}.facts dd{margin:0;overflow-wrap:anywhere}
+.est{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--warn);border:1px solid rgba(226,186,124,.4);border-radius:4px;padding:0 4px;vertical-align:1px}
+.ainote{font-size:14px;line-height:1.45}.ainote .tiny{border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.rbtn{align-items:center}.rbtn .ib[aria-pressed="true"]{color:var(--pink)}
+.ask label span{display:inline-flex;gap:6px;align-items:center;font-weight:700}
+.stops{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}.stops li{display:flex;gap:12px}.stops .tm{flex:none;width:64px;font-weight:800;color:var(--pink);font-size:13px;padding-top:2px}
+.stars{display:flex;gap:2px}.stars button{min-width:44px;min-height:44px;font-size:24px;color:var(--pink)}
 .rx{display:flex;gap:6px;flex-wrap:wrap}
 .rx button{min-height:44px;min-width:52px;padding:0 12px;border-radius:999px;background:var(--surface2);font-size:14px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;transition:transform .12s,background .15s}
 .rx button:active{transform:scale(1.15)}
@@ -382,7 +392,7 @@ const Cloud={db:null,user:null,uid:null,state:"checking",t:null,busy:false,dirty
   async readVault(){try{const s=await this.priv("vault").get();if(s.exists){const o=JSON.parse(s.data().json);if(o&&o.v===1)return o}}catch(e){}return null},
   async deleteAll(){if(this.state!=="ready")return;try{await Media.purge(false)}catch(e){}
     const ps=["vault","keys","stash"].map(n=>this.priv(n).delete());
-    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","reports","couples"])ps.push(this.db.doc(c+"/"+this.uid).delete());
+    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","reports","couples","prefs"])ps.push(this.db.doc(c+"/"+this.uid).delete());
     await Promise.allSettled(ps)}
 };
 
@@ -415,8 +425,8 @@ const K={ok:!!(window.crypto&&crypto.subtle),priv:null,self:null,pairs:{},
    Shared storage holds: profiles (handle + public key), posts, reactions, comments, links.
    "Everyone" cards are stored readable. Connections-only cards are stored as ciphertext with one wrapped key per
    permitted recipient; reconcile() is the single place that decides who gets a key. No key, no card. */
-const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","couples"];
-const Soc={profiles:{},couples:{},reportsAll:{},isOwner:false,posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},consent:{},creq:[],cans:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
+const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs"];
+const Soc={profiles:{},prefs:{},couples:{},reportsAll:{},isOwner:false,posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},consent:{},creq:[],cans:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
   async ensureKeys(){if(!S.keys){const d=await Cloud.priv("keys").get();if(d.exists)S.keys=JSON.parse(d.data().json);else{S.keys=await K.gen();await Cloud.priv("keys").set({json:JSON.stringify(S.keys)})}saveLocal()}
     if(!K.priv)await K.load(S.keys)},
   async start(){if(this.subs.length||Cloud.state!=="ready"||!K.ok)return;this.status="loading";
@@ -429,7 +439,7 @@ const Soc={profiles:{},couples:{},reportsAll:{},isOwner:false,posts:{},reactions
   sched(){clearTimeout(this.t);this.t=setTimeout(async()=>{if(this.busy){this.again=true;return}this.busy=true;
     try{await this.recompute()}catch(e){}this.busy=false;if(this.status==="loading"||this.status==="slow")this.status="ready";
     const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.mres,this.creq.map(r=>r.id),this.cans]),moved=sig!==this.invSig;this.invSig=sig;
-    if((ui.tab==="feed"||ui.tab==="profile"||ui.page&&["compose","social","user","couple","notifs","saved","mod"].includes(ui.page.type)||moved)&&!typing())render();
+    if((ui.tab==="feed"||ui.tab==="profile"||ui.tab==="discover"&&!ui.dsc.busy&&!ui.dsc.ibusy||ui.page&&["compose","social","user","couple","notifs","saved","mod"].includes(ui.page.type)||moved)&&!typing())render();
     if(this.again){this.again=false;this.sched()}},40)},
   write(coll,data){this[coll]=Object.assign({},this[coll]);if(data===null)delete this[coll][Cloud.uid];else this[coll][Cloud.uid]=data;
     const ref=Cloud.db.doc(coll+"/"+Cloud.uid);
@@ -509,7 +519,7 @@ const Soc={profiles:{},couples:{},reportsAll:{},isOwner:false,posts:{},reactions
     const perms=Object.assign({},this.perms);if(!on)delete perms[id];return this.saveLinks(out,perms)},
   setPerm(id,p){return this.saveLinks(Object.assign({},(this.links[Cloud.uid]||{}).out),Object.assign({},this.perms,{[id]:p}))},
   /* Social off without deleting: move my shared documents into my private space, so nothing of mine is left readable. */
-  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match","consent","couples"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
+  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
   async unstash(){try{const s=await Cloud.priv("stash").get();if(!s.exists)return;const o=JSON.parse(s.data().json);for(const c in o)if(SHARED.includes(c))await Cloud.db.doc(c+"/"+Cloud.uid).set(o[c]);await Cloud.priv("stash").delete()}catch(e){}}
 };
 
@@ -566,7 +576,7 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
 
 /* ============ ui state ============ */
 const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
-  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},int:{seg:"track"},disc:{seg:"ideas",f:{}},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
+  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
 const TABS=()=>[["home","Home","home"],["feed","Feed","feed"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
@@ -920,6 +930,7 @@ function vSheet(isNew){const s=ui.sheet,close=`<button class="btn ghost block" d
   else if(s.type==="quick")b=`<h2>Quick log</h2><p class="sub small">For a session that just ended. Saved privately as an estimate; add details later from History if you like.</p>
     ${who(s.cat,s.cat==="poly"?s.n:2,"q")}<div class="col"><h3>About how long?</h3><div class="chips" role="group" aria-label="Duration">${[10,20,30,45,60,90].map(m=>`<button class="chip" data-act="qDur" data-v="${m}" aria-pressed="${s.min===m}">${m<60?m+" min":m/60+(m===60?" hour":" hours")}</button>`).join("")}</div></div>
     ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="qSave" ${s.min?"":"disabled"}>Save</button>${close}`;
+  else if(s.type==="itinShare")b=`<h2>Share with which space?</h2><p class="sub">The plan is saved and shared there. They see the stops, never your preferences.</p>${s.sps.map(x=>`<button class="btn block" data-act="itinShareTo" data-id="${esc(x.id)}">${esc(x.name)}</button>`).join("")}${close}`;
   else if(s.type==="sched")b=`<h2>When?</h2><label class="f" for="sch-in">Date and time<input type="datetime-local" id="sch-in" value="${esc(s.val)}"></label><p class="tiny">Clear it to unschedule. VOUZ doesn't book anything or check availability.</p>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="schedSave">Save</button>${close}`;
   else if(s.type==="legacy"){const L=legacySessions(),nS=L.filter(x=>x.category==="solo").length,nP=L.length-nS;
     b=`<h2>Sessions are now Couple or Poly</h2><p class="sub">VOUZ now records two kinds of session: Couple, for two people, and Poly, for three or more. ${[nS?nS+" Solo session"+(nS===1?"":"s"):"",nP?nP+" Partnered session"+(nP===1?"":"s"):""].filter(Boolean).join(" and ")} can't be recorded either way, so ${L.length===1?"it is":"they are"} being removed from this device${S.user.mode==="account"?" and your synced copy":""}.</p><p class="sub small">Duo, Trio and Group sessions were kept and converted. This can't be undone, so download a copy first if you might want ${L.length===1?"it":"them"}.</p>
@@ -1457,7 +1468,7 @@ function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning
   const idea=sug?`<div class="ideal"><span class="grow"><span class="tiny">An idea</span><b>${esc(sug.t)}</b></span><button class="ib" data-act="sugNext" aria-label="Show another idea">${ic("next")}</button><button class="ib" data-act="ideaSave" data-v="${sug.id}" aria-label="Save ${esc(sug.t)} to plans">${ic("plus")}</button></div>`:"";
   const sec=(title,go,goLabel,body)=>`<div class="sec"><div class="row between"><h3>${title}</h3>${go}</div>${body}</div>`;
   return`<div class="scroll">${head}${demoBanner()}${invitesCard()}${spaceInvitesCard()}${consentCard()}
-   <h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1>${live}${prog}
+   <h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1>${live}${prog}${howWasCard()}
    <div class="qa"><button data-act="quick">${ic("heart")}<span>Quick log</span></button><button data-act="expNew" data-kind="done">${ic("book")}<span>Memory</span></button><button data-act="tab" data-tab="discover">${ic("compass")}<span>Ideas</span></button></div>
    ${fresh?`<div class="card"><h2>Start your <em>story.</em></h2><p class="sub small">Everything stays private unless you choose to share it.</p><button class="link small" style="align-self:flex-start" data-act="loadDemo">See it with demo data</button></div>${idea}`
     :`${plans.length?sec("Coming up",`<button class="link small" data-act="discSeg" data-v="plans">All</button>`,"",`<div>${plans.map(homeRow).join("")}</div>`):idea}
@@ -1486,7 +1497,9 @@ function vExp(){const p=ui.page,e=findX(p.id,p.a);if(!e){ui.page=null;return vSt
    ${e.sharedNote?`<div class="card"><h3>Shared note</h3><p style="overflow-wrap:anywhere">${esc(e.sharedNote)}</p></div>`:""}
    ${mine&&e.notes?`<div class="card line"><h3>Private notes</h3><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(e.notes)}</p><p class="tiny">Only you see these.</p></div>`:""}
    <p class="tiny">${mine?(sp?"Shared with "+esc(sp.name)+": "+esc(names(Soc.people(sp).filter(u=>u!==Cloud.uid))||"no one else yet")+". Private notes and photos stay with you.":e.space?"Private: the space this was shared to has ended.":"Private: only you see this."):"Shared by "+esc(Soc.handle(e.a))+" in "+esc(sp?sp.name:"a space")+"."}</p>
+   ${mine&&(e.stops||e.venue)?`<div class="card line"><h3>${e.stops?"The plan":"The place"}</h3>${(e.stops||[{time:null,v:e.venue}]).map(s=>`<p>${s.time?`<b>${esc(fmtHM(s.time))}</b> `:""}${esc(s.v.name)}${s.v.demo?" (demo)":""}<span class="sub small" style="display:block">${esc(s.v.addr||"")}${s.v.src&&!s.v.demo?" · from "+esc(s.v.src):""}${mapsUrl(s.v)?` · <a class="link" href="${esc(mapsUrl(s.v))}" target="_blank" rel="noopener noreferrer">Directions</a>`:""}</span></p>`).join("")}<p class="tiny">Not booked. VOUZ never books or pays for anything.</p>${e.rating?`<p class="tiny">Your private rating: ${"★".repeat(e.rating)}</p>`:""}</div>`:""}
    ${e.kind==="done"?`<button class="btn block" data-act="mcOpen" data-id="${esc(e.id)}" data-a="${mine?"me":esc(e.a)}">${ic("share")} Share as a card</button>`:""}
+   ${mine&&e.kind==="done"&&S.settings.social?`<button class="btn block" data-act="postFromExp" data-id="${esc(e.id)}">${ic("feed")} Post to Feed</button>`:""}
    ${mine&&e.kind==="plan"?`<div class="row"><button class="btn grow" data-act="planSched" data-id="${e.id}">${ic("clock")} Schedule</button><button class="btn primary grow" data-act="planDone" data-id="${e.id}">${ic("check")} Mark done</button></div>`:""}
    ${mine?`<button class="btn danger block" data-act="expDelAsk" data-id="${e.id}">${ic("trash")} Delete</button>`:""}</div>`}
 
@@ -1509,7 +1522,9 @@ function vExpEdit(){const d=ui.xd;if(!d){ui.page=null;return vStory()+vTabs()}co
    <button class="btn primary block" data-act="expSave">${d.editing?"Save changes":"Save"}</button></div>`}
 
 function vDiscover(){const seg=ui.disc.seg,f=ui.disc.f;
-  const head=`<div><h3>Discover</h3><h1>Something to <em>do together.</em></h1></div><div class="seg3" role="group" aria-label="Discover section">${[["ideas","Ideas"],["planner","Planner"],["match","Match"],["plans","Plans"]].map(([v,l])=>`<button data-act="discSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
+  if(!Conn.ready)Conn.init();
+  const head=`<div><h3>Discover</h3><h1>Something to <em>do together.</em></h1></div><div class="seg3" role="group" aria-label="Discover section">${[["foryou","For You"],["nearby","Nearby"],["saved","Saved"]].map(([v,l])=>`<button data-act="discSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>
+   <div class="chips sm scrollx" role="group" aria-label="More in Discover">${[["ideas","Ideas"],["plans","Plans"],["match","Mutual Match"],["planner","Idea generator"]].map(([v,l])=>`<button class="chip" data-act="discSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
   const chipRow=(k,label,opts)=>`<div class="col" style="gap:6px"><span class="tiny">${label}</span><div class="chips sm" role="group" aria-label="${label}">${opts.map(([v,l])=>`<button class="chip" data-act="fSet" data-k="${k}" data-v="${v}" aria-pressed="${String(f[k]??"")===String(v)}">${l}</button>`).join("")}</div></div>`;
   const filters=`<details class="card filt" ${ui.disc.open?"open":""}><summary data-act="fOpen"><b>Filters</b><span class="sub small">${IDEAS.filter(x=>ideaOk(x,f)).length} of ${IDEAS.length}</span></summary>
     ${chipRow("b","Budget",[["","Any"],["0","Free"],["1","Up to $"],["2","Up to $$"]])}${chipRow("tm","Time you have",[["","Any"],["1","An hour"],["2","A few hours"],["3","Half a day"]])}
@@ -1517,7 +1532,8 @@ function vDiscover(){const seg=ui.disc.seg,f=ui.disc.f;
     <div class="col" style="gap:6px"><span class="tiny">Interests</span><div class="chips sm">${Object.entries(INTS).map(([k,l])=>`<button class="chip" data-act="fInt" data-v="${k}" aria-pressed="${(f.g||[]).includes(k)}">${l}</button>`).join("")}</div></div>
     <button class="link small" data-act="fClear">Clear filters</button></details>`;
   let body="";
-  if(seg==="ideas"){const list=IDEAS.filter(x=>ideaOk(x,f));body=filters+(list.length?list.map(x=>ideaCard(x)).join(""):`<div class="card line"><p class="sub small">Nothing fits all of those. Loosen a filter.</p></div>`)}
+  if(seg==="foryou")body=vForYou();else if(seg==="nearby")body=vNearby();else if(seg==="saved")body=vSavedD();
+  else if(seg==="ideas"){const list=IDEAS.filter(x=>ideaOk(x,f));body=filters+(list.length?list.map(x=>ideaCard(x)).join(""):`<div class="card line"><p class="sub small">Nothing fits all of those. Loosen a filter.</p></div>`)}
   else if(seg==="planner")body=vPlanner();
   else if(seg==="plans"){const pl=allPlans();body=`<button class="btn block" data-act="expNew" data-kind="plan">${ic("plus")} New plan</button>`+(pl.length?`<div class="sec"><div>${pl.map(planRow).join("")}</div></div><p class="tiny">Tap ${ic("clock").replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')} to schedule, ${ic("check").replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')} when it's done: it moves to Our Story.</p>`:`<div class="card line"><p class="sub small">No plans yet. Save an idea, or one you match on.</p></div>`)}
   else{if(!Soc.ready())body=`<div class="card"><h2>Pick privately. <em>Match together.</em></h2><p class="sub">Each of you chooses what you'd like to do, without seeing the other's choices. VOUZ shows only what everyone picked.</p><p class="sub small">${S.settings.social?"Connections can't be reached right now.":"This needs Connections, which is off. Turn it on in Profile, connect with your partner, and create a shared space."}</p><button class="btn sm" style="align-self:flex-start" data-act="tab" data-tab="profile">Profile</button></div>`;
@@ -1549,7 +1565,7 @@ function blankX(kind){return{editing:null,kind,title:"",date:kind==="plan"?"":da
 function dateFromInput(v){if(!v)return null;const t=new Date(v+"T12:00").getTime();return isNaN(t)?NaN:t}
 Object.assign(A,{
   iSeg(e){ui.int.seg=e.dataset.v;render(true)},
-  discSeg(e){ui.disc.seg=e.dataset.v;if(ui.tab!=="discover"||ui.page)go("discover");else render(true)},
+  discSeg(e){ui.disc.seg=e.dataset.v;if(ui.tab!=="discover"||ui.page)go("discover");else render(true);if(ui.disc.seg==="nearby"&&!ui.dsc.nearby&&!ui.dsc.busy&&S.disc.loc)runDisc("nearby")},
   fOpen(e,ev){ev&&ev.preventDefault();ui.disc.open=!ui.disc.open;render()},
   fSet(e){const k=e.dataset.k,v=e.dataset.v;ui.disc.f[k]=v===""?null:(k==="w"||k==="ds")?v:+v;render()},
   fInt(e){const g=ui.disc.f.g=ui.disc.f.g||[],v=e.dataset.v;ui.disc.f.g=g.includes(v)?g.filter(x=>x!==v):g.concat([v]);render()},
@@ -2188,6 +2204,7 @@ Object.assign(A,{
       if(it.c){const x=Soc.items.find(i=>i.a===Cloud.uid&&i.it.id===s.id);const body={...x.it};delete body.id;delete body.vis;delete body.postedAt;body.caption=cap;body.loc=loc;body.editedAt=Date.now();
         const n=await Soc.seal(it.id,body,x.aud,it.postedAt);n.wk=Object.assign({},it.wk,{self:n.wk.self});items.push(n)}else items.push({...it,caption:cap,loc,editedAt:Date.now()})}
       await Soc.write("posts",{items,hidden:cur.hidden||[]});ui.sheet=null;ui.err="";toast("Post updated.")})},
+  postFromExp(e){A.postNew();ui.pc.kind="memory";ui.pc.expId=e.dataset.id;render()},
   meNoPhoto(){ui.me.avatar="";render()},mePriv(){S.settings.privateProfile=!S.settings.privateProfile;save();render()},
   meSave(){const d=ui.me,h=String(d.handle||"").trim();if(h.length<2){ui.err="A name needs at least 2 characters.";return render()}
     Soc.write("profiles",Object.assign({},Soc.me(),{handle:h.slice(0,24),bio:String(d.bio||"").trim().slice(0,160),avatar:d.avatar||"",discoverable:!S.settings.privateProfile,at:Date.now()}));ui.me=null;ui.err="";A.back();toast("Profile saved.")},
@@ -2200,7 +2217,7 @@ Object.assign(A,{
       await Soc.write("couples",{items:[{id,with:d.with,data,h,at:Date.now()}],postOk:(Soc.couples[me]||{}).postOk||[]});ui.cp=null;ui.err="";toast("Sent to "+Soc.handle(d.with)+" to approve.")})},
   cpApprove(e){const p=Soc.couplesPending.find(x=>x.id===e.dataset.id);if(!p)return;return busy(async()=>{await Soc.write("couples",{items:[{id:p.id,with:p.from,data:p.data,h:p.h,at:Date.now()}],postOk:(Soc.couples[Cloud.uid]||{}).postOk||[]});toast("Couple profile approved. It's live.")})},
   cpDecline(e){S.declinedCouples=(S.declinedCouples||[]).concat([e.dataset.id]);Soc.couplesPending=Soc.couplesPending.filter(x=>x.id!==e.dataset.id);save();render()},
-  cpLeave(){sheet({type:"confirm",title:"Take down the couple profile?",body:"It disappears from VOUZ straight away. Posts made as the couple stop showing as the couple.",yes:"Take it down",danger:true,fn(){Soc.write("couples",{items:[],postOk:[]});toast("Taken down.")}})},
+  cpLeave(){sheet({type:"confirm",title:"Take down the couple profile?",body:"It disappears from VOUZ straight away. Posts made as the couple stop showing as the couple.",yes:"Take it down",danger:true,fn(){Soc.write("couples",{items:[],postOk:[]});render();toast("Taken down.")}})},
   jointOk(e){const me=Cloud.uid,cur=Soc.couples[me]||{};Soc.write("couples",{items:cur.items||[],postOk:(cur.postOk||[]).concat([e.dataset.k]).slice(-300)});toast("Approved.")},
   jointNo(e){S.declinedJoint=(S.declinedJoint||[]).concat([e.dataset.k]);save();render();toast("Declined. It stays visible only to them.")},
   async modRemove(e){const a=e.dataset.a,id=e.dataset.id;try{const ref=Cloud.db.doc("posts/"+a),d=await ref.get();if(d.exists){const v=d.data(),gone=(v.items||[]).find(i=>i.id===id);await ref.set({...v,items:(v.items||[]).filter(i=>i.id!==id)});for(const m of ((gone&&gone.media)||[]))await Media.del(m,a)}S.modDone=(S.modDone||[]).concat([e.dataset.r]);save();toast("Post removed.")}catch(z){toast("Only the owner of this VOUZ can remove posts.")}render()},
@@ -2210,7 +2227,339 @@ document.addEventListener("change",async ev=>{const t=ev.target;
   if(t.id==="pc-file"&&ui.pc){const c=ui.pc,room=(c.kind==="photo"?4:1)-c.files.length;for(const f of Array.from(t.files||[]).slice(0,room)){let prev="";if(/^image\//.test(f.type)){try{const r=await shrinkTo(f,320,.7);prev="data:image/jpeg;base64,"+await blobB64(r.blob)}catch(x){}}c.files.push({file:f,name:f.name,prev})}render()}
   if((t.id==="me-photo"&&ui.me)||(t.id==="cp-photo"&&ui.cp)){const f=t.files&&t.files[0];if(!f)return;try{const r=await shrinkTo(f,256,.78),d="data:image/jpeg;base64,"+await blobB64(r.blob);if(t.id==="me-photo")ui.me.avatar=d;else ui.cp.photo=d}catch(x){toast("That photo couldn't be used.")}render()}});
 
-function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={feed:ui.feed,pc:ui.pc,me:ui.me,cp:ui.cp,soc:ui.soc,ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
+/* ============ AI Discover: For You, Nearby, Saved, Ask VOUZ ============
+   VOUZ never invents a venue. Places, ratings, photos and hours come from the viewer's own connectors (Yelp, AllTrails,
+   Mapbox, AccuWeather), called through the platform with the viewer's sign-in. Without them it shows clearly labelled
+   demo places. Ranking is done here, in code, and every factor is shown; Claude only writes short explanations from
+   the facts it is handed and may only pick from the places it is given.
+   Never used for recommendations: intimacy records, health data, private notes. */
+const DGROUPS={coffee:["food"],food:["food"],drinks:["food","music"],outdoors:["outdoors","wellness"],trail:["outdoors","adventure"],culture:["culture","learning"],music:["music","culture"],adventure:["adventure"],wellness:["wellness"],games:["home","adventure"],romance:["romance"],shopping:["culture"],class:["learning"],other:[]};
+const DKIND={coffee:"Coffee",food:"Food",drinks:"Drinks",outdoors:"Outdoors",trail:"Trail",culture:"Arts & culture",music:"Live music",adventure:"Activity",wellness:"Wellness",games:"Games",romance:"Romantic",shopping:"Shops",class:"Class",other:"Place"};
+const DTERMS=[["coffee",/coffee|caf[eé]|espresso|tea\b|bakery|brunch|breakfast/i],["drinks",/bar\b|bars\b|wine|cocktail|brew|pub|lounge|speakeasy|drinks/i],["food",/restaurant|food|dinner|lunch|pizza|sushi|taco|ramen|bistro|dessert|ice cream|eat/i],["trail",/trail|hike|hiking/i],["outdoors",/park|garden|beach|lake|walk|viewpoint|sunset|outdoor|picnic|pier/i],["culture",/museum|gallery|art|theater|theatre|cinema|movie|bookstore|book/i],["music",/music|concert|jazz|karaoke|club|dance/i],["games",/arcade|bowling|games|escape room|mini golf|billiards/i],["adventure",/climb|kayak|bike|axe|go-kart|trampoline|adventur/i],["wellness",/spa|yoga|massage|sauna|bath/i],["class",/class|workshop|lesson|pottery|cooking/i],["shopping",/market|shop|vintage|boutique/i]];
+const kindOf=s=>{for(const[k,re] of DTERMS)if(re.test(s||""))return k;return"other"};
+const hav=(a,b)=>{if(!a||!b||a.lat==null||b.lat==null)return null;const R=6371,r=x=>x*Math.PI/180,dl=r(b.lat-a.lat),dn=r(b.lon-a.lon),h=Math.sin(dl/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)))};
+const kmTxt=k=>k==null?"Distance unknown":k<0.2?"Under 0.2 km":(k*0.621371).toFixed(k<16?1:0)+" mi";
+/* Travel time without a routing service: labelled as an estimate everywhere it shows. */
+function travelEst(km,mode){if(km==null)return null;const m=mode==="walk"?km*1.3/4.8*60:mode==="transit"?km/18*60+10:km/30*60+6;return{min:Math.max(1,Math.round(m)),mode,est:true}}
+const modeFor=(km,pref)=>pref==="transit"?(km<1.2?"walk":"transit"):pref==="walk"?"walk":km<1.2?"walk":"drive";
+const YQ={coffee:"coffee",food:"restaurants",drinks:"cocktail bar wine bar",outdoors:"parks",trail:"hiking trails",culture:"museums art galleries",music:"live music",games:"arcade bowling",adventure:"fun activities",wellness:"spa",class:"classes workshops",shopping:"markets",romance:"romantic"};
+const PRICE_PP={1:[8,20],2:[20,45],3:[45,90],4:[90,180]};   // rough per-person ranges for a price level, shown as estimates
+
+/* ---------- connectors ---------- */
+const CONN={YELP:"Yelp",TRAILS:"AllTrails",MAP:"Mapbox",WX:"AccuWeather®"};
+const Conn={mcp:null,ready:false,tools:{},schemas:{},err:{},
+  async init(){if(this.ready)return;this.ready=true;try{this.mcp=window.claude&&window.claude.use?await window.claude.use("mcp"):null}catch(e){this.mcp=null}
+    if(!this.mcp)return;try{const r=await this.mcp.listTools();for(const s of (r.servers||[]))if(s.kind!=="artifact")this.tools[s.server]={auth:s.authStatus,tools:(s.tools||[]).map(t=>t.name)}}catch(e){}
+    if(ui.tab==="discover"&&!typing())render()},
+  has(server,tool){const s=this.tools[server];return!!(s&&s.tools.includes(tool))},
+  pick(server,names){const s=this.tools[server];return s?names.find(n=>s.tools.includes(n))||null:null},
+  live(){return["YELP","TRAILS","MAP"].some(k=>{const s=this.tools[CONN[k]];return s&&s.tools.length})},
+  async schema(server,tool){const k=server+"|"+tool;if(k in this.schemas)return this.schemas[k];let p=null;try{const d=await this.mcp.describeTool(server,tool);p=d&&d.inputSchema||null}catch(e){p=null}return this.schemas[k]=p},
+  /* Fill a tool's input from its own schema: only properties it declares, never guessed names. */
+  async input(server,tool,want){const sc=await this.schema(server,tool);if(!sc||!sc.properties)throw{code:"no_schema"};const out={},props=sc.properties,req=sc.required||[];
+    for(const[p,def0] of Object.entries(props)){const def=def0&&def0.anyOf?Object.assign({},def0,def0.anyOf.find(x=>x&&x.type&&x.type!=="null")||{}):def0||{},n=p.toLowerCase(),t=def.type;let v;
+      if(/^(lat|latitude)$/.test(n))v=want.lat;else if(/^(lon|lng|longitude)$/.test(n))v=want.lon;
+      else if(/^(term|query|q|search|keyword|keywords|search_term|searchtext|prompt|text)$/.test(n))v=want.term;
+      else if(/location|near|address|place|city|where/.test(n)&&t!=="object")v=want.label||(want.lat!=null?want.lat+","+want.lon:undefined);
+      else if(/radius|distance/.test(n))v=want.radiusM!=null?(/km/.test(n)?want.radiusM/1000:/mile/.test(n)?want.radiusM/1609:Math.min(40000,Math.round(want.radiusM))):undefined;
+      else if(/^(limit|count|max_results|maxresults|num_results|size)$/.test(n))v=want.limit||10;
+      else if(/open_now|opennow/.test(n))v=want.openNow?true:undefined;
+      else if(/proximity/.test(n)&&want.lat!=null)v=t==="string"?want.lon+","+want.lat:t==="array"?[want.lon,want.lat]:{longitude:want.lon,latitude:want.lat};
+      else if(/^(category|categories|category_id)$/.test(n))v=want.category;
+      else if(/coordinates|waypoints/.test(n)&&want.coords)v=def.items&&def.items.type==="object"?want.coords.map(c=>({longitude:c.lon,latitude:c.lat})):want.coords.map(c=>[c.lon,c.lat]);
+      else if(/profile|mode/.test(n)&&want.mode){const en=def.enum||[];v=en.find(x=>String(x).includes(want.mode==="walk"?"walk":want.mode==="transit"?"walk":"driv"))||(en.length?undefined:want.mode==="drive"?"driving":"walking")}
+      if(v!==undefined&&v!==null&&v!==""){if(t==="number"||t==="integer"){v=+v;if(def.maximum!=null)v=Math.min(def.maximum,v);if(def.minimum!=null)v=Math.max(def.minimum,v);if(t==="integer")v=Math.round(v)}
+        else if(t==="string"){v=String(v);if(def.maxLength)v=v.slice(0,def.maxLength)}out[p]=v}}
+    if(req.some(r=>!(r in out)))throw{code:"no_schema"};return out},
+  async call(server,tool,want,opts){if(!this.mcp)throw{code:"not_granted"};const input=await this.input(server,tool,want);
+    try{const r=await this.mcp.callTool(server,tool,input,{cache:{staleTime:opts&&opts.stale||15*6e4,gcTime:6*36e5}});this.err[server]=null;return{payload:r.payload,at:r.cache?r.cache.storedAt:Date.now(),cached:!!r.cache}}
+    catch(e){this.err[server]=e&&e.code||"upstream_error";if(e&&e.retryable&&!(opts&&opts.retried)){await new Promise(r=>setTimeout(r,(e.retryAfterMs||800)+Math.random()*400));return this.call(server,tool,want,{...opts,retried:true})}throw e}}};
+const CONN_MSG={needs_reauth:s=>"Reconnect "+s+" in claude.ai Settings → Connectors.",server_not_connected:s=>"Add "+s+" in claude.ai Settings → Connectors.",selection_required:s=>"Choose which "+s+" connector to use when claude.ai asks.",not_in_manifest:s=>s+" isn't allowed for VOUZ in this view.",approval_required:s=>s+" needs your approval. Try again and allow it.",blocked_by_policy:s=>"Your organization blocks "+s+".",server_unavailable:s=>s+" isn't answering right now.",no_schema:s=>s+" didn't describe its search, so VOUZ won't guess at it.",tool_error:s=>s+" couldn't run that search."};
+/* Find the list of results in a connector's answer, wherever it puts it. */
+function findList(p,d=0){if(typeof p==="string"){try{return findList(JSON.parse(p),d)}catch(e){return null}}
+  if(Array.isArray(p))return p.length&&typeof p[0]==="object"&&p[0]&&("name" in p[0]||"title" in p[0]||(p[0].properties&&p[0].properties.name))?p:null;
+  if(p&&typeof p==="object"&&d<4){for(const k of ["businesses","results","trails","features","items","places","data","suggestions"])if(p[k]){const r=findList(p[k],d+1);if(r)return r}for(const v of Object.values(p)){const r=findList(v,d+1);if(r)return r}}return null}
+const num=v=>typeof v==="number"&&isFinite(v)?v:typeof v==="string"&&v.trim()!==""&&isFinite(+v)?+v:null;
+const httpsUrl=u=>typeof u==="string"&&/^https:\/\//.test(u)?u:null;
+function normVenue(x,src,at){const pr=x.properties||{},name=String(x.name||x.title||pr.name||"").slice(0,80);if(!name)return null;
+  const c=x.coordinates||x.coords||pr.coordinates||x.location&&x.location.coordinates||(x.geometry&&Array.isArray(x.geometry.coordinates)?{longitude:x.geometry.coordinates[0],latitude:x.geometry.coordinates[1]}:null)||x;
+  const lat=num(c.latitude??c.lat),lon=num(c.longitude??c.lon??c.lng);
+  const loc=x.location||{},addr=String((Array.isArray(loc.display_address)?loc.display_address.join(", "):loc.address1||loc.formatted_address)||x.address||x.full_address||pr.full_address||pr.place_formatted||x.vicinity||"").replace(/\s*\n\s*/g,", ").slice(0,120);
+  const cats=(x.categories||pr.poi_category||[]).map(k=>typeof k==="string"?k:k.title||(k.alias?k.alias.replace(/[-_]/g," ").replace(/^./,c=>c.toUpperCase()):"")).filter(Boolean).slice(0,3);
+  const price=typeof x.price==="string"&&/^\$+$/.test(x.price)?x.price.length:num(x.price_level);
+  const ph=[x.image_url,x.photo,x.photo_url].concat(x.photos||[]).map(p=>httpsUrl(typeof p==="string"?p:p&&p.url)).filter(Boolean).slice(0,3);
+  const hrs=Array.isArray(x.business_hours)?x.business_hours[0]:Array.isArray(x.hours)?x.hours[0]:x.hours&&typeof x.hours==="object"?x.hours:null;
+  const openNow=typeof x.is_open_now==="boolean"?x.is_open_now:hrs&&typeof hrs.is_open_now==="boolean"?hrs.is_open_now:typeof x.open_now==="boolean"?x.open_now:null;
+  const lenKm=num(x.length_km)??(num(x.length_meters)!=null?num(x.length_meters)/1000:num(x.length)!=null&&num(x.length)>100?num(x.length)/1000:null);
+  return{id:src.toLowerCase().replace(/\W/g,"")+":"+String(x.id||x.alias||pr.mapbox_id||name+"@"+(lat||"")+","+(lon||"")).slice(0,120),src,name,cats,kind:kindOf([name].concat(cats).join(" "))==="other"&&src==="AllTrails"?"trail":kindOf([name].concat(cats).join(" ")),
+    addr,lat,lon,rating:num(x.rating),reviews:num(x.review_count??x.num_reviews),price:price&&price>=1&&price<=4?price:null,photos:ph,url:httpsUrl(x.url||x.website),
+    openNow,hoursText:hrs&&typeof hrs.text==="string"?hrs.text.slice(0,80):null,closedForGood:x.is_closed===true,distKm:(d=>d!=null&&d>=5?d/1000:null)(num(x.distance??x.distance_meters)),lenKm,at,demo:false}}
+
+/* ---------- demo places: fictional, placed around wherever the search is centred ---------- */
+const DEMO=[["Sample Café","coffee",0.4,40,2,4.5],["Demo Bakery & Tea","coffee",1.1,200,1,4.2],["Example Bistro","food",0.9,120,2,4.4],["Placeholder Ramen","food",2.3,300,2,4.6],["Mock Rooftop Wine Bar","drinks",1.6,20,3,4.3],["Sample City Gallery","culture",1.3,250,1,4.7],["Demo Cinema","culture",2.8,90,2,4.1],["Example Jazz Room","music",3.1,160,2,4.5],["Sample Park & Garden","outdoors",0.7,330,0,4.8],["Demo Waterfront Walk","outdoors",2.0,70,0,4.6],["Example Ridge Trail","trail",6.5,30,0,4.7],["Placeholder Arcade","games",1.9,280,2,4.0],["Sample Climbing Gym","adventure",3.6,110,2,4.4],["Demo Pottery Studio","class",2.6,200,3,4.9],["Mock Day Spa","wellness",4.2,180,3,4.3],["Example Night Market","shopping",1.4,60,1,4.2],["Sample Dessert Bar","food",1.0,350,2,4.5],["Demo Bookshop","culture",0.5,140,1,4.6]];
+function demoVenues(center){const c=center&&center.lat!=null?center:{lat:37.7749,lon:-122.4194};
+  return DEMO.map(([name,kind,km,deg,price,rating],i)=>{const r=deg*Math.PI/180,lat=c.lat+km/111*Math.cos(r),lon=c.lon+km/(111*Math.cos(c.lat*Math.PI/180))*Math.sin(r);
+    return{id:"demo:"+i,src:"Demo",name,cats:[DKIND[kind]],kind,addr:"Demo address — not a real place",lat,lon,rating,reviews:null,price:price||null,free:price===0,photos:[],url:null,openNow:null,hoursText:null,distKm:null,at:Date.now(),demo:true}})}
+
+/* ---------- search: connectors first, demo only when there is nothing live ---------- */
+const Disc={wx:null,wxAt:0,
+  center(){const l=S.disc.loc;return l&&l.lat!=null?{lat:l.lat,lon:l.lon}:null},
+  async places(q){const c=this.center(),label=S.disc.loc&&S.disc.loc.label||"",term=q.term||(q.kinds&&q.kinds.length?q.kinds.map(k=>DKIND[k]).join(" "):"things to do"),radiusM=Math.round((q.km||S.disc.maxKm||8)*1000),out=[],notes=[];
+    let live=false;
+    if(Conn.has(CONN.YELP,"yelp_search_local_businesses")&&(c||label)){live=true;
+      /* Yelp returns up to 8 a search, so ask once per kind of place (at most 4), each with a short keyword query. */
+      const asks=q.term?[[q.term,kindOf(q.term)]]:(q.kinds&&q.kinds.length?q.kinds:["food","culture","outdoors","drinks"]).slice(0,4).map(k=>[YQ[k]||DKIND[k],k]);
+      await Promise.all(asks.map(async([qq,k])=>{try{const r=await Conn.call(CONN.YELP,"yelp_search_local_businesses",{term:qq,label,lat:c&&c.lat,lon:c&&c.lon,limit:8,openNow:q.now});const p=typeof r.payload==="string"?(()=>{try{return JSON.parse(r.payload)}catch(e){return r.payload}})():r.payload;
+          if(p&&p.error){notes.push({src:"Yelp",err:"tool_error"});return}const L=findList(p);
+          if(L)L.forEach((x,i)=>{const v=normVenue(x,"Yelp",r.at);if(v){if(v.kind==="other"&&k!=="other")v.kind=k;v.rank=i;out.push(v)}});else if(typeof p==="string"&&p.trim())notes.push({src:"Yelp",text:p.trim().slice(0,600)})}catch(e){notes.push({src:"Yelp",err:e&&e.code})}}))}
+    if((q.kinds||[]).some(k=>k==="trail"||k==="outdoors")&&Conn.has(CONN.TRAILS,"find_trails_near_location")&&c){live=true;try{const r=await Conn.call(CONN.TRAILS,"find_trails_near_location",{lat:c.lat,lon:c.lon,radiusM,limit:6,term:"trail"});(findList(r.payload)||[]).forEach(x=>{const v=normVenue(x,"AllTrails",r.at);if(v){v.kind="trail";out.push(v)}})}catch(e){notes.push({src:"AllTrails",err:e&&e.code})}}
+    const mbx=Conn.pick(CONN.MAP,["category_search_tool","poi_search_tool"]);
+    if(!out.length&&mbx&&c){live=true;try{const r=await Conn.call(CONN.MAP,mbx,{term,category:(q.kinds&&q.kinds[0]||"restaurant"),lat:c.lat,lon:c.lon,limit:10});(findList(r.payload)||[]).forEach(x=>{const v=normVenue(x,"Mapbox",r.at);if(v)out.push(v)})}catch(e){notes.push({src:"Mapbox",err:e&&e.code})}}
+    let list=out,demo=false;if(!live||(!out.length&&S.disc.demo)){list=demoVenues(c);demo=true}
+    const seen=new Set();list=list.filter(v=>{const k=v.name.toLowerCase()+"|"+(v.addr||"").toLowerCase().slice(0,20);if(seen.has(k)||v.closedForGood)return false;seen.add(k);return true});
+    const ref=c||(demo?{lat:37.7749,lon:-122.4194}:null);for(const v of list){const d=hav(ref,v);if(d!=null)v.distKm=d}
+    return{list,demo,live,notes}},
+  async weather(){const c=this.center();if(!c&&!(S.disc.loc&&S.disc.loc.label))return null;if(this.wx&&Date.now()-this.wxAt<30*6e4)return this.wx;
+    const t=Conn.pick(CONN.WX,["widgets-current-claude"]);if(!t)return null;
+    try{const r=await Conn.call(CONN.WX,t,{label:S.disc.loc&&S.disc.loc.label,lat:c&&c.lat,lon:c&&c.lon,term:S.disc.loc&&S.disc.loc.label},{stale:30*6e4});const p=typeof r.payload==="string"?(()=>{try{return JSON.parse(r.payload)}catch(e){return{text:r.payload}}})():r.payload||{};
+      const deep=(o,re,d=0)=>{if(!o||typeof o!=="object"||d>5)return undefined;for(const[k,v] of Object.entries(o)){if(re.test(k)&&(typeof v==="string"||typeof v==="number"))return v;const x=deep(v,re,d+1);if(x!==undefined)return x}};
+      const text=deep(p,/^(weathertext|condition|phrase|iconphrase|summary)$/i),temp=deep(p,/^(value|temperature|temp)$/i),wet=/rain|shower|storm|snow|sleet|drizzle/i.test(String(text||""));
+      this.wx=text||temp!=null?{text:text?String(text).slice(0,40):null,temp:num(temp),wet,at:r.at,src:"AccuWeather"}:null;this.wxAt=Date.now();return this.wx}catch(e){return null}},
+  async route(a,b,mode){const t=Conn.pick(CONN.MAP,["directions_tool"]);const km=hav(a,b);if(t&&a&&b&&a.lat!=null&&b.lat!=null){try{const r=await Conn.call(CONN.MAP,t,{coords:[a,b],mode},{stale:6*36e5});const p=typeof r.payload==="string"?JSON.parse(r.payload):r.payload;const rt=p&&(p.routes&&p.routes[0]||p.route||p);const s=num(rt&&rt.duration);if(s!=null)return{min:Math.max(1,Math.round(s/60)),km:num(rt.distance)!=null?num(rt.distance)/1000:km,mode,est:false,src:"Mapbox"}}catch(e){}}
+    const e=travelEst(km,mode);return e&&{...e,km}},
+  async geocode(text){const t=Conn.pick(CONN.MAP,["search_and_geocode_tool","forward_geocode_tool","geocode_tool"]);if(!t)return null;
+    try{const r=await Conn.call(CONN.MAP,t,{term:text,label:text,limit:1});const L=findList(r.payload)||[];const v=L[0]&&normVenue(L[0],"Mapbox",r.at);return v&&v.lat!=null?{lat:+v.lat.toFixed(3),lon:+v.lon.toFixed(3)}:null}catch(e){return null}}};
+
+/* ---------- requests in plain words ---------- */
+function parseAsk(s){const t=String(s||"").toLowerCase(),q={raw:String(s||"").slice(0,200),kinds:[]};let m;
+  if((m=t.match(/within\s+(\d+(?:\.\d+)?)\s*(mi|mile|miles|km|kilomet)/)))q.km=+m[1]*(m[2].startsWith("k")?1:1.609);
+  else if(/walking distance|walkable/.test(t))q.km=1.6;else if(/nearby|close by|near (us|me)/.test(t))q.km=q.km||5;
+  if((m=t.match(/(?:under|less than|below|max|up to)\s*\$?\s*(\d+)/))||(m=t.match(/\$\s*(\d+)/)))q.budget=+m[1];else if(/\bfree\b|no money|cheap/.test(t))q.budget=/free|no money/.test(t)?0:30;
+  const W={one:1,two:2,three:3,four:4,five:5,six:6,an:1,a:1};if((m=t.match(/(\d+(?:\.\d+)?|one|two|three|four|five|six|an|a)\s*(?:hours?|hrs?)/)))q.hours=W[m[1]]||+m[1];
+  if(/romantic|romance|intimate|candle/.test(t))q.mood="romance";if(/adventur|thrill|active/.test(t))q.mood="adventure";if(/bored|fun|play|silly/.test(t))q.mood=q.mood||"fun";if(/relax|chill|calm|low.?key/.test(t))q.mood=q.mood||"calm";
+  if(/tonight|right now|now\b|spontaneous|this evening/.test(t))q.now=true;if(/haven.?t (tried|done)|new to us|something new|never tried|different/.test(t))q.novel=true;
+  if(/public trans|transit|bus|train|subway|metro|bart|no car/.test(t))q.transit=true;
+  for(const[k,re] of DTERMS)if(re.test(t))q.kinds.push(k);
+  if(q.mood==="romance"&&!q.kinds.length)q.kinds=["drinks","food","outdoors","culture"];if(q.mood==="adventure"&&!q.kinds.length)q.kinds=["adventure","trail","outdoors"];
+  if(q.mood==="fun"&&!q.kinds.length)q.kinds=["games","music","adventure"];if(q.mood==="calm"&&!q.kinds.length)q.kinds=["coffee","outdoors","wellness","culture"];
+  q.plan=/\bplan\b|itinerary|our (saturday|sunday|day|evening|night|weekend)|day out|date (night|plan)/.test(t);
+  const days=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];const dm=days.findIndex(d=>t.includes(d));if(dm>=0)q.day=dm;else if(/tomorrow/.test(t))q.day="tomorrow";else if(/tonight|today|this evening/.test(t))q.day="today";
+  if(/tonight|evening|night|dinner/.test(t))q.daypart="evening";else if(/morning|brunch|breakfast/.test(t))q.daypart="morning";
+  const kw=t.replace(/within.*?(mi|miles|km)\b|under \$?\d+|\$\d+|\d+ hours?/g," ").match(/(?:find|suggest|want|looking for|some)\s+(?:a |an |some )?([a-z][a-z\s-]{2,30}?)(?:\s+(?:near|nearby|tonight|under|within|for|that|in)\b|$)/);
+  if(kw&&!/something|anything|thing|place/.test(kw[1]))q.term=kw[1].trim();
+  return q}
+
+/* ---------- what each person likes: built only from what they did and said in VOUZ, never from intimacy records ---------- */
+function myTaste(){const w={};const add=(g,v)=>{if(INTS[g])w[g]=(w[g]||0)+v};
+  (S.settings.chPrefs.interests||[]).forEach(g=>add(g,3));
+  if(S.disc.learn!==false){for(const e of S.exps){if(e.demo)continue;if(e.idea&&IDEA[e.idea])IDEA[e.idea].g.forEach(g=>add(g,e.kind==="done"?1.5:.8));const k=e.venue&&e.venue.kind;if(k)(DGROUPS[k]||[]).forEach(g=>add(g,e.kind==="done"?(e.rating?e.rating-2.5:1):.5))}
+    for(const v of (S.disc.saved||[]))(DGROUPS[v.kind]||[]).forEach(g=>add(g,.8));
+    for(const[k,n] of Object.entries(S.disc.kinds||{}))(DGROUPS[k]||[]).forEach(g=>add(g,n*.7))}
+  const max=Math.max(1,...Object.values(w).map(Math.abs)),norm={};for(const g in w)norm[g]=+(w[g]/max).toFixed(2);
+  const spent=S.exps.filter(e=>!e.demo&&e.venue&&e.venue.price).map(e=>e.venue.price);
+  return{w:norm,price:spent.length?Math.round(spent.reduce((a,b)=>a+b,0)/spent.length):null,km:S.disc.maxKm||null,avoid:Object.keys(S.disc.kinds||{}).filter(k=>S.disc.kinds[k]<=-2)}}
+const tried=()=>{const t=new Set();for(const e of S.exps)if(!e.demo&&e.kind==="done"&&e.venue)t.add(e.venue.kind);return t};
+const visited=v=>S.exps.some(e=>!e.demo&&e.kind==="done"&&(e.venue&&e.venue.id===v.id||String(e.title).toLowerCase()===v.name.toLowerCase()));
+
+/* Score one place for a group. Interest fit for a group is mostly the average, partly the least-happy person. */
+function scoreVenue(v,q,ctx){const f={},maxKm=q.km||S.disc.maxKm||8,hr=new Date(ctx.when||Date.now()).getHours();
+  f.distance=v.distKm==null?4:v.distKm>maxKm?-100:Math.round(25*(1-v.distKm/maxKm));
+  const fit=t=>{const gs=DGROUPS[v.kind]||[];return gs.length?Math.max(0,...gs.map(g=>t.w[g]||0)):0},fits=ctx.tastes.map(fit);
+  f.interests=Math.round(20*(fits.reduce((a,b)=>a+b,0)/fits.length*.6+Math.min(...fits)*.4));
+  if(q.kinds&&q.kinds.length)f.request=q.kinds.includes(v.kind)?20:-10;
+  const est=v.price?PRICE_PP[v.price]:v.free?[0,0]:null,people=ctx.people||2,budget=q.budget!=null?q.budget:S.disc.budget;
+  if(budget!=null&&est)f.budget=est[0]*people>budget?-200:est[1]*people<=budget?10:0;
+  if(v.rating)f.rating=Math.round((v.rating-3.8)*8);if(v.rank!=null)f.relevance=Math.max(0,6-v.rank);
+  if(q.now)f.open=v.openNow===true?10:v.openNow===false?-80:0;
+  if(ctx.wx&&ctx.wx.wet&&["outdoors","trail"].includes(v.kind))f.weather=-20;
+  if(v.kind==="coffee")f.time=hr<12?6:hr>17?-10:0;else if(["drinks","music"].includes(v.kind))f.time=hr>=17?6:-8;
+  const fb=(S.disc.fb||{})[v.id];if(fb)f.feedback=fb>0?15:-200;const kfb=(S.disc.kinds||{})[v.kind];if(kfb)f.feedback=(f.feedback||0)+Math.max(-30,Math.min(10,kfb*5));
+  if(q.novel)f.novelty=visited(v)?-40:ctx.tried.has(v.kind)?0:15;else if(visited(v))f.novelty=-8;
+  if(q.transit)f.transit=v.distKm!=null&&v.distKm>1.2?-4:3;
+  const total=Object.values(f).reduce((a,b)=>a+b,0);return{f,total}}
+const FACT_L={relevance:"a top Yelp match",distance:"close by",interests:"fits your interests",request:"what you asked for",budget:"within budget",rating:"well rated",open:"open now",weather:"weather",time:"time of day",feedback:"your feedback",novelty:"something new",transit:"easy without a car"};
+function reasons(s,group){return Object.entries(s.f).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k])=>k==="interests"&&group?"suits all of you":FACT_L[k])}
+function costTxt(v,people){if(v.free)return{t:"Free (demo)",est:true};const r=v.price&&PRICE_PP[v.price];return r?{t:"≈ $"+r[0]*people+"–"+r[1]*people+" for "+people+" ("+"$".repeat(v.price)+")",est:true}:{t:"Cost unknown",est:true}}
+
+/* ---------- group: partners who chose to share their taste with me ---------- */
+async function readTastes(){const out=[];for(const id of Soc.conns()){const r=Soc.rel[id],d=(Soc.prefs||{})[id];if(!r||!d)continue;const it=(d.items||[]).find(x=>x&&x.k===r.in);if(!it)continue;
+    try{const t=Soc.cache["p"+it.c]||(Soc.cache["p"+it.c]=await K.decJ(r.key,it.c));if(t&&t.w)out.push({id,t:{w:Object.fromEntries(Object.entries(t.w).filter(([g,v])=>INTS[g]&&typeof v==="number").map(([g,v])=>[g,Math.max(-1,Math.min(1,v))])),price:num(t.price),km:num(t.km)}})}catch(e){}}
+  return out}
+async function shareTaste(){const me=Cloud.uid,ids=(S.disc.shareWith||[]).filter(i=>Soc.rel[i]&&Soc.rel[i].mutual),t=myTaste(),items=[];
+  for(const i of ids)items.push({k:Soc.rel[i].out,c:await K.encJ(Soc.rel[i].key,{w:t.w,price:t.price,km:t.km,at:Date.now()})});
+  await Soc.write("prefs",items.length?{items}:null)}
+
+/* ---------- AI: short explanations, only from the facts given; any place it names that we didn't send is dropped ---------- */
+async function aiNotes(recs,q,group){if(!SAMPLE||!recs.length||S.disc.ai===false)return{};
+  const facts=recs.slice(0,6).map(r=>({id:r.v.id,name:r.v.name,kind:DKIND[r.v.kind],distance:kmTxt(r.v.distKm),rating:r.v.rating,priceLevel:r.v.price?"$".repeat(r.v.price):null,openNow:r.v.openNow,reasons:r.why}));
+  const prompt=["You write one short sentence for each place below explaining why it suits this request in VOUZ, an app for couples and partners.",
+    "Use only the facts given. Do not add opening hours, prices, events, menus, reviews or anything not listed. Do not invent places. Warm, plain, non-explicit. Under 140 characters each.",
+    group?"They are planning for more than one person; never mention any one person's preferences, only that it suits the group.":"",
+    'Reply with only JSON: {"notes":[{"id":"the id given","note":"sentence"}]}',
+    "Request: "+(q.raw||"Suggest something for us"),"Places: "+JSON.stringify(facts)].filter(Boolean).join("\n");
+  try{const v=await SAMPLE.json(prompt,{cache:{staleTime:6e5}});const ids=new Set(facts.map(f=>f.id)),out={};for(const n of ((v&&v.notes)||[]))if(n&&ids.has(n.id)&&typeof n.note==="string")out[n.id]=n.note.slice(0,160);return out}catch(e){return{}}}
+
+/* ---------- running a search ---------- */
+async function runDisc(kind){const d=ui.dsc,q=kind==="nearby"?{kinds:d.nk?[d.nk]:[],km:d.nkm||S.disc.maxKm||5,raw:""}:parseAsk(d.q);
+  d.busy=true;d.err="";d.notes=[];render();
+  try{const people=d.who.length+1,tastes=[myTaste()],all=await readTastes().catch(()=>[]);for(const p of all)if(d.who.includes(p.id))tastes.push(p.t);
+    const[res,wx]=await Promise.all([Disc.places(q),Disc.weather().catch(()=>null)]);
+    const ctx={tastes,tried:tried(),wx,people,when:Date.now()};
+    let recs=res.list.map(v=>{const s=scoreVenue(v,q,ctx);return{v,s,why:reasons(s,tastes.length>1)}}).filter(r=>r.s.total>-50&&(kind!=="nearby"||!d.nk||r.v.kind===d.nk));
+    recs.sort((a,b)=>kind==="nearby"&&d.nsort==="dist"?(a.v.distKm??99)-(b.v.distKm??99):b.s.total-a.s.total);
+    const seenK={};if(kind!=="nearby")recs=recs.filter(r=>(seenK[r.v.kind]=(seenK[r.v.kind]||0)+1)<=3);   // variety: at most 3 of a kind
+    d[kind]={q,recs:recs.slice(0,kind==="nearby"?20:8),demo:res.demo,live:res.live,wx,notes:res.notes,at:Date.now(),group:tastes.length>1};
+    S.disc.hist=(S.disc.hist||[]).concat([{at:Date.now(),q:q.raw||"(nearby)",n:recs.length}]).slice(-50);saveLocal();
+    if(kind==="foryou"){render();const h=document.getElementById("fy-res");if(h&&h.scrollIntoView)h.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"start"});const notes=await aiNotes(d.foryou.recs,q,tastes.length>1);if(d.foryou&&d.foryou.q===q)d.foryou.ai=notes}}
+  catch(e){d.err="That search didn't work. Try again."}
+  finally{d.busy=false;render()}}
+
+/* ---------- itineraries ---------- */
+const SLOTS={day:[["11:00","coffee"],["12:00","culture"],["14:00","food"],["16:30","outdoors"]],evening:[["18:00","drinks"],["19:15","food"],["21:00","music"]],morning:[["09:00","coffee"],["10:30","outdoors"],["12:30","food"]]};
+function planDate(q){const now=new Date();let d=new Date(now);if(q.day==="tomorrow")d.setDate(d.getDate()+1);else if(typeof q.day==="number"){const add=(q.day-now.getDay()+7)%7;d.setDate(d.getDate()+add)}return d}
+async function buildItin(it,keepIdx){const d=ui.dsc,q=it.q,dp=q.daypart||(q.day==="today"&&new Date().getHours()>=15?"evening":"day"),slots=it.slots||SLOTS[dp],date=planDate(q);
+  it.slots=slots;it.date=dayKey(date.getTime());it.daypart=dp;d.ibusy=true;render();
+  const tastes=[myTaste()].concat((await readTastes().catch(()=>[])).filter(p=>d.who.includes(p.id)).map(p=>p.t)),people=d.who.length+1;
+  const pools={},res=await Disc.places({...q,kinds:Array.from(new Set(slots.map(s=>s[1]))),term:null});it.demo=res.demo;
+  const ctx={tastes,tried:tried(),wx:await Disc.weather().catch(()=>null),people};
+  const stops=it.stops||[],used=new Set(stops.filter((s,i)=>keepIdx&&keepIdx.includes(i)).map(s=>s.v.id)),per=q.budget!=null?q.budget/slots.length:null;
+  const out=[];let prev=Disc.center();
+  for(let i=0;i<slots.length;i++){if(keepIdx&&keepIdx.includes(i)&&stops[i]){out.push(stops[i]);used.add(stops[i].v.id);prev=stops[i].v;continue}
+    const[time,kind]=slots[i],cands=res.list.filter(v=>(v.kind===kind||(kind==="music"&&v.kind==="culture")||(kind==="culture"&&v.kind==="class"))&&!used.has(v.id)&&!(it.skip||[]).includes(v.id));
+    const sc=cands.map(v=>{const s=scoreVenue(v,{...q,kinds:[kind],budget:per,now:false},ctx),hop=hav(prev,v);return{v,t:s.total-(hop!=null?hop*4:0),s}}).sort((a,b)=>b.t-a.t);
+    const pick=sc[it.shuffle?Math.min(sc.length-1,Math.floor(Math.random()*Math.min(3,sc.length))):0];
+    if(!pick){out.push({time,kind,v:null});continue}
+    used.add(pick.v.id);const mode=modeFor(hav(prev,pick.v)||0,S.disc.travel);const leg=prev&&prev.lat!=null?await Disc.route(prev,pick.v,mode):null;
+    out.push({time,kind,v:pick.v,leg,cost:costTxt(pick.v,people),why:reasons(pick.s,tastes.length>1)});prev=pick.v}
+  it.stops=out;it.shuffle=false;it.people=people;
+  const lo=out.reduce((a,s)=>a+(s.v&&s.v.price?PRICE_PP[s.v.price][0]*people:0),0),hi=out.reduce((a,s)=>a+(s.v&&s.v.price?PRICE_PP[s.v.price][1]*people:0),0);it.cost=hi?{t:"≈ $"+lo+"–"+hi,est:true}:null;
+  d.ibusy=false;render()}
+function icsFor(it){const pad=n=>String(n).padStart(2,"0"),dt=(day,hm)=>{const[y,m,dd]=day.split("-"),[h,mi]=hm.split(":");return y+m+dd+"T"+pad(h)+pad(mi)+"00"},esc2=s=>String(s||"").replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n");
+  const ev=it.stops.filter(s=>s.v).map((s,i,a)=>{const end=a[i+1]?a[i+1].time:(()=>{const[h,m]=s.time.split(":").map(Number);return pad(Math.min(23,h+1))+":"+pad(m)})();
+    return["BEGIN:VEVENT","UID:"+uid()+"@vouz","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z","DTSTART:"+dt(it.date,s.time),"DTEND:"+dt(it.date,end),"SUMMARY:"+esc2(s.v.name+(s.v.demo?" (demo)":"")),"LOCATION:"+esc2(s.v.demo?"":s.v.addr),"DESCRIPTION:"+esc2("Planned in VOUZ. Not booked: check hours before you go."),"END:VEVENT"].join("\r\n")});
+  return["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//VOUZ//EN"].concat(ev,["END:VCALENDAR"]).join("\r\n")}
+const mapsUrl=v=>!v||v.demo?null:v.lat!=null?"https://www.google.com/maps/dir/?api=1&destination="+v.lat+","+v.lon:v.addr?"https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(v.name+", "+v.addr):null;
+
+/* ---------- views ---------- */
+function locCard(){const l=S.disc.loc,d=ui.dsc;
+  return`<div class="card line loc"><div class="row between"><span class="grow"><span class="tiny">Searching around</span><b style="display:block">${l?esc(l.label||"Your location"):"No area set"}</b>${l&&l.precise?`<span class="sub small">From your device, rounded to about 1 km. Not shared.</span>`:""}</span><button class="btn sm ghost" data-act="dLocEdit">${l?"Change":"Set area"}</button></div>
+   ${d.locOpen||!l?`<div class="row"><input type="text" id="d-area" maxlength="60" placeholder="Neighborhood or city" aria-label="Neighborhood or city" autocomplete="off" value="${esc(d.area||"")}"><button class="btn sm" data-act="dLocSet">Use</button></div><button class="link small" data-act="dLocGPS">${ic("pin")} Use my precise location instead</button>${d.locErr?`<p class="err" role="alert">${esc(d.locErr)}</p>`:""}`:""}</div>`}
+function connStrip(){const live=Conn.live(),srcs=Object.entries(CONN).filter(([k,s])=>Conn.tools[s]&&Conn.tools[s].tools.length).map(([k,s])=>s);
+  const errs=Object.entries(Conn.err).filter(([s,c])=>c).map(([s,c])=>(CONN_MSG[c]||(x=>x+" had a problem."))(s));
+  return live?`<p class="tiny">Live from ${esc(srcs.join(", "))}.${errs.length?" "+esc(errs.join(" ")):""}</p>`:`<div class="card line"><p class="sub small"><b>Showing demo places.</b> They're made up, to show how this works. For real places, connect Yelp in claude.ai Settings → Connectors, then reopen VOUZ and allow it when asked.</p></div>`}
+function whoChips(){const d=ui.dsc,shared=Soc.ready()?Soc.conns().filter(id=>{const r=Soc.rel[id],p=(Soc.prefs||{})[id];return r&&p&&(p.items||[]).some(x=>x&&x.k===r.in)}):[];if(!Soc.ready()||!shared.length)return"";
+  return`<div class="col" style="gap:6px"><span class="tiny">Who's coming? Only people who shared their taste with you.</span><div class="chips sm" role="group" aria-label="Who's coming">${shared.map(id=>`<button class="chip" data-act="dWho" data-v="${esc(id)}" aria-pressed="${d.who.includes(id)}">${esc(Soc.handle(id))}</button>`).join("")}</div></div>`}
+function recCard(r,ctx){const v=r.v,saved=(S.disc.saved||[]).some(x=>x.id===v.id),fb=(S.disc.fb||{})[v.id],cost=costTxt(v,ctx.people),tr=v.distKm!=null?travelEst(v.distKm,modeFor(v.distKm,S.disc.travel)):null,note=ctx.ai&&ctx.ai[v.id];
+  const stale=v.at&&Date.now()-v.at>24*36e5;
+  return`<article class="rec" aria-label="${esc(v.name)}">${v.photos[0]?`<div class="recph"><img src="${esc(v.photos[0])}" alt="${esc(v.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"><span class="tiny">Photo: ${esc(v.src)}</span></div>`:""}
+   <div class="row between"><span class="grow"><span class="tiny">${esc(DKIND[v.kind])}${v.demo?" · demo place":" · "+esc(v.src)}</span><b class="rt">${esc(v.name)}</b></span>${v.rating?`<span class="pill">★ ${v.rating.toFixed(1)}${v.reviews?` <span class="sub">(${v.reviews})</span>`:""}</span>`:""}</div>
+   ${note?`<p class="ainote">${esc(note)} <span class="tiny">AI</span></p>`:""}
+   ${r.why&&r.why.length?`<p class="sub small">Why: ${esc(r.why.join(", "))}.</p>`:""}
+   <dl class="facts"><div><dt>Where</dt><dd>${esc(v.addr||"Address not provided")}</dd></div>
+    <div><dt>Distance</dt><dd>${v.distKm==null&&!v.demo?"Not provided by "+esc(v.src)+"; searched near "+esc(S.disc.loc&&S.disc.loc.label||"your area"):kmTxt(v.distKm)}${tr?` · about ${tr.min} min ${tr.mode==="walk"?"walk":tr.mode==="transit"?"by transit":"drive"} <span class="est">est.</span>`:""}</dd></div>
+    <div><dt>Cost</dt><dd>${esc(cost.t)} ${cost.t!=="Cost unknown"?`<span class="est">est.</span>`:""}</dd></div>
+    <div><dt>Hours</dt><dd>${v.openNow===true?"Open now, per "+esc(v.src):v.openNow===false?"Closed now, per "+esc(v.src):v.hoursText?esc(v.hoursText)+", per "+esc(v.src):"Not verified. Check before you go."}</dd></div></dl>
+   ${stale?`<p class="tiny warn-t">Details from ${ago(v.at)} ago; they may have changed.</p>`:""}
+   <div class="row wrap rbtn"><button class="btn sm ${saved?"ghost":""}" data-act="dSave" data-id="${esc(v.id)}" aria-pressed="${saved}">${ic("bookmark")} ${saved?"Saved":"Save"}</button><button class="btn sm" data-act="dPlan" data-id="${esc(v.id)}">${ic("clock")} Plan it</button>
+    <span class="grow"></span><button class="ib bare" data-act="dFb" data-id="${esc(v.id)}" data-v="1" aria-pressed="${fb>0}" aria-label="More like this">${ic("heart")}</button><button class="ib bare" data-act="dFb" data-id="${esc(v.id)}" data-v="-1" aria-pressed="${fb<0}" aria-label="Not for us">${ic("x")}</button>
+    ${v.url?`<a class="ib bare" href="${esc(v.url)}" target="_blank" rel="noopener noreferrer" aria-label="Open on ${esc(v.src)}">${ic("next")}</a>`:""}</div></article>`}
+function findV(id){const d=ui.dsc;for(const k of ["foryou","nearby"])if(d[k]){const r=d[k].recs.find(r=>r.v.id===id);if(r)return r.v}if(d.itin)for(const s of d.itin.stops||[])if(s.v&&s.v.id===id)return s.v;return(S.disc.saved||[]).find(v=>v.id===id)||null}
+const DISC_EX=["What can we do within 2 miles?","Find something romantic under $50","We're bored. Suggest something fun.","Plan a spontaneous date tonight","Find something adventurous nearby","We have three hours and $100","Suggest something we haven't tried before","Somewhere nice we can reach by public transit","Plan our Saturday"];
+function vForYou(){const d=ui.dsc,r=d.foryou,need=d.need;
+  return`${locCard()}<div class="card ask"><label class="f" for="d-q"><span>${ic("spark")} Ask VOUZ</span><textarea id="d-q" data-bind="dsc.q" maxlength="200" placeholder="Plan our Saturday, or find something romantic under $50">${esc(d.q)}</textarea></label>
+    <div class="chips sm scrollx" role="group" aria-label="Examples">${DISC_EX.map((t,i)=>`<button class="chip" data-act="dEx" data-i="${i}">${esc(t)}</button>`).join("")}</div>${whoChips()}
+    ${d.busy||d.ibusy?`<p class="sub small" role="status">Looking…</p>`:`<button class="btn primary block" data-act="dAsk">${ic("spark")} ${parseAsk(d.q).plan?"Plan it":"Find"}</button>`}
+    <p class="tiny">VOUZ ranks real places from Yelp and explains the ranking. Claude may write a one-line note using only those facts. Your intimacy records, health data and notes are never used.</p></div>
+   ${need?`<div class="card line"><h3>${esc(need.title)}</h3><div class="chips">${need.opts.map(([v,l])=>`<button class="chip" data-act="dNeed" data-k="${need.k}" data-v="${esc(v)}">${esc(l)}</button>`).join("")}</div></div>`:""}
+   ${d.err?`<p class="err" role="alert">${esc(d.err)}</p>`:""}
+   ${d.itin?vItin():""}
+   ${connStrip()}
+   ${r&&!d.itin&&r.q.km&&r.live&&r.recs.length&&r.recs.every(x=>x.v.distKm==null)?`<p class="tiny warn-t">Yelp didn't give distances, so VOUZ couldn't check the ${(r.q.km*0.621371).toFixed(1)}-mile limit. These are Yelp's results near ${esc(S.disc.loc.label)}.</p>`:""}
+   ${r&&!d.itin?(r.recs.length?`<div class="row between" id="fy-res"><h3>${r.group?"For all of you":"For you"}</h3>${r.wx?`<span class="tiny">${esc([r.wx.text,r.wx.temp!=null?Math.round(r.wx.temp)+"°":""].filter(Boolean).join(" "))} · AccuWeather</span>`:`<span class="tiny">Weather not connected</span>`}</div>${r.recs.map(x=>recCard(x,{people:d.who.length+1,ai:r.ai})).join("")}`:`<div class="card line"><p class="sub small">Nothing fits all of that. Try a wider distance or a bigger budget.</p></div>`):""}
+   ${r&&r.notes&&r.notes.filter(n=>n.text).map(n=>`<div class="card line"><span class="tiny">${esc(n.src)} answered in words</span><p class="sub small" style="white-space:pre-wrap">${esc(n.text)}</p></div>`).join("")||""}`}
+function vItin(){const it=ui.dsc.itin,d=ui.dsc,day=it.date?fmtDate(new Date(it.date+"T12:00").getTime()):"";
+  return`<div class="card itin"><div class="row between"><span><span class="tiny">${it.demo?"Demo plan · made-up places":"Date plan"}</span><h2>${esc(day)}</h2></span><button class="ib bare" data-act="dItinClose" aria-label="Close plan">${ic("x")}</button></div>
+   ${d.ibusy?`<p class="sub small" role="status">Putting it together…</p>`:`<ol class="stops">${it.stops.map((s,i)=>`<li><span class="tm">${fmtHM(s.time)}</span><div class="grow">${s.v?`<b>${esc(s.v.name)}</b><span class="sub small" style="display:block">${esc(DKIND[s.v.kind])}${s.v.demo?" · demo":""} · ${esc(s.v.addr||"Address not provided")}</span>
+      ${!s.leg&&!s.v.demo?`<span class="tiny">Travel time unavailable: ${esc(s.v.src)} doesn't give coordinates. Use Directions.</span>`:""}${s.leg?`<span class="tiny">${i?"From the last stop":"From your area"}: ${kmTxt(s.leg.km)}, about ${s.leg.min} min ${s.leg.mode==="walk"?"walking":s.leg.mode==="transit"?"by transit":"driving"}${s.leg.est?" (estimate)":", via "+esc(s.leg.src)}</span>`:""}
+      <span class="tiny" style="display:block">${esc(s.cost.t)}${s.cost.t!=="Cost unknown"?" (estimate)":""} · ${s.v.openNow===true?"open now":"hours not verified"}</span>
+      <div class="row" style="gap:4px"><button class="link small" data-act="dSwap" data-i="${i}">Replace</button>${mapsUrl(s.v)?`<a class="link small" href="${esc(mapsUrl(s.v))}" target="_blank" rel="noopener noreferrer">Directions</a>`:""}</div>`
+      :`<b>No ${esc(DKIND[s.kind].toLowerCase())} nearby fits.</b><button class="link small" data-act="dSwap" data-i="${i}">Try again</button>`}</div></li>`).join("")}</ol>
+    ${it.cost?`<p class="sub small">Total ${esc(it.cost.t)} for ${it.people} (estimate). Nothing is booked or paid.</p>`:`<p class="sub small">Nothing is booked or paid.</p>`}
+    <div class="col" style="gap:6px"><span class="tiny">Budget</span><div class="chips sm">${[["","Any"],["50","$50"],["100","$100"],["200","$200"]].map(([v,l])=>`<button class="chip" data-act="dItinSet" data-k="budget" data-v="${v}" aria-pressed="${String(it.q.budget??"")===v}">${l}</button>`).join("")}</div>
+     <span class="tiny">How far</span><div class="chips sm">${[["2","1 mi"],["5","3 mi"],["10","6 mi"],["25","15 mi"]].map(([v,l])=>`<button class="chip" data-act="dItinSet" data-k="km" data-v="${v}" aria-pressed="${String(Math.round(it.q.km||S.disc.maxKm||8))===v}">${l}</button>`).join("")}</div></div>
+    <div class="row wrap"><button class="btn sm" data-act="dItinRegen">Regenerate</button><button class="btn sm primary" data-act="dItinSave">Save plan</button><button class="btn sm" data-act="dItinCal">${ic("clock")} Add to calendar</button>${Soc.ready()&&Soc.inSpaces().length?`<button class="btn sm" data-act="dItinShare">${ic("people")} Share with partner</button>`:""}</div>`}</div>`}
+const fmtHM=hm=>{const[h,m]=hm.split(":").map(Number);return(h%12||12)+(m?":"+String(m).padStart(2,"0"):"")+(h<12?" AM":" PM")};
+function vNearby(){const d=ui.dsc,r=d.nearby;
+  return`${locCard()}<div class="chips sm scrollx" role="group" aria-label="Kind">${[["","Everything"],["coffee","Coffee"],["food","Food"],["drinks","Drinks"],["outdoors","Outdoors"],["trail","Trails"],["culture","Culture"],["music","Music"],["games","Games"],["class","Classes"],["wellness","Wellness"]].map(([v,l])=>`<button class="chip" data-act="dNk" data-v="${v}" aria-pressed="${(d.nk||"")===v}">${l}</button>`).join("")}</div>
+   <div class="row between"><div class="chips sm" role="group" aria-label="Distance">${[[1.6,"1 mi"],[5,"3 mi"],[16,"10 mi"]].map(([v,l])=>`<button class="chip" data-act="dNkm" data-v="${v}" aria-pressed="${(d.nkm||5)===v}">${l}</button>`).join("")}</div><button class="link small" data-act="dNsort">${d.nsort==="dist"?"Best match":"Closest first"}</button></div>
+   ${r&&r.live&&r.recs.length&&r.recs.every(x=>x.v.distKm==null)?`<p class="tiny">Yelp doesn't give distances here, so the distance chips can't filter. Results are Yelp's, near ${esc(S.disc.loc.label)}.</p>`:""}${connStrip()}${d.busy?`<div class="skel"></div>`:""}
+   ${r?(r.recs.length?r.recs.map(x=>recCard(x,{people:d.who.length+1})).join(""):`<div class="card line"><p class="sub small">Nothing found within that distance.</p></div>`):S.disc.loc?"":`<p class="sub small">Set an area to see what's around.</p>`}`}
+function vSavedD(){const sv=S.disc.saved||[],plans=allPlans().filter(e=>e.venue||e.stops);
+  return`${sv.length?`<div class="sec"><h3>Saved places</h3>${sv.map(v=>`<div class="hist"><span class="grow"><b>${esc(v.name)}</b><span class="sub small" style="display:block">${esc(DKIND[v.kind])}${v.demo?" · demo":" · "+esc(v.src)} · ${esc(v.addr||"")}</span></span><button class="btn sm" data-act="dPlan" data-id="${esc(v.id)}">Plan</button><button class="ib bare" data-act="dSave" data-id="${esc(v.id)}" aria-label="Remove ${esc(v.name)}">${ic("x")}</button></div>`).join("")}</div>`:`<div class="card line"><p class="sub small">Nothing saved yet. Tap Save on anything in For You or Nearby: it stays here, like a bucket list.</p></div>`}
+   ${plans.length?`<div class="sec"><h3>Plans from Discover</h3><div>${plans.map(planRow).join("")}</div></div>`:""}
+   <div class="card"><h3>Personalization</h3>
+    ${sw("dLearn",S.disc.learn!==false,"Learn from what we save and do","Saved places, completed plans, your ratings and your likes and dislikes. Stored only on your devices.")}
+    ${sw("dAi",S.disc.ai!==false,"Short AI notes","Claude writes one line per place from the facts shown, nothing else.")}
+    <div class="col" style="gap:6px"><span class="tiny">Getting around</span><div class="chips sm">${[["any","Any way"],["walk","Walking"],["transit","Public transit"],["drive","Driving"]].map(([v,l])=>`<button class="chip" data-act="dTravel" data-v="${v}" aria-pressed="${(S.disc.travel||"any")===v}">${l}</button>`).join("")}</div></div>
+    ${Soc.ready()&&Soc.conns().length?`<div class="col" style="gap:6px"><span class="tiny">Share my taste with (for planning together)</span><div class="chips sm">${Soc.conns().map(id=>`<button class="chip" data-act="dShareT" data-v="${esc(id)}" aria-pressed="${(S.disc.shareWith||[]).includes(id)}">${esc(Soc.handle(id))}</button>`).join("")}</div><p class="tiny">They get your interest weights, usual price level and distance, encrypted for them alone. VOUZ shows them only combined results, never your list. Never your intimacy records.</p></div>`:""}
+    <div class="row wrap"><button class="btn sm ghost" data-act="dReset">Reset personalization</button><button class="btn sm ghost" data-act="dWipeHist">Delete recommendation history</button></div>
+    <p class="tiny">${(S.disc.hist||[]).length} searches remembered on this device.</p></div>
+   <div class="card line"><h3>Rewards</h3><p class="sub small">A completed plan earns ${RW.VP.planDone} VP, and a kind of date you haven't logged before earns ${RW.VP.newKind}. VOUZ has no merchant partners, so there are no venue offers or check-in rewards.</p></div>`}
+
+/* After a planned date: how was it? */
+function howWasCard(){const due=S.exps.filter(e=>!e.demo&&e.kind==="plan"&&e.date&&e.date<Date.now()-2*36e5&&!e.asked).sort((a,b)=>b.date-a.date)[0];if(!due)return"";
+  return`<div class="card line"><span class="tiny">After ${esc(fmtDate(due.date))}</span><h3>How was ${esc(due.title)}?</h3>
+   <div class="stars" role="group" aria-label="Rate it privately">${[1,2,3,4,5].map(n=>`<button data-act="hwRate" data-id="${esc(due.id)}" data-v="${n}" aria-label="${n} of 5">${n<=(due.rating||0)?"★":"☆"}</button>`).join("")}</div>
+   <div class="row wrap"><button class="btn sm primary" data-act="planDone" data-id="${esc(due.id)}">${ic("check")} We did it</button><button class="btn sm ghost" data-act="hwSkip" data-id="${esc(due.id)}">Didn't happen</button></div>
+   <p class="tiny">Your rating stays private. Marking it done turns it into a memory you can add photos to, make into a card, and post if you want.</p></div>`}
+
+Object.assign(A,{
+  dEx(e){ui.dsc.q=DISC_EX[+e.dataset.i];render()},
+  dWho(e){const d=ui.dsc,v=e.dataset.v;d.who=d.who.includes(v)?d.who.filter(x=>x!==v):d.who.concat([v]);render()},
+  async dAsk(){const d=ui.dsc,q=parseAsk(d.q);d.need=null;d.itin=null;
+    if(!S.disc.loc){d.locOpen=true;d.err="Set an area first, so VOUZ looks in the right place.";return render()}
+    if(q.plan){if(q.day==null){d.need={title:"Which day?",k:"day",opts:[["today","Today"],["tomorrow","Tomorrow"],["6","Saturday"],["0","Sunday"]]};return render()}
+      d.itin={q,stops:null};return buildItin(d.itin)}
+    return runDisc("foryou")},
+  dNeed(e){const d=ui.dsc,v=e.dataset.v;d.need=null;const q=parseAsk(d.q);q.day=/^\d$/.test(v)?+v:v;d.itin={q,stops:null};buildItin(d.itin)},
+  dSwap(e){const it=ui.dsc.itin,i=+e.dataset.i;if(!it)return;const s=it.stops[i];if(s&&s.v)it.skip=(it.skip||[]).concat([s.v.id]);buildItin(it,it.stops.map((x,j)=>j).filter(j=>j!==i))},
+  dItinSet(e){const it=ui.dsc.itin;if(!it)return;const k=e.dataset.k,v=e.dataset.v;it.q[k]=v===""?null:+v;it.skip=[];it.stops=null;buildItin(it)},
+  dItinRegen(){const it=ui.dsc.itin;if(!it)return;it.shuffle=true;it.stops=null;buildItin(it)},
+  dItinClose(){ui.dsc.itin=null;render()},
+  dItinSave(){const it=ui.dsc.itin;if(!it||!it.stops)return;const now=Date.now(),first=it.stops.find(s=>s.v),[h,m]=(it.stops[0]&&it.stops[0].time||"12:00").split(":").map(Number),dt=new Date(it.date+"T12:00");dt.setHours(h,m,0,0);
+    const notes=it.stops.filter(s=>s.v).map(s=>fmtHM(s.time)+" — "+s.v.name+(s.v.demo?" (demo)":"")+(s.v.addr&&!s.v.demo?", "+s.v.addr:"")).join("\n")+"\n\nNot booked. Check opening hours before you go.";
+    S.exps.push({id:uid(),kind:"plan",title:(fmtDate(dt.getTime())+" plan").slice(0,80),date:dt.getTime(),cat:it.daypart==="evening"?"romantic":"adventure",location:first&&!first.v.demo?String(first.v.addr||"").slice(0,80):"",favorite:"",mood:"",notes,sharedNote:"",space:null,anniv:false,photos:[],idea:null,stops:it.stops.filter(s=>s.v).map(s=>({time:s.time,v:snapV(s.v)})),venue:first?snapV(first.v):null,createdAt:now,updatedAt:now});
+    save();toast("Saved to your plans. Nothing was booked.");render()},
+  async dItinCal(){const it=ui.dsc.itin;if(!it)return;const r=await saveOut(new Blob([icsFor(it)],{type:"text/calendar"}),"vouz-plan-"+it.date+".ics");toast(r==="saved"?"Calendar file ready. Open it to add the plan.":r==="declined"?"Not saved.":"Saving files isn't available in this view.")},
+  dItinShare(){const sps=Soc.inSpaces();sheet({type:"itinShare",sps:sps.map(s=>({id:s.id,name:s.name}))})},
+  itinShareTo(e){A.dItinSave();const x=S.exps[S.exps.length-1];if(x&&Soc.sp[e.dataset.id]){x.space=e.dataset.id;x.updatedAt=Date.now();save();Soc.sched()}ui.sheet=null;render();toast("Shared in "+(Soc.sp[e.dataset.id]||{}).name+". They see the plan, not your preferences.")},
+  dLocEdit(){ui.dsc.locOpen=!ui.dsc.locOpen;render()},
+  async dLocSet(){const d=ui.dsc,t=(($("#d-area")||{}).value||"").trim().slice(0,60);if(t.length<2){d.locErr="Type a neighborhood or city.";return render()}d.area=t;d.locErr="";
+    const g=await Disc.geocode(t).catch(()=>null);S.disc.loc={label:t,lat:g?g.lat:null,lon:g?g.lon:null,precise:false,at:Date.now()};d.locOpen=false;save();d.foryou=d.nearby=null;render();if(ui.disc.seg==="nearby")runDisc("nearby")},
+  dLocGPS(){const d=ui.dsc;if(!navigator.geolocation){d.locErr="This browser can't share your location. Type an area instead.";return render()}
+    navigator.geolocation.getCurrentPosition(p=>{S.disc.loc={label:"Near you",lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2),precise:true,at:Date.now()};d.locOpen=false;d.locErr="";save();d.foryou=d.nearby=null;render();if(ui.disc.seg==="nearby")runDisc("nearby")},
+      err=>{d.locErr=err&&err.code===1?"Location permission was declined. Type an area instead.":"Your location isn't available here. Type an area instead.";render()},{enableHighAccuracy:false,timeout:10000,maximumAge:6e5})},
+  dSave(e){const v=findV(e.dataset.id);const sv=S.disc.saved||[];if(sv.some(x=>x.id===e.dataset.id))S.disc.saved=sv.filter(x=>x.id!==e.dataset.id);else if(v){S.disc.saved=[snapV(v)].concat(sv).slice(0,200);S.disc.kinds=S.disc.kinds||{};S.disc.kinds[v.kind]=Math.min(5,(S.disc.kinds[v.kind]||0)+.5)}save();render()},
+  dPlan(e){const v=findV(e.dataset.id);if(!v)return;const now=Date.now();
+    S.exps.push({id:uid(),kind:"plan",title:v.name.slice(0,80),date:null,cat:{food:"dinner",drinks:"romantic",coffee:"dinner",trail:"adventure",outdoors:"adventure",adventure:"adventure",music:"celebration",culture:"other"}[v.kind]||"other",location:v.demo?"":String(v.addr||"").slice(0,80),favorite:"",mood:"",notes:v.demo?"Demo place, not real.":"From "+v.src+". Not booked: check hours before you go.",sharedNote:"",space:null,anniv:false,photos:[],idea:null,venue:snapV(v),createdAt:now,updatedAt:now});
+    save();const x=S.exps[S.exps.length-1];sheet({type:"sched",id:x.id,val:""});toast("Added to your plans. Pick a time, or leave it open.")},
+  dFb(e){const id=e.dataset.id,v=findV(id),n=+e.dataset.v;S.disc.fb=S.disc.fb||{};S.disc.kinds=S.disc.kinds||{};const was=S.disc.fb[id];
+    if(was===n){delete S.disc.fb[id]}else{S.disc.fb[id]=n;if(v)S.disc.kinds[v.kind]=Math.max(-5,Math.min(5,(S.disc.kinds[v.kind]||0)+n))}save();
+    if(n<0&&was!==n){for(const k of ["foryou","nearby"])if(ui.dsc[k])ui.dsc[k].recs=ui.dsc[k].recs.filter(r=>r.v.id!==id);toast("Got it. Fewer like that.")}render()},
+  dNk(e){ui.dsc.nk=e.dataset.v||null;runDisc("nearby")},dNkm(e){ui.dsc.nkm=+e.dataset.v;runDisc("nearby")},
+  dNsort(){ui.dsc.nsort=ui.dsc.nsort==="dist"?null:"dist";if(ui.dsc.nearby)runDisc("nearby");else render()},
+  dLearn(){S.disc.learn=S.disc.learn===false;save();render()},dAi(){S.disc.ai=S.disc.ai===false;save();render()},
+  dTravel(e){S.disc.travel=e.dataset.v;save();render()},
+  async dShareT(e){const v=e.dataset.v,c=S.disc.shareWith||[];S.disc.shareWith=c.includes(v)?c.filter(x=>x!==v):c.concat([v]);save();render();try{await shareTaste();toast(S.disc.shareWith.includes(v)?"Shared with "+Soc.handle(v)+".":"Stopped sharing with "+Soc.handle(v)+".")}catch(x){toast("That couldn't be saved.")}},
+  dReset(){sheet({type:"confirm",title:"Reset personalization?",body:"Clears your likes, dislikes and learned preferences. Saved places and plans stay.",yes:"Reset",fn(){S.disc.fb={};S.disc.kinds={};save();ui.dsc.foryou=ui.dsc.nearby=null;if(Soc.ready()&&(S.disc.shareWith||[]).length)shareTaste().catch(()=>{});render();toast("Personalization reset.")}})},
+  dWipeHist(){sheet({type:"confirm",title:"Delete recommendation history?",body:"Removes past searches and cached results from this device.",yes:"Delete",danger:true,fn(){S.disc.hist=[];ui.dsc.foryou=ui.dsc.nearby=ui.dsc.itin=null;try{Conn.mcp&&Conn.mcp.invalidate&&Conn.mcp.invalidate().catch(()=>{})}catch(x){}save();render();toast("History deleted.")}})},
+  hwRate(e){const x=S.exps.find(z=>z.id===e.dataset.id);if(!x)return;x.rating=+e.dataset.v;x.updatedAt=Date.now();if(x.venue){S.disc.kinds=S.disc.kinds||{};S.disc.kinds[x.venue.kind]=Math.max(-5,Math.min(5,(S.disc.kinds[x.venue.kind]||0)+(x.rating-3)/2))}save();render()},
+  hwSkip(e){const x=S.exps.find(z=>z.id===e.dataset.id);if(!x)return;x.asked=true;x.updatedAt=Date.now();save();render()}
+});
+/* What a saved place keeps: provider facts only, with the time they were fetched. */
+const snapV=v=>({id:v.id,src:v.src,name:v.name,kind:v.kind,cats:v.cats,addr:v.addr,lat:v.lat,lon:v.lon,rating:v.rating,reviews:v.reviews,price:v.price,free:v.free,photos:(v.photos||[]).slice(0,1),url:v.url,openNow:null,hoursText:null,distKm:null,at:v.at,demo:!!v.demo});
+
+function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={dsc:ui.dsc,feed:ui.feed,pc:ui.pc,me:ui.me,cp:ui.cp,soc:ui.soc,ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
 document.addEventListener("input",ev=>{bind(ev.target);const sid=ev.target.id;if(sid==="f-q"||sid==="s-q"||sid==="pc-loc"){clearTimeout(bind.t);bind.t=setTimeout(()=>{ui.feed.n=10;render();const el=document.getElementById(sid);if(el){el.focus();const n=el.value.length;try{el.setSelectionRange(n,n)}catch(x){}}},250)}if(ev.target.id==="mc-cap"){clearTimeout(refreshCard.t);refreshCard.t=setTimeout(refreshCard,250)}if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
 document.addEventListener("change",ev=>{if(ev.target.dataset&&ev.target.dataset.live&&ev.target.type==="date"){bind(ev.target);render()}});
@@ -2225,7 +2574,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&S.onboarde
 window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.onboarded&&!ui.locked&&TABS().some(x=>x[0]===t)&&(t!==ui.tab||ui.page)&&!legacySessions().length){ui.tab=t;ui.page=null;ui.sheet=null;render(true)}});
 
 /* ============ boot ============ */
-(function boot(){normCats();
+(function boot(){normCats();S.disc=Object.assign({loc:null,saved:[],fb:{},kinds:{},hist:[],learn:true,ai:true,travel:"any",maxKm:8,budget:null,shareWith:[]},S.disc||{});
   try{if(window.claude&&window.claude.use)window.claude.use("sample").then(f=>{SAMPLE=f||null;if(ui.tab==="discover"&&!typing())render()}).catch(()=>{})}catch(e){}const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
   if(S.onboarded&&S.settings.pinHash)ui.locked=true;
   if(S.active){ui.tab="intimacy";ui.int.seg="track"}
@@ -2235,7 +2584,7 @@ window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.on
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 })();
-window.__vouz={Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+window.__vouz={Disc,Conn,parseAsk,scoreVenue,normVenue,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>

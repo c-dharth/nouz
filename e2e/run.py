@@ -29,7 +29,14 @@ MOCK=r"""
 const snap=(p,v)=>({id:p.split('/').pop(),exists:v!==null&&v!==undefined,data:()=>v,metadata:{fromCache:false,hasPendingWrites:false}});
 const doc=(p)=>({id:p.split('/').pop(),path:p,get:async()=>snap(p,await window.__dbGet(U,p)),set:async(d)=>{try{await window.__dbSet(U,p,JSON.stringify(d))}catch(e){throw {code:'invalid_argument'}}},delete:async()=>{await window.__dbDel(U,p)}});
 const coll=(c)=>({path:c,doc:(id)=>doc(c+'/'+id),onSnapshot:(next)=>{let last=null,on=true;const f=async()=>{if(!on)return;const m=await window.__dbList(U,c);const j=JSON.stringify(m);if(j!==last){last=j;next({docs:Object.keys(m).map(k=>snap(c+'/'+k,m[k]))})}setTimeout(f,120)};f();return()=>{on=false}}});
-window.claude={use:async(n)=>n==='db'?{doc,collection:coll}:n==='user'?{id:async()=>U,can:async()=>true,isOwner:async()=>U==='dave'}:null};})();
+const yelpSchema={type:'object',additionalProperties:false,properties:{is_open_now:{type:'boolean'},latitude:{anyOf:[{type:'number',minimum:-90,maximum:90},{type:'null'}]},limit:{type:'integer',minimum:3,maximum:8},location:{anyOf:[{type:'string',maxLength:250},{type:'null'}]},longitude:{anyOf:[{type:'number'},{type:'null'}]},query:{anyOf:[{type:'string',maxLength:250},{type:'null'}]}}};
+window.__yelpCalls=[];
+const biz=(q,i,o)=>Object.assign({id:'t-'+q.replace(/\W/g,'')+'-'+i,name:'TEST '+q.toUpperCase().slice(0,14)+' '+i,rating:3.6+i*.3,review_count:20+i,is_closed:false,categories:[{alias:q.split(' ')[0]}],url:'https://www.yelp.com/biz/test-'+i,image_url:'https://example.com/p'+i+'.jpg',location:{address1:(100+i)+' Test St\nTestville, CA 90000',city:'Testville'},price:['$','$$','$$$'][i%3],distance_meters:0.2},o||{});
+const mcp={listTools:async()=>({servers:[{server:'Yelp',authStatus:'connected',tools:[{name:'yelp_search_local_businesses',description:''}]}]}),
+  describeTool:async(s,t)=>({name:t,description:'',inputSchema:yelpSchema}),
+  callTool:async(s,t,input)=>{window.__yelpCalls.push(input);const q=input.query||'x';return{content:[],payload:{businesses:[biz(q,0),biz(q,1),biz(q,2,{is_closed:true,name:'TEST CLOSED '+q}),biz(q,3,{price:null})],status:'ok',error:null}}},
+  invalidate:async()=>{}};
+window.claude={use:async(n)=>n==='mcp'&&U==='erin'?mcp:n==='db'?{doc,collection:coll}:n==='user'?{id:async()=>U,can:async()=>true,isOwner:async()=>U==='dave'}:null};})();
 """
 res=[]
 def ok(name,cond,extra=""):
@@ -611,6 +618,54 @@ with sync_playwright() as pw:
     p.evaluate("()=>{navigator.clipboard.write=async items=>{window.__copied.push(items.length)}}"); act(p,"mcCopy"); p.wait_for_selector("text=Image copied."); ok("copy: the image can be copied where allowed",p.evaluate("window.__copied")==[1])
     p.evaluate("()=>{navigator.clipboard.write=async()=>{throw new DOMException('no','NotAllowedError')}}"); act(p,"mcCopy"); p.wait_for_selector("text=Copying images isn't allowed here."); ok("copy: a refusal is explained",True); p.evaluate("sessionStorage.removeItem('noDl')")
     m2=[e for e in S(p)["exps"] if e["id"]==mem["id"]][0]; ok("cards: the memory itself is unchanged and still private",m2["updatedAt"]==up0 and m2["space"] is None and m2["notes"]=="PRIVNOTE")
+    ctx.close()
+    # ---------- Discover: For You, Nearby, Saved, Ask VOUZ (demo places, no connectors) ----------
+    ctx,p=newctx(b); p.goto(URL); p.wait_for_timeout(300); onboard(p); nav(p,"discover")
+    ok("discover: For You / Nearby / Saved, with Ideas, Plans, Match still there",[x.inner_text() for x in p.locator('.seg3 [data-act="discSeg"]').all()]==["For You","Nearby","Saved"] and p.locator('[data-act="discSeg"][data-v="match"]').count()==1)
+    p.fill("#d-q","Find something romantic under $50"); act(p,"dAsk"); ok("discover: asks for an area before searching","Set an area first" in p.inner_text(".scroll"))
+    p.fill("#d-area","Mission District"); act(p,"dLocSet"); act(p,"dAsk"); p.wait_for_selector(".rec")
+    t=p.inner_text(".scroll"); ok("discover: with no connectors, places are clearly demo","Showing demo places" in t and all("demo place" in x.inner_text() for x in p.locator(".rec").all()))
+    ok("discover: every card shows place, distance, cost and hours, with estimates labelled",all(all(k in x.inner_text() for k in ("Where","Distance","Cost","Hours")) for x in p.locator(".rec").all()) and p.locator(".rec .est").count()>=1 and "Not verified" in t)
+    over=p.evaluate("window.__vouz.S&&[...document.querySelectorAll('.rec')].length")
+    ok("discover: under $50 for two leaves out pricier places",p.evaluate("""()=>{const d=JSON.parse(JSON.stringify(window.__vouz.S.disc));return true}""") and "$90" not in t and "$180" not in t)
+    p.fill("#d-q","What can we do within 2 miles?"); act(p,"dAsk"); p.wait_for_selector(".rec")
+    ok("discover: 'within 2 miles' keeps everything within 2 miles",all(float(re.search(r"([\d.]+) mi",x.inner_text()).group(1))<=2.0 for x in p.locator(".rec").all()))
+    vid=p.locator('.rec [data-act="dSave"]').first.get_attribute("data-id"); act(p,"dSave",id=vid)
+    ok("saved: kept on the device",len(S(p)["disc"]["saved"])==1)
+    did=p.locator('.rec [data-act="dSave"]').nth(1).get_attribute("data-id"); act(p,"dFb",id=did,v="-1")
+    ok("feedback: 'not for us' removes it and learns",p.locator(f'[data-act="dSave"][data-id="{did}"]').count()==0 and any(v<0 for v in S(p)["disc"]["kinds"].values()))
+    p.fill("#d-q","Plan our Saturday"); act(p,"dAsk"); p.wait_for_selector(".stops li")
+    ok("ask vouz: a day plan with times, places and travel",p.locator(".stops li").count()>=3 and "Demo plan" in p.inner_text(".itin") and "estimate" in p.inner_text(".itin") and "Nothing is booked" in p.inner_text(".itin"))
+    n0=p.locator(".stops li b").nth(1).inner_text(); act(p,"dSwap",i="1"); p.wait_for_timeout(300)
+    ok("ask vouz: replace one stop, keep the rest",p.locator(".stops li b").nth(1).inner_text()!=n0)
+    act(p,"dItinCal"); p.wait_for_selector(".toast"); ok("calendar: says so when saving files isn't available","isn't available" in p.inner_text(".toast"))
+    act(p,"dItinSave"); pl=[e for e in S(p)["exps"] if e.get("stops")][0]
+    ok("ask vouz: saved as a plan on Saturday, not booked",len(pl["stops"])>=3 and p.evaluate(f"new Date({pl['date']}).getDay()")==6 and "Not booked" in pl["notes"])
+    p.fill("#d-q","Plan something"); act(p,"dAsk"); ok("ask vouz: asks only for the missing day","which day?" in p.inner_text(".scroll").lower()); act(p,"dNeed",k="day",v="today"); p.wait_for_selector(".stops li")
+    p.evaluate(f"()=>{{const x=window.__vouz.S.exps.find(e=>e.id==='{pl['id']}');x.date=Date.now()-5*36e5}}"); nav(p,"home")
+    ok("after the date: Home asks how it was","how was" in p.inner_text(".scroll").lower())
+    act(p,"hwRate",id=pl["id"],v="4"); ok("rating is private, on the plan",[e for e in S(p)["exps"] if e["id"]==pl["id"]][0]["rating"]==4)
+    act(p,"planDone",id=pl["id"]); act(p,"expSave"); p.wait_for_timeout(200); e2=[e for e in S(p)["exps"] if e["id"]==pl["id"]][0]
+    ok("loop: done becomes a memory that keeps its places",e2["kind"]=="done" and e2.get("stops") and "the plan" in p.inner_text(".scroll").lower() and p.locator('[data-act="mcOpen"]').count()==1)
+    nav(p,"discover"); act(p,"discSeg",v="saved"); ok("saved tab: places, plans and personalization controls","saved places" in p.inner_text(".scroll").lower() and "Reset personalization" in p.inner_text(".scroll"))
+    act(p,"dReset"); act(p,"confirmYes"); act(p,"dWipeHist"); act(p,"confirmYes"); d=S(p)["disc"]
+    ok("controls: reset personalization and delete history",d["fb"]=={} and d["kinds"]=={} and d["hist"]==[] and len(d["saved"])==1)
+    act(p,"discSeg",v="nearby"); p.wait_for_selector(".rec"); act(p,"dNk",v="coffee"); p.wait_for_timeout(300)
+    ok("nearby: filter by kind",p.locator(".rec").count()>=1 and all("coffee" in x.inner_text().lower() for x in p.locator(".rec").all()))
+    p.screenshot(path=SH+"nearby.png"); ctx.close()
+    # ---------- Discover with the Yelp connector (stand-in with Yelp's real input schema) ----------
+    ctx,e=newctx(b,"erin"); e.goto(URL); e.wait_for_timeout(400); onboard(e,account=True); nav(e,"discover"); e.wait_for_timeout(300)
+    e.fill("#d-area","Mission District"); act(e,"dLocSet"); e.fill("#d-q","Find something romantic under $50"); act(e,"dAsk"); e.wait_for_selector(".rec")
+    calls=e.evaluate("window.__yelpCalls")
+    ok("yelp: input built from Yelp's own schema (location, short query, limit 3-8, nothing else)",calls and all(c.get("location")=="Mission District" and 3<=c.get("limit",0)<=8 and set(c)<= {"location","query","limit","is_open_now","latitude","longitude"} and len(c.get("query",""))<=40 for c in calls),str(calls[:2]))
+    t=e.inner_text(".scroll")
+    ok("yelp: live results, labelled with their source, nothing demo","Live from Yelp" in t and "demo" not in t.lower() and "TEST" in t)
+    ok("yelp: permanently closed places are dropped","TEST CLOSED" not in t)
+    ok("yelp: distance and hours not claimed when Yelp doesn't give them","Not provided by Yelp" in t and "Not verified" in t)
+    ok("yelp: address cleaned, photo shown with credit",", Testville" in t and e.locator(".recph img").count()>=1 and "Photo: Yelp" in t)
+    e.screenshot(path=SH+"foryou-yelp.png")
+    act(e,"discSeg",v="nearby"); e.wait_for_timeout(200); act(e,"dNk",v="coffee"); e.wait_for_timeout(500)
+    ok("yelp: nearby asks Yelp for that kind",e.evaluate("window.__yelpCalls.slice(-1)[0].query")=="coffee")
     ctx.close()
     # screenshots with motion on
     ctx,p=newctx(b,motion="no-preference"); p.goto(URL); p.wait_for_timeout(700); p.screenshot(path=SH+"ob.png"); onboard(p); act(p,"loadDemo"); p.wait_for_timeout(600); p.screenshot(path=SH+"home.png"); nav(p,"history"); p.wait_for_timeout(1200)

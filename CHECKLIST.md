@@ -26,7 +26,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 | Feature | State |
 |---|---|
 | AI experience planner | Done. Discover → Planner. Sends only the request, budget, time, a typed area and (optional) memory titles |
-| Personalized recommendations | Not started (the Home idea is a daily rotation, not personalised) |
+| Personalized recommendations | Done in the web app: Discover For You / Nearby / Saved with Yelp, Ask VOUZ day plans, learning from saves, plans, ratings and feedback. Server tables in migration 0006, tested locally |
 | Monthly and yearly recaps | Not started |
 | Smart reminders, push notifications | Not started; web page can't send push here |
 | Shared wishlists | Not started (plans in a space cover part of it) |
@@ -56,6 +56,11 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 - **Video** location scrubbing covers the standard boxes (©xyz, loci) and ISO 6709 coordinate strings; it is checked with test files, not with every phone's format. Videos aren't re-encoded.
 - **Moderation** in the web app is for the page owner only; there's no appeals flow or automated screening.
 - **Notifications** are in-app only. No push.
+- **Yelp results** carry no coordinates or opening hours, so "within 2 miles" can't be checked, travel times aren't shown for Yelp places, and hours say "not verified". A routing/geocoding connector would fill this in.
+- **Yelp in VOUZ** is tested against a stand-in built from Yelp's real schema and a real result, not yet with a live account inside the artifact. Each person using VOUZ must connect Yelp themselves and allow it when asked.
+- **Weather, events and transit** aren't connected (you chose Yelp only). The weather slot says "not connected".
+- **Precise location** in the artifact depends on the browser allowing it; typing an area always works.
+- **Merchant rewards:** none. VOUZ has no merchant partners and doesn't reward claimed visits.
 - **Photos** are on one device only. Clearing browser data deletes them.
 - **Poly matching** requires every member to pick before anything is revealed.
 - Confirmation invites aren't updated if the session is edited after sending.
@@ -66,6 +71,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 1. Point values and caps (RW.VP, RW.CAPS) are first guesses: adjust after real use.
 2. Supabase: when to deploy, and whether notes are encrypted on the device first.
 3. Explore ranking weights (recency 40, engagement 25, interests 15, detail 10, repeat author −12) are first guesses.
+5. Whether to add a routing/weather connector (e.g. Mapbox, AccuWeather) for distances, travel time and weather.
 4. Who moderates, and the community rules they enforce, before any real public launch.
 
 ## Commands once Xcode is installed

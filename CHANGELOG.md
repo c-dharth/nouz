@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.8.0 — 2026-11-19
+
+Added (browser-tested; Yelp tested against a stand-in using Yelp's real input schema and result shape):
+- Discover now opens on For You, Nearby and Saved. Ideas, Plans, Mutual Match and the idea generator are still one tap away. The Feed is unchanged and separate.
+- Real places from the Yelp connector, called with each viewer's own connection. Without it, clearly labelled made-up demo places.
+- Ask VOUZ: plain-language requests ("within 2 miles", "romantic under $50", "tonight", "something we haven't tried", "by public transit").
+- Ranking you can read: distance, interests, the request, budget, Yelp rating and rank, open now, time of day, your feedback, novelty. Claude may add a one-line note using only those facts.
+- "Plan our Saturday" asks only for what's missing (the day), then builds a timed plan from real places. Each stop can be replaced; budget and distance can change; regenerate, save, share to a space, or add to calendar (.ics). Nothing is booked or paid.
+- Each card: name, Yelp photo, address, distance, travel time, cost, hours, rating and why it fits. Estimates are marked; distance and hours say "not provided" or "not verified" when Yelp doesn't give them.
+- Location: a typed neighborhood or city, or precise location only on tap, rounded to about 1 km and kept on the device.
+- Planning together: share your taste (interest weights, price level, distance) with chosen connections, encrypted for each. Group results balance everyone and never show one person's preferences.
+- The loop: after a planned date, Home asks how it went: private rating, mark done, then add photos, make a card, post. Points follow the existing rules; there are no merchant rewards.
+- Controls: learning on/off, AI notes on/off, travel mode, reset personalization, delete recommendation history.
+- Supabase migration 0006: saved places, feedback, history, shared taste (connections only), server-only provider cache.
+
 ## 0.7.0 — 2026-11-19
 
 Added (browser-tested with four simulated users):
