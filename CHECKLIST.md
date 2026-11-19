@@ -30,14 +30,15 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 | Monthly and yearly recaps | Not started |
 | Smart reminders, push notifications | Not started; web page can't send push here |
 | Shared wishlists | Not started (plans in a space cover part of it) |
-| Photo sync between partners | Not started; needs private object storage (Supabase Storage with RLS) |
+| Photo sync between partners | Partly: photos and video posted to the feed are shared, encrypted for Friends/Private. Memory photos themselves are still device-only |
 | Rewards, badges, levels, challenges, shop | Done (device); server ledger in migration 0004, tested locally |
 | Weekly streaks on screen | Logic only (`core/streaks.js`); intimacy is deliberately never part of a streak |
 | Apple Watch, HealthKit | Source only (`watch/`), never compiled |
 | Subscriptions | Logic only (`core/entitlements.js`); no purchase screen |
-| Supabase as the backend | Schema and policies tested locally (96 checks); not deployed; app not switched over |
+| Supabase as the backend | Schema and policies tested locally (167 checks); not deployed; app not switched over |
 | iOS/Android builds | Blocked: no Capacitor packages, Android SDK or Xcode here |
 
+| Social feed: Explore & Friends | Done in the web app: posts with media, visibility, likes, comments, saves, share, edit, report, block, profiles, couple profiles, notifications, moderation. Server version in migration 0005, tested locally, not deployed |
 | Shareable memory cards | Done in the web app. Native share plugin path written, untested; Instagram "Share to Stories" direct button needs the native app and a Meta app ID |
 
 ## Known limits
@@ -49,6 +50,12 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 - **Rewards in the web app** are computed on the device, so someone editing their own browser storage could give themselves points; that only affects their own virtual rewards. The Supabase migration moves awarding to the database.
 - **Intimacy points** are capped at once a week so frequency never earns more. The server version doesn't yet add the "confirmed" bonus, because confirmations don't live on the server yet.
 - **Leaving a space:** the space gets a new key, but someone who left may have kept copies of what they saw.
+- **Feed scale in the web app:** "Public" is everyone the page is shared with, not the internet. On a personal plan only people invited as editors can post; viewers can read. Storage is the page's database (25,000 documents), so heavy video use will fill it. Supabase is the path to real scale.
+- **Feed media** is encrypted for Friends and Private posts; someone who can see a post can still screenshot it. Removing a friend stops future access; it can't recall what they already saw.
+- **Blocking** in the web app hides content in both apps; it can't stop someone determined from reading public posts, which anyone with access can read. The Supabase version enforces blocks in the database.
+- **Video** location scrubbing covers the standard boxes (©xyz, loci) and ISO 6709 coordinate strings; it is checked with test files, not with every phone's format. Videos aren't re-encoded.
+- **Moderation** in the web app is for the page owner only; there's no appeals flow or automated screening.
+- **Notifications** are in-app only. No push.
 - **Photos** are on one device only. Clearing browser data deletes them.
 - **Poly matching** requires every member to pick before anything is revealed.
 - Confirmation invites aren't updated if the session is edited after sending.
@@ -58,6 +65,8 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 
 1. Point values and caps (RW.VP, RW.CAPS) are first guesses: adjust after real use.
 2. Supabase: when to deploy, and whether notes are encrypted on the device first.
+3. Explore ranking weights (recency 40, engagement 25, interests 15, detail 10, repeat author −12) are first guesses.
+4. Who moderates, and the community rules they enforce, before any real public launch.
 
 ## Commands once Xcode is installed
 

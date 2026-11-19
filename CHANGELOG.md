@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.0 — 2026-11-19
+
+Added (browser-tested with four simulated users):
+- Feed tab with Explore and Friends. The old Social page becomes Friends (people, requests, search, blocked) and My posts.
+- Post types: memory card, photo (up to 4), video (up to 60 s, 10 MB), date, trip, milestone, recommendation, badge.
+- Visibility on every post: Public, Friends, or Private (chosen friends). Friends and Private posts and their media are encrypted for their audience.
+- Media upload: photos re-encoded (no EXIF/GPS); video location boxes and coordinates overwritten before upload. Stored in pieces, deleted with the post.
+- Optional place tag, limited to a neighborhood or city; numbers and street words are refused.
+- Likes (one per person), comments, saving (private), sharing (public or own posts), edit caption and place, delete, report, block.
+- Explore ranking you can inspect: recency, engagement, your interests, detail, and a penalty for repeat authors. "Why this post?", a Latest view with no personalization, search, kind filters, Show more.
+- Friends feed: newest first, with an empty state.
+- Profiles: photo, bio, posts, add/accept/remove friend, block. Couple profiles: name, photo, bio, favorite things, achievements; live only when both approve the same version. Posts as the couple need the partner's approval.
+- Blocking now works both ways: a block marker tells the blocked person's app to hide the blocker.
+- In-app notifications: friend requests, likes, comments, couple and joint-post approvals, share requests.
+- Moderation page for the page owner: open reports, remove a public post, dismiss.
+- Supabase migration 0005: post kinds and fields, media index and storage policies, saved posts, couple profiles and approvals, notifications by trigger, Explore and Friends feed functions, moderators.
+
 ## 0.6.0 — 2026-11-18
 
 Added (browser-tested):

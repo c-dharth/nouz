@@ -11,7 +11,7 @@ $AS "$BIN/pg_ctl" -D "$D/data" -o "-p $PORT -k $D -c listen_addresses=''" -l "$D
 trap '$AS "$BIN/pg_ctl" -D "$D/data" -m immediate stop >/dev/null 2>&1; rm -rf "$D"' EXIT
 P="$AS $BIN/psql -h $D -p $PORT -U postgres -v ON_ERROR_STOP=1 -q -X"
 $P -c "create database vouz" postgres
-for f in 00_supabase_stub.sql 0001_vouz_core.sql 0002_vouz_social.sql 05_seed_legacy.sql 0003_couple_poly_experiences.sql 06_legacy_check.sql 0004_rewards.sql 10_policies.sql 20_rewards.sql; do $P -f "$D/$f" vouz >/dev/null; done
+for f in 00_supabase_stub.sql 0001_vouz_core.sql 0002_vouz_social.sql 05_seed_legacy.sql 0003_couple_poly_experiences.sql 06_legacy_check.sql 0004_rewards.sql 0005_feed.sql 10_policies.sql 20_rewards.sql 30_feed.sql; do $P -f "$D/$f" vouz >/dev/null; done
 $P -At -c "select case when ok then 'PASS ' else 'FAIL ' end || label from test.results order by n" vouz
 $P -At -c "select count(*) filter (where ok) || '/' || count(*) || ' passed' from test.results" vouz
 [ "$($P -At -c "select count(*) from test.results where not ok" vouz)" = "0" ]

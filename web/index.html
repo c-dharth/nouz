@@ -96,7 +96,7 @@ button.pill{min-height:44px;padding:0 14px}
 .seg3 button[aria-pressed="true"]{background:var(--surface2);color:var(--text)}
 label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--muted)}
 label.f em{font-style:normal;font-weight:500;color:var(--dim);letter-spacing:0}
-input[type=text],input[type=number],input[type=datetime-local],input[type=date],input[type=password],textarea{width:100%;min-height:48px;background:var(--surface2);border:1px solid transparent;border-radius:var(--r-sm);padding:12px 14px;font-size:16px;font-weight:500;color:var(--text);letter-spacing:0}
+input[type=text],input[type=search],input[type=number],input[type=datetime-local],input[type=date],input[type=password],textarea{width:100%;min-height:48px;background:var(--surface2);border:1px solid transparent;border-radius:var(--r-sm);padding:12px 14px;font-size:16px;font-weight:500;color:var(--text);letter-spacing:0}
 input:focus,textarea:focus{outline:none;border-color:var(--coral)}
 textarea{min-height:84px;resize:vertical}
 .sw{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:8px 0;min-height:48px;width:100%;text-align:left}
@@ -162,6 +162,28 @@ textarea{min-height:84px;resize:vertical}
 .share .wm{font-family:var(--display);font-style:italic;font-size:20px;opacity:.8}
 .post{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px}
 .av{width:38px;height:38px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-weight:800;color:var(--pink);flex:none}
+.post2{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.post2 .ph2{gap:10px;align-items:center}.post2 .ph2 b{display:block}
+.av{overflow:hidden}img.av{object-fit:cover;padding:0}.av.lg{width:72px;height:72px;font-size:26px}
+.link-u{font:inherit;color:var(--text);padding:0;min-height:0;background:none;text-align:left}
+.pmg{display:grid;gap:4px;border-radius:14px;overflow:hidden;margin:0 -2px}.pmg.n2,.pmg.n4{grid-template-columns:1fr 1fr}.pmg.n3{grid-template-columns:2fr 1fr}.pmg.n3 .pm:first-child{grid-row:span 2}
+.pm{background:var(--surface2);aspect-ratio:1;position:relative;min-height:120px}.pmg.n1 .pm{aspect-ratio:4/5;max-height:62vh}
+.pm img,.pm video{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .25s}.pm.ok img,.pm.ok video{opacity:1}.pm video{object-fit:contain;background:#000}
+.pm:not(.ok):not(.gone)::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--surface2) 0,var(--surface) 80px,var(--surface2) 160px);background-size:320px 100%;animation:shimmer 1.3s linear infinite}
+.pm.gone::after{content:"Media unavailable";position:absolute;inset:0;display:grid;place-items:center;font-size:12px;color:var(--dim)}
+.ptitle{display:flex;flex-direction:column;gap:2px}.ptitle .tiny{text-transform:uppercase;letter-spacing:.08em;color:var(--pink)}.ptitle b{font-family:var(--serif,inherit);font-size:19px;line-height:1.2}
+.pcap{overflow-wrap:anywhere;line-height:1.45}
+.pact{display:flex;align-items:center;gap:2px;margin:0 -8px}.pact button{min-height:44px;min-width:44px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:700;font-size:13px;border-radius:999px}
+.pact button[aria-pressed="true"]{color:var(--pink)}.pact button[data-act="like"][aria-pressed="true"] svg{fill:var(--pink)}
+.why{color:var(--dim);align-self:flex-start;min-height:32px}p.why{line-height:1.45}
+.pcm{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.phead{display:flex;gap:16px;align-items:center}
+.ib{position:relative}.ib .dot{position:absolute;top:4px;right:2px;min-width:18px;height:18px;border-radius:9px;background:var(--wine,#7A2E3B);color:var(--text);font-size:10px;font-weight:800;display:grid;place-items:center;padding:0 4px}
+.hist.need{border-left:3px solid var(--pink);padding-left:10px}
+.warn-t{color:var(--warn)}.skel.tall{height:320px}
+.tabs .tab{font-size:10px;min-width:0}
+.chips.scrollx{flex:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px}.chips.scrollx::-webkit-scrollbar{display:none}.chips.scrollx .chip{flex:none}
+input[type=search]{-webkit-appearance:none;appearance:none}
 .rx{display:flex;gap:6px;flex-wrap:wrap}
 .rx button{min-height:44px;min-width:52px;padding:0 12px;border-radius:999px;background:var(--surface2);font-size:14px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;transition:transform .12s,background .15s}
 .rx button:active{transform:scale(1.15)}
@@ -313,7 +335,7 @@ const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 const reduced=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return true}};
 const PARTS=["Morning","Afternoon","Evening","Night"],PARTH=["5am to noon","noon to 5pm","5pm to 10pm","10pm to 5am"];
 const partOf=h=>h>=5&&h<12?0:h>=12&&h<17?1:h>=17&&h<22?2:3;
-const IC={heart:'<path d="M12 20s-7.5-4.6-9.2-9.3C1.7 7.5 3.8 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.2 0 5.3 3 4.2 6.2C19.5 15.4 12 20 12 20z"/>',compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>',photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',track:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.6 5.2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>',play:'<path d="M8 4.5v15l12-7.5z" fill="currentColor"/>',pause:'<path d="M8 5v14M16 5v14"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="M15 5l-7 7 7 7"/>',next:'<path d="M9 5l7 7-7 7"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',edit:'<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',share:'<path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',dots:'<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>',watch:'<rect x="6.5" y="6" width="11" height="12" rx="3"/><path d="M9 6l.6-3.5h4.8L15 6M9 18l.6 3.5h4.8L15 18"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'};
+const IC={heart:'<path d="M12 20s-7.5-4.6-9.2-9.3C1.7 7.5 3.8 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.2 0 5.3 3 4.2 6.2C19.5 15.4 12 20 12 20z"/>',compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>',photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',track:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.6 5.2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>',play:'<path d="M8 4.5v15l12-7.5z" fill="currentColor"/>',pause:'<path d="M8 5v14M16 5v14"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="M15 5l-7 7 7 7"/>',next:'<path d="M9 5l7 7-7 7"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',edit:'<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',share:'<path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',dots:'<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>',watch:'<rect x="6.5" y="6" width="11" height="12" rx="3"/><path d="M9 6l.6-3.5h4.8L15 6M9 18l.6 3.5h4.8L15 18"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',pin:'<path d="M12 21s-6.5-6.1-6.5-11a6.5 6.5 0 0 1 13 0c0 4.9-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',chat:'<path d="M4 5h16v11H9l-5 4z"/>',bookmark:'<path d="M6 3h12v18l-6-4.5L6 21z"/>',bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',feed:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'};
 const ic=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>';
 
 /* ============ private store (this device, not encrypted by VOUZ) ============ */
@@ -358,8 +380,9 @@ const Cloud={db:null,user:null,uid:null,state:"checking",t:null,busy:false,dirty
     catch(e){toast("Account sync failed. Your data is still saved on this device.")}
     this.busy=false;if(this.dirty){this.dirty=false;this.pushVault()}},
   async readVault(){try{const s=await this.priv("vault").get();if(s.exists){const o=JSON.parse(s.data().json);if(o&&o.v===1)return o}}catch(e){}return null},
-  async deleteAll(){if(this.state!=="ready")return;const ps=["vault","keys","stash"].map(n=>this.priv(n).delete());
-    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","reports"])ps.push(this.db.doc(c+"/"+this.uid).delete());
+  async deleteAll(){if(this.state!=="ready")return;try{await Media.purge(false)}catch(e){}
+    const ps=["vault","keys","stash"].map(n=>this.priv(n).delete());
+    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","reports","couples"])ps.push(this.db.doc(c+"/"+this.uid).delete());
     await Promise.allSettled(ps)}
 };
 
@@ -392,19 +415,21 @@ const K={ok:!!(window.crypto&&crypto.subtle),priv:null,self:null,pairs:{},
    Shared storage holds: profiles (handle + public key), posts, reactions, comments, links.
    "Everyone" cards are stored readable. Connections-only cards are stored as ciphertext with one wrapped key per
    permitted recipient; reconcile() is the single place that decides who gets a key. No key, no card. */
-const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent"];
-const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},consent:{},creq:[],cans:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
+const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","couples"];
+const Soc={profiles:{},couples:{},reportsAll:{},isOwner:false,posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},consent:{},creq:[],cans:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
   async ensureKeys(){if(!S.keys){const d=await Cloud.priv("keys").get();if(d.exists)S.keys=JSON.parse(d.data().json);else{S.keys=await K.gen();await Cloud.priv("keys").set({json:JSON.stringify(S.keys)})}saveLocal()}
     if(!K.priv)await K.load(S.keys)},
   async start(){if(this.subs.length||Cloud.state!=="ready"||!K.ok)return;this.status="loading";
     try{await this.ensureKeys()}catch(e){this.status="error";return}
     const timer=setTimeout(()=>{if(this.status==="loading"){this.status="slow";render()}},10000);
-    for(const c of SHARED)this.subs.push(Cloud.db.collection(c).onSnapshot(q=>{const m={};q.docs.forEach(d=>{m[d.id]=d.data()||{}});this[c]=m;if(c==="posts")clearTimeout(timer);this.sched()},()=>{clearTimeout(timer);this.status="error";render()}))},
-  stop(){this.subs.forEach(u=>{try{u()}catch(e){}});this.subs=[];this.status="off";clearTimeout(this.t);for(const c of SHARED)this[c]={};this.inbox=[];this.inv={};this.invSig="";this.sp={};this.shared=[];this.mres={};this.mdocs={};this.creq=[];this.cans={};this.pubSig="";this.rel={};this.items=[];this.cm={};this.perms={};this.cache={};this.au={}},
+    for(const c of SHARED)this.subs.push(Cloud.db.collection(c).onSnapshot(q=>{const m={};q.docs.forEach(d=>{m[d.id]=d.data()||{}});this[c]=m;if(c==="posts")clearTimeout(timer);this.sched()},()=>{clearTimeout(timer);this.status="error";render()}));
+    try{this.isOwner=!!(await (Cloud.user&&Cloud.user.isOwner?Cloud.user.isOwner():false))}catch(e){this.isOwner=false}
+    if(this.isOwner)this.subs.push(Cloud.db.collection("reports").onSnapshot(q=>{const m={};q.docs.forEach(d=>{m[d.id]=d.data()||{}});this.reportsAll=m;this.sched()},()=>{}))},
+  stop(){this.subs.forEach(u=>{try{u()}catch(e){}});this.subs=[];this.status="off";clearTimeout(this.t);for(const c of SHARED)this[c]={};this.inbox=[];this.inv={};this.invSig="";this.sp={};this.shared=[];this.mres={};this.mdocs={};this.creq=[];this.cans={};this.pubSig="";this.rel={};this.items=[];this.cm={};this.perms={};this.cache={};this.au={};this.reportsAll={};this.media={};this.couplesLive={};this.couplesPending=[];this.coupleMine=null},
   sched(){clearTimeout(this.t);this.t=setTimeout(async()=>{if(this.busy){this.again=true;return}this.busy=true;
     try{await this.recompute()}catch(e){}this.busy=false;if(this.status==="loading"||this.status==="slow")this.status="ready";
     const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.mres,this.creq.map(r=>r.id),this.cans]),moved=sig!==this.invSig;this.invSig=sig;
-    if((ui.tab==="social"||ui.tab==="profile"||ui.page&&ui.page.type==="compose"||moved)&&!typing())render();
+    if((ui.tab==="feed"||ui.tab==="profile"||ui.page&&["compose","social","user","couple","notifs","saved","mod"].includes(ui.page.type)||moved)&&!typing())render();
     if(this.again){this.again=false;this.sched()}},40)},
   write(coll,data){this[coll]=Object.assign({},this[coll]);if(data===null)delete this[coll][Cloud.uid];else this[coll][Cloud.uid]=data;
     const ref=Cloud.db.doc(coll+"/"+Cloud.uid);
@@ -420,13 +445,15 @@ const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},spa
     this.rel=rel;
     const lp=(this.links[me]||{}).p;if(lp){if(!this.au[lp]){try{this.au[lp]=await K.decJ(K.self,lp)}catch(e){this.au[lp]={}}}this.perms=this.au[lp]}else this.perms={};
     const items=[];
-    for(const a in this.posts){if(a!==me&&(!this.profiles[a]||S.blocks.includes(a)))continue;
+    const media={},reg=(a,b)=>{for(const m of ((b&&b.media)||[]))if(m&&m.id)media[a+"|"+m.id]=m};
+    for(const a in this.posts){if(a!==me&&(!this.profiles[a]||S.blocks.includes(a)||this.blockedMe(a)))continue;
       for(const it of (this.posts[a].items||[])){if(!it)continue;
         if(it.c){const wk=it.wk||{},w=a===me?wk.self:(rel[a]&&rel[a].mutual?wk[rel[a].in]:null);if(!w)continue;
           try{let e=this.cache[it.c+w];if(!e){const raw=await K.dec(a===me?K.self:rel[a].key,w),ck=await K.aes(raw);e=this.cache[it.c+w]={raw,ck,body:await K.decJ(ck,it.c),thread:await K.thread(raw)}}
             let aud="all";if(a===me&&it.au){if(!this.au[it.au]){try{this.au[it.au]=await K.decJ(K.self,it.au)}catch(x){this.au[it.au]={aud:[]}}}aud=this.au[it.au].aud}
-            items.push({a,key:e.thread,ck:e.ck,raw:e.raw,aud,sealed:true,n:Object.keys(wk).length-1,it:{id:it.id,vis:"connections",postedAt:it.postedAt,kind:e.body.kind,caption:e.body.caption,card:e.body.card}})}catch(e){}}
-        else if(it.vis==="everyone")items.push({a,key:a+"_"+it.id,it})}}
+            reg(a,e.body);items.push({a,key:e.thread,ck:e.ck,raw:e.raw,aud,sealed:true,n:Object.keys(wk).length-1,it:Object.assign({},e.body,{id:it.id,vis:"connections",postedAt:it.postedAt})})}catch(e){}}
+        else if(it.vis==="everyone"){reg(a,it);items.push({a,key:a+"_"+it.id,it})}}}
+    this.media=media;
     items.sort((x,y)=>(y.it.postedAt||0)-(x.it.postedAt||0));this.items=items;
     const byKey={};items.forEach(x=>byKey[x.key]=x);const cm={};
     for(const u in this.comments){if(u!==me&&(!this.profiles[u]||S.blocks.includes(u)))continue;
@@ -434,6 +461,7 @@ const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},spa
         if(c.c){if(!p.ck)continue;try{text=this.cache["c"+c.c]||(this.cache["c"+c.c]=(await K.decJ(p.ck,c.c)).text)}catch(e){continue}}else if(!p.sealed)text=c.text;else continue;
         (cm[c.post]=cm[c.post]||[]).push({u,id:c.id,text:String(text||""),at:c.at})}}
     for(const k in cm)cm[k].sort((x,y)=>x.at-y.at);this.cm=cm;
+    try{await this.readCouples()}catch(e){}
     await this.readInvites();
     await this.readSpaces();
     await this.reconcile()},
@@ -473,12 +501,15 @@ const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},spa
       if(Object.keys(want).sort().join()!==Object.keys(it.wk).sort().join())changed=true;
       out.push(Object.assign({},it,{wk:want}))}
     if(changed){this.reconciling=true;await this.write("posts",{items:out,hidden:cur.hidden||[]});this.reconciling=false}},
-  async saveLinks(out,perms){return this.write("links",{out,p:await K.encJ(K.self,perms)})},
+  async saveLinks(out,perms,bl){return this.write("links",{out,p:await K.encJ(K.self,perms),bl:bl||((this.links[Cloud.uid]||{}).bl||[])})},
+  /* A block marker tells the blocked person's app to stop showing my content to them. It names only the pair label, not me or them. */
+  markBlock(id,on){const t=this.rel[id]&&this.rel[id].out,cur=((this.links[Cloud.uid]||{}).bl||[]);if(!t)return Promise.resolve();
+    const bl=on?Array.from(new Set(cur.concat([t]))).slice(-500):cur.filter(x=>x!==t);return this.saveLinks(Object.assign({},(this.links[Cloud.uid]||{}).out),this.perms,bl)},
   setLink(id,on){const out=Object.assign({},(this.links[Cloud.uid]||{}).out),t=this.rel[id]&&this.rel[id].out;if(!t)return Promise.resolve();if(on)out[t]=1;else delete out[t];
     const perms=Object.assign({},this.perms);if(!on)delete perms[id];return this.saveLinks(out,perms)},
   setPerm(id,p){return this.saveLinks(Object.assign({},(this.links[Cloud.uid]||{}).out),Object.assign({},this.perms,{[id]:p}))},
   /* Social off without deleting: move my shared documents into my private space, so nothing of mine is left readable. */
-  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match","consent"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
+  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match","consent","couples"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
   async unstash(){try{const s=await Cloud.priv("stash").get();if(!s.exists)return;const o=JSON.parse(s.data().json);for(const c in o)if(SHARED.includes(c))await Cloud.db.doc(c+"/"+Cloud.uid).set(o[c]);await Cloud.priv("stash").delete()}catch(e){}}
 };
 
@@ -535,14 +566,14 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
 
 /* ============ ui state ============ */
 const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
-  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},int:{seg:"track"},disc:{seg:"ideas",f:{}},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"feed"},compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
-const TABS=()=>[["home","Home","home"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
+  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},int:{seg:"track"},disc:{seg:"ideas",f:{}},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
+const TABS=()=>[["home","Home","home"],["feed","Feed","feed"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
 function paintToast(){let t=$(".toast");if(!ui.toast){t&&t.remove();return}if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");$("#app").appendChild(t)}t.textContent=ui.toast}
-/* Older names still work: Track, History and Insights live inside Intimacy; the Social feed is a page under Profile. */
+/* Older names still work: Track, History and Insights live inside Intimacy; the old Social page is Friends, under Feed. */
 function go(tab){if(["track","history","insights"].includes(tab)){ui.int.seg=tab;tab="intimacy"}
-  if(tab==="social"){ui.tab="profile";ui.page={type:"social"};ui.sheet=null;render(true);return}
+  if(tab==="social"){ui.tab="feed";ui.page={type:"social"};ui.sheet=null;render(true);return}
   ui.tab=tab;ui.page=null;ui.sheet=null;try{if(location.hash!=="#"+tab)location.hash=tab}catch(e){}render(true)}
 function openPage(page){ui.page=page;ui.sheet=null;ui.err="";render(true)}
 function sheet(s){ui.sheet=s;render()}
@@ -603,12 +634,12 @@ function render(resetScroll){
   if(ui.locked)h=vLock();
   else if(!S.onboarded)h=vOnboard();
   else{if(!ui.sheet&&legacySessions().length)ui.sheet={type:"legacy"}}
-  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Social")+vSocial(),spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
-  else h=({home:vHome,intimacy:vIntimacy,discover:vDiscover,story:vStory,profile:vProfile})[ui.tab]()+vTabs();
+  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Friends")+vSocial(),notifs:vNotifs,saved:vSaved,user:vUser,meEdit:vMeEdit,couple:vCouple,postNew:vPostNew,mod:vMod,spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
+  else h=({home:vHome,feed:vFeed,intimacy:vIntimacy,discover:vDiscover,story:vStory,profile:vProfile})[ui.tab]()+vTabs();
   const sheetNew=ui.sheet&&ui.sheet!==lastSheet;lastSheet=ui.sheet;
   app.classList.toggle("enter",changed);
   app.innerHTML=h+(ui.sheet?vSheet(sheetNew):"");
-  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();hydratePhotos();applyTheme();checkRewards();paintCel();if(ui.page&&ui.page.type==="cardEdit")refreshCard();
+  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();hydratePhotos();hydrateMedia();applyTheme();checkRewards();paintCel();if(ui.page&&ui.page.type==="cardEdit")refreshCard();
   if(sheetNew){const f=$(".sheet input,.sheet textarea")||$(".sheet");f&&f.focus({preventScroll:true})}
   else if(changed&&!ui.sheet){if(ns){ns.setAttribute("tabindex","-1");if(!typing())ns.focus({preventScroll:true})}countUp()}
 }
@@ -804,29 +835,20 @@ const RX=["🔥","❤️","👏","✨"];
 function cardHTML(c){const a=c.arc?Math.min(60,+c.arc||0):0;return`<div class="share s${[0,1,2,3,4,5].includes(c.style)?c.style:0}">${a?`<svg class="deco" viewBox="0 0 100 100" aria-hidden="true"><path d="${arc(50,50,40,0,Math.min(359.9,a*6))}" stroke="currentColor" stroke-width="9" fill="none" stroke-linecap="round"/></svg>`:""}<div class="big">${esc(c.title||"Less scrolling. More together.")}</div><div><div class="meta">${c.duration?`<span>${esc(c.duration)}</span>`:""}${c.category?`<span>${esc(c.category)}</span>`:""}${c.badge?`<span>${esc(c.badge)}</span>`:""}</div><div class="wm" style="margin-top:10px">vouz.</div></div></div>`}
 const names=ids=>ids.map(i=>i==="you"?"you":Soc.handle(i)).join(", ");
 function vSocial(){if(!S.settings.social)return vProfile();
-  if(Cloud.state!=="ready"||!K.ok)return`<div class="scroll"><div class="card"><h2>Social can't connect here.</h2><p class="sub">It needs a signed-in account and a browser that supports encryption. Your private tracking is unaffected.</p></div></div>`;
-  const seg=ui.soc.seg,me=Cloud.uid,head=`<div class="row between"><div><h3>Social</h3><h1>Good <em>company.</em></h1></div><button class="pill" data-act="sheet" data-s="guidelines">Guidelines</button></div><div class="seg3" role="group" aria-label="Social section">${[["feed","Feed"],["people","People"],["mine","My cards"]].map(([v,l])=>`<button data-act="socSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
-  if(Soc.status==="loading")return`<div class="scroll" aria-busy="true">${head}<div class="skel"></div><div class="skel"></div><span class="tiny" role="status">Loading the feed…</span></div>`;
-  if(Soc.status==="error"||Soc.status==="slow")return`<div class="scroll">${head}<div class="card"><p class="sub">The feed can't be reached right now. Nothing of yours has been shared in the meantime.</p></div></div>`;
-  let body=seg==="feed"?invitesCard():"";
-  if(seg==="feed"||seg==="mine"){const f=Soc.items.filter(x=>seg==="mine"?x.a===me:true);
-    body+=f.length?f.map(({a,it,key,sealed,aud,n})=>{const counts={};let mine=null;for(const u in Soc.reactions){if(u!==me&&(!Soc.profiles[u]||S.blocks.includes(u)))continue;const e=(Soc.reactions[u].r||{})[key];if(e&&RX.includes(e)){counts[e]=(counts[e]||0)+1;if(u===me)mine=e}}
-      const hidden=(Soc.posts[a]||{}).hidden||[],cms=(Soc.cm[key]||[]).filter(c=>!hidden.includes(c.id));
-      const who=!sealed?"Everyone on VOUZ":a!==me?"Shared with you":aud==="all"?`All connections (${n})`:`${n} chosen ${n===1?"person":"people"}`;
-      return`<article class="post"><div class="row"><span class="av" aria-hidden="true">${esc(Soc.handle(a)[0].toUpperCase())}</span><span class="grow"><b>${esc(Soc.handle(a))}</b>${a===me?' <span class="pill">you</span>':""}<span class="sub small" style="display:block">${ago(it.postedAt)} · ${sealed?ic("lock").replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')+" ":""}${who}</span></span><button class="ib bare" data-act="postMenu" data-a="${esc(a)}" data-id="${esc(it.id)}" aria-label="Card options">${ic("dots")}</button></div>
-       ${cardHTML(it.card||{})}${it.caption?`<p style="overflow-wrap:anywhere">${esc(it.caption)}</p>`:""}
-       <div class="rx" role="group" aria-label="Reactions">${RX.map(e=>`<button data-act="react" data-k="${esc(key)}" data-e="${e}" aria-pressed="${mine===e}" aria-label="React ${e}${counts[e]?", "+counts[e]:""}">${e}${counts[e]?" "+counts[e]:""}</button>`).join("")}</div>
-       ${cms.map(c=>`<div class="cm row between"><span><b>${esc(Soc.handle(c.u))}</b> ${esc(c.text)}</span>${c.u===me||a===me?`<button class="tiny link" data-act="${c.u===me?"delComment":"hideComment"}" data-id="${esc(c.id)}">${c.u===me?"Delete":"Hide"}</button>`:`<button class="tiny link" data-act="report" data-a="${esc(c.u)}" data-id="${esc(c.id)}" data-kind="comment">Report</button>`}</div>`).join("")}
-       <div class="row"><input type="text" id="c-${esc(key)}" maxlength="200" placeholder="Say something kind" autocomplete="off" aria-label="Add a comment"><button class="btn sm" data-act="comment" data-k="${esc(key)}">Send</button></div></article>`}).join("")
-     :`<div class="card"><h2>${seg==="mine"?"You haven't shared anything.":"Quiet in here."}</h2><p class="sub">${seg==="mine"?"Nothing posts by itself. Build a card from any Replay or achievement when you feel like it.":"Cards from you and the people you connect with show up here, newest first. There are no rankings and nothing is posted automatically, by anyone."}</p><button class="btn sm primary" style="align-self:flex-start" data-act="page" data-page="history">Pick a session to share</button></div>`}
-  else{const ids=Object.keys(Soc.rel).filter(i=>!S.blocks.includes(i)),R=Soc.rel;
+  if(Cloud.state!=="ready"||!K.ok)return`<div class="scroll"><div class="card"><h2>Friends can't connect here.</h2><p class="sub">It needs a signed-in account and a browser that supports encryption. Your private tracking is unaffected.</p></div></div>`;
+  const seg=ui.soc.seg==="mine"?"mine":"people",me=Cloud.uid,head=`<div class="row between"><div><h1>Your <em>people.</em></h1></div><button class="pill" data-act="sheet" data-s="guidelines">Guidelines</button></div><div class="seg3" role="group" aria-label="Friends section">${[["people","People"],["mine","My posts"]].map(([v,l])=>`<button data-act="socSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
+  if(Soc.status==="loading")return`<div class="scroll" aria-busy="true">${head}<div class="skel"></div><span class="tiny" role="status">Loading…</span></div>`;
+  if(Soc.status==="error"||Soc.status==="slow")return`<div class="scroll">${head}<div class="card"><p class="sub">This can't be reached right now. Nothing of yours has been shared in the meantime.</p></div></div>`;
+  let body="";
+  if(seg==="mine"){const f=Soc.items.filter(x=>x.a===me);body=f.length?f.map(x=>postView(x,null)).join(""):`<div class="card"><h2>You haven't posted anything.</h2><p class="sub">Nothing posts by itself. Share a memory, photo or idea from the Feed when you feel like it.</p><button class="btn sm primary" style="align-self:flex-start" data-act="postNew">New post</button></div>`}
+  else{const q=String(ui.soc.q||"").trim().toLowerCase(),R=Soc.rel,ids=Object.keys(Soc.rel).filter(i=>!S.blocks.includes(i)&&!Soc.blockedMe(i)&&(!q||Soc.handle(i).toLowerCase().includes(q)));
     const conn=ids.filter(i=>R[i].mutual),req=ids.filter(i=>R[i].theirs&&!R[i].mine&&!S.ignored.includes(i)),sent=ids.filter(i=>R[i].mine&&!R[i].theirs),disc=ids.filter(i=>!R[i].mine&&!R[i].theirs&&Soc.profiles[i].discoverable);
-    const person=(i,btn)=>`<div class="ach"><span class="av" aria-hidden="true">${esc(Soc.handle(i)[0].toUpperCase())}</span><span class="grow"><b>${esc(Soc.handle(i))}</b></span>${btn}</div>`;
-    body=`<div class="card"><h3>Your connect code</h3><p class="sub small">Connections only happen when both of you approve. VOUZ never looks at your contacts. Share this code yourself, with someone you trust.</p><div class="row"><input type="text" readonly value="${esc(me)}" id="mycode" aria-label="Your connect code"><button class="btn sm" data-act="copyCode">Copy</button></div><div class="row"><input type="text" id="addcode" placeholder="Paste someone's code" autocomplete="off" aria-label="Connect code to add"><button class="btn sm primary" data-act="addCode">Request</button></div></div>
-     ${req.length?`<div class="card"><h3>Requests</h3><div>${req.map(i=>person(i,`<button class="btn sm primary" data-act="approve" data-id="${esc(i)}">Approve</button><button class="btn sm ghost" data-act="ignore" data-id="${esc(i)}">Ignore</button>`)).join("")}</div></div>`:""}
-     <div class="card"><h3>Connected</h3><div>${conn.map(i=>person(i,`<button class="btn sm ghost" data-act="sheet" data-s="conn" data-id="${esc(i)}">Manage</button>`)).join("")||'<p class="sub small">No connections yet.</p>'}</div></div>
+    const person=(i,btn)=>{const pr=Soc.profiles[i]||{};return`<div class="ach">${pr.avatar?`<img class="av" src="${esc(pr.avatar)}" alt="">`:`<span class="av" aria-hidden="true">${esc(Soc.handle(i)[0].toUpperCase())}</span>`}<button class="grow link-u" style="text-align:left" data-act="openUser" data-id="${esc(i)}"><b>${esc(Soc.handle(i))}</b></button>${btn}</div>`};
+    body=`<input type="search" id="s-q" data-bind="soc.q" value="${esc(ui.soc.q||"")}" placeholder="Search people by name" aria-label="Search people" autocomplete="off"><div class="card"><h3>Your friend code</h3><p class="sub small">Connections only happen when both of you approve. VOUZ never looks at your contacts. Share this code yourself, with someone you trust.</p><div class="row"><input type="text" readonly value="${esc(me)}" id="mycode" aria-label="Your connect code"><button class="btn sm" data-act="copyCode">Copy</button></div><div class="row"><input type="text" id="addcode" placeholder="Paste someone's code" autocomplete="off" aria-label="Connect code to add"><button class="btn sm primary" data-act="addCode">Request</button></div></div>
+     ${req.length?`<div class="card"><h3>Requests</h3><div>${req.map(i=>person(i,`<button class="btn sm primary" data-act="approve" data-id="${esc(i)}">Accept</button><button class="btn sm ghost" data-act="ignore" data-id="${esc(i)}">Decline</button>`)).join("")}</div></div>`:""}
+     <div class="card"><h3>Friends</h3><div>${conn.map(i=>person(i,`<button class="btn sm ghost" data-act="sheet" data-s="conn" data-id="${esc(i)}">Manage</button>`)).join("")||'<p class="sub small">No friends yet.</p>'}</div></div>
      ${sent.length?`<div class="card"><h3>Waiting on them</h3><div>${sent.map(i=>person(i,`<button class="btn sm ghost" data-act="disconnect" data-id="${esc(i)}">Withdraw</button>`)).join("")}</div></div>`:""}
-     ${disc.length?`<div class="card"><h3>Open to connecting</h3><div>${disc.map(i=>person(i,`<button class="btn sm" data-act="request" data-id="${esc(i)}">Request</button>`)).join("")}</div></div>`:""}
+     ${disc.length?`<div class="card"><h3>People on VOUZ</h3><div>${disc.map(i=>person(i,`<button class="btn sm" data-act="request" data-id="${esc(i)}">Add friend</button>`)).join("")}</div></div>`:""}
      ${S.blocks.length?`<div class="card"><h3>Blocked</h3><div>${S.blocks.map(i=>`<div class="ach"><span class="grow sub">${esc(Soc.handle(i))}</span><button class="btn sm ghost" data-act="unblock" data-id="${esc(i)}">Unblock</button></div>`).join("")}</div></div>`:""}`}
   return`<div class="scroll">${head}${body}</div>`}
 
@@ -864,7 +886,7 @@ function vProfile(){const s=S.settings,p=Soc.me();
      ${sw("togglePin",!!s.pinHash,"Passcode lock",s.pinHash?"On. Asked for when you open or return to VOUZ.":"Ask for a 4-digit code when VOUZ opens.")}
      <p class="tiny">The passcode is a screen lock. It keeps the app closed to someone holding your unlocked phone; it does not encrypt what's stored in this browser, and a 4-digit code is not strong protection against someone with technical access to the device. Face ID and fingerprint unlock aren't available to a web page here.</p></div>
    <div class="card"><h3>Your data</h3><div class="row wrap"><button class="btn sm" data-act="exportData">Export</button><button class="btn sm" data-act="sheet" data-s="import">Import</button>${hasDemo()?`<button class="btn sm ghost" data-act="removeDemo">Remove demo data</button>`:`<button class="btn sm ghost" data-act="loadDemo">Load demo data</button>`}</div><p class="tiny">${S.sessions.filter(x=>!x.demo).length} sessions and ${S.exps.filter(x=>!x.demo).length} memories and plans of your own. Export gives you all of it as one JSON file; photos stay on this device and aren't included.</p></div>
-   ${s.social?`<div class="card"><h3>Connections</h3><div>${[["spaces","Shared spaces"],["social","People and social feed"]].map(([pg,l])=>`<button class="sess" data-act="page" data-page="${pg}"><span class="grow t">${l}</span>${ic("next")}</button>`).join("")}</div></div>`:""}
+   ${s.social?`<div class="card"><h3>Connections</h3><div>${[["spaces","Shared spaces"],["social","Friends and people"],["couple","Couple profile"]].concat(Soc.me()?[["user","Your public profile"]]:[]).concat(Soc.isOwner?[["mod","Moderation"]]:[]).map(([pg,l])=>`<button class="sess" data-act="page" data-page="${pg}"><span class="grow t">${l}</span>${ic("next")}</button>`).join("")}</div></div>`:""}
    <button class="card rowcard" data-act="page" data-page="rewards">${S.settings.games?badgeArt({id:"pf",g:"spark"},true,44):`<span class="badge" aria-hidden="true">${ic("spark")}</span>`}<span class="grow"><b>Rewards and achievements</b><span class="sub small" style="display:block">${S.settings.games?(r=>`Level ${r.level.n} · ${r.level.name} · ${r.balance} VP · ${r.badges.filter(b=>b.earnedAt).length} badges`)(R()):"Off"}</span></span>${ic("next")}</button>
    <div class="card"><h3>More</h3><div>${[["achievements","Private achievements"],["wearables","Wearables and Apple Watch"],["plus","VOUZ Plus"],["policy","Privacy, and what's built vs planned"]].map(([pg,l])=>`<button class="sess" data-act="page" data-page="${pg}"><span class="grow t">${l}</span>${ic("next")}</button>`).join("")}</div></div>
    <button class="btn danger block" data-act="sheet" data-s="deleteAccount">${ic("trash")} Delete account and all data</button>
@@ -906,14 +928,15 @@ function vSheet(isNew){const s=ui.sheet,close=`<button class="btn ghost block" d
     b=`<h2>Add someone</h2>${!Soc.ready()?`<p class="sub">${S.settings.social?"Social can't be reached right now, so invites can't be sent. Try again in a moment.":"Adding people works through Social, which is off. Turn it on in Profile, connect with someone, and they'll show up here."}</p>`:list.length?`<p class="sub">Pick from your connections. They get an invite and nothing is linked until they accept.</p><div>${list.map(i=>`<button class="ach" style="width:100%;text-align:left;min-height:52px" data-act="inviteAsk" data-id="${esc(i)}"><span class="av" aria-hidden="true">${esc(Soc.handle(i)[0].toUpperCase())}</span><span class="grow"><b>${esc(Soc.handle(i))}</b></span>${ic("plus")}</button>`).join("")}</div>`:`<p class="sub">${Soc.conns().length?"Everyone you're connected with is already on this session.":"You have no connections yet. Connect with someone under Social, People, and they'll show up here."}</p>`}${close}`}
   else if(s.type==="socialOn")b=`<h2>Turn on Social</h2><p class="sub">You'll get a Social tab. Nothing is shared until you build a card, preview it and confirm. You can turn this off again at any time.</p><label class="f" for="s-handle">Pick a handle <em>A nickname is fine. Your real name isn't used.</em><input type="text" id="s-handle" maxlength="24" autocomplete="off" value="${esc(s.handle||"")}"></label>${sw("sheetPrivate",s.priv,"Private profile","Stay out of the list of people open to connecting.")}${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block ${ui.busy?"busy":""}" data-act="socialOnYes">${ui.busy?"Setting up…":"Turn on Social"}</button>${close}`;
   else if(s.type==="handle")b=`<h2>Change handle</h2><label class="f" for="s-handle">Handle<input type="text" id="s-handle" maxlength="24" autocomplete="off" value="${esc((Soc.me()||{}).handle||"")}"></label>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="handleSave">Save</button>${close}`;
-  else if(s.type==="socialOff")b=`<h2>Turn off Social?</h2><p class="sub">Right away: your profile is deleted, nothing new can be shared, and your cards, comments, reactions and connections are taken out of shared storage. Tracking carries on exactly as before.</p>${sw("sheetWipe",s.wipe,"Delete them instead of keeping them","Off: they're kept in your private space and come back if you turn Social on again. On: they're gone for good.")}<button class="btn primary block ${ui.busy?"busy":""}" data-act="socialOffYes">Turn off Social</button>${close}`;
+  else if(s.type==="socialOff")b=`<h2>Turn off Social?</h2><p class="sub">Right away: your profile is deleted, nothing new can be shared, and your posts, comments, likes and connections are taken out of shared storage. Photos and videos on public posts are deleted. Tracking carries on exactly as before.</p>${sw("sheetWipe",s.wipe,"Delete them instead of keeping them","Off: they're kept in your private space and come back if you turn Social on again. On: they're gone for good.")}<button class="btn primary block ${ui.busy?"busy":""}" data-act="socialOffYes">Turn off Social</button>${close}`;
   else if(s.type==="wipeShared")b=`<h2>Delete everything you've shared?</h2><p class="sub">Removes all your cards, reactions and comments for everyone. Your private sessions aren't touched. This can't be undone.</p><button class="btn danger block" data-act="wipeSharedYes">Delete shared content</button>${close}`;
   else if(s.type==="deleteAccount")b=`<h2>Delete your account?</h2><p class="sub">This permanently erases every session, note and setting on this device${Cloud.state==="ready"?", your synced copy, your keys and everything you shared in Social":""}. There's no undo and no backup kept.</p><label class="f" for="del-in">Type DELETE to confirm<input type="text" id="del-in" autocomplete="off"></label>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn danger block ${ui.busy?"busy":""}" data-act="deleteAccountYes">${ui.busy?"Erasing…":"Erase everything"}</button>${close}`;
   else if(s.type==="pinSet")b=`<h2>Set a passcode</h2><label class="f" for="pin-new">4 digits<input class="pin" type="password" id="pin-new" inputmode="numeric" maxlength="4" autocomplete="off"></label><p class="tiny">A screen lock, not encryption. If you forget it, the only way back in is erasing this device's VOUZ data.</p>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="pinSave">Turn on lock</button>${close}`;
   else if(s.type==="forgot")b=`<h2>Forgot your passcode?</h2><p class="sub">VOUZ can't recover it. You can erase the data on this device and start again.${S.user.mode==="account"?" Your synced copy can be restored afterwards.":""}</p><button class="btn danger block" data-act="forgotErase">Erase this device's data</button>${close}`;
   else if(s.type==="import")b=`<h2>Import a backup</h2><p class="sub">Choose a VOUZ export file. Its sessions are added to what's here; duplicates are skipped.</p><input type="file" id="imp-file" accept="application/json,.json" aria-label="Backup file">${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="importYes">Import</button>${close}`;
   else if(s.type==="export")b=`<h2>Your export</h2><p class="sub">Downloads aren't available in this view, so here is the file's contents to copy.</p><textarea id="exp-out" readonly style="min-height:160px;font-size:12px">${esc(s.json)}</textarea><button class="btn primary block" data-act="copyExport">Copy</button>${close}`;
-  else if(s.type==="postMenu"){const mine=s.a===Cloud.uid,x=Soc.items.find(i=>i.a===s.a&&i.it.id===s.id);b=`<h2>${mine?"Your card":esc(Soc.handle(s.a))}</h2>${mine?`${x&&x.sealed?`<button class="btn block" data-act="audOpen" data-id="${esc(s.id)}">${ic("people")} Change who sees it</button>`:""}<button class="btn danger block" data-act="delPost" data-id="${esc(s.id)}">${ic("trash")} Delete this card</button>`:`<button class="btn block" data-act="report" data-a="${esc(s.a)}" data-id="${esc(s.id)}" data-kind="post">${ic("flag")} Report</button><button class="btn danger block" data-act="block" data-id="${esc(s.a)}">Block ${esc(Soc.handle(s.a))}</button>`}${close}`}
+  else if(s.type==="postMenu"){const mine=s.a===Cloud.uid,x=s.id?Soc.items.find(i=>i.a===s.a&&i.it.id===s.id):null;b=`<h2>${mine?"Your post":esc(Soc.handle(s.a))}</h2>${mine?`<button class="btn block" data-act="editPost" data-id="${esc(s.id)}">${ic("edit")} Edit caption or place</button>${x&&x.sealed?`<button class="btn block" data-act="audOpen" data-id="${esc(s.id)}">${ic("people")} Change who sees it</button>`:""}<button class="btn danger block" data-act="delPost" data-id="${esc(s.id)}">${ic("trash")} Delete this post</button>`:`${s.id?"":`<button class="btn block" data-act="openUser" data-id="${esc(s.a)}">${ic("user")} View profile</button>`}<button class="btn block" data-act="report" data-a="${esc(s.a)}" data-id="${esc(s.id||"profile")}" data-kind="${s.id?"post":"profile"}">${ic("flag")} Report</button><button class="btn danger block" data-act="block" data-id="${esc(s.a)}">Block ${esc(Soc.handle(s.a))}</button>`}${close}`}
+  else if(s.type==="editPost")b=`<h2>Edit post</h2><label class="f" for="ep-cap">Caption<textarea id="ep-cap" maxlength="500">${esc(s.caption)}</textarea></label><label class="f" for="ep-loc">Place tag <em>A neighborhood or city</em><input type="text" id="ep-loc" maxlength="40" value="${esc(s.loc)}" autocomplete="off"></label>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="editPostSave">Save</button>${close}`;
   else if(s.type==="aud"){const conns=Soc.conns();b=`<h2>Who sees this card</h2><div class="chips">${[["all","All connections"],["pick","Choose people"]].map(([v,l])=>`<button class="chip" data-act="audMode" data-v="${v}" aria-pressed="${s.aud===v}">${l}</button>`).join("")}</div>${s.aud==="pick"?`<div class="chips">${conns.map(i=>`<button class="chip" data-act="audPick" data-id="${esc(i)}" aria-pressed="${s.picks.includes(i)}">${esc(Soc.handle(i))}</button>`).join("")||'<span class="sub small">No approved connections yet.</span>'}</div>`:""}<p class="tiny">People you remove lose their key to this card straight away.</p><button class="btn primary block" data-act="audSave">Save</button>${close}`}
   else if(s.type==="report")b=`<h2>Report</h2><p class="sub">Goes to the people who moderate this space. The person isn't told who reported them.</p><div class="chips">${["Harassment","Pressure or coercion","Explicit imagery or detail","Shares someone without consent","Something else"].map(r=>`<button class="chip" data-act="reportWhy" data-v="${r}" aria-pressed="${s.why===r}">${r}</button>`).join("")}</div><button class="btn primary block" data-act="reportSend" ${s.why?"":"disabled"}>Send report</button>${close}`;
   else if(s.type==="conn"){const l=Soc.perms[s.id]||{};b=`<h2>${esc(Soc.handle(s.id))}</h2><p class="sub small">Choose what this connection can open of yours. Turning one off removes their key to those cards.</p>${sw("permRecaps",l.recaps!==false,"Recap cards","Connections-only recap cards you post.",`data-id="${esc(s.id)}"`)}${sw("permAch",l.achievements!==false,"Achievement cards","Connections-only achievement cards you post.",`data-id="${esc(s.id)}"`)}<button class="btn danger block" data-act="disconnect" data-id="${esc(s.id)}">Disconnect</button><button class="btn danger block" data-act="block" data-id="${esc(s.id)}">Block</button><button class="btn ghost block" data-act="closeSheet">Done</button>`}
@@ -929,7 +952,7 @@ function demoExps(){const b=startOfDay(Date.now()),mk=(back,kind,title,cat,o={})
 function demoSessions(){const out=[],base=startOfDay(Date.now()),plan=[[1,21,40,34,2,"Tender",5],[3,7,15,18,2,"Relaxed",4],[6,22,30,41,3,"Electric",4],[9,20,5,27,2,"Playful",5],[12,23,10,22,2,"",0],[15,8,20,31,2,"Connected",4],[19,21,0,48,4,"Tender",5],[23,22,45,16,2,"Curious",3],[27,19,30,36,2,"Playful",4],[33,10,0,29,2,"Relaxed",0],[38,23,20,24,3,"",4],[45,21,15,39,2,"Electric",5]];
   plan.forEach(([back,h,m,dur,n,mood,sat],i)=>{const st=addDays(base,-back)+h*36e5+m*6e4,d=dur*60+((i*17)%50);out.push({id:"demo"+i,demo:true,title:"",start:st,durationSec:d,segments:i%3?null:[[st,st+d*400],[st+d*400+18e4,st+d*1e3+18e4]],category:n>2?"poly":"couple",participants:n,satisfaction:sat||null,sharedNote:"",tags:i%4===0?["weekend"]:[],mood,notes:"",reflection:i===0?"Demo reflection: an unhurried evening.":"",hrAvg:i%2?"":String(96+i*2),hrPeak:i%2?"":String(128+i*3),people:[],createdAt:st,updatedAt:st})});return out}
 function compose(o){ui.compose=Object.assign({kind:"recap",sid:null,title:"",caption:"",showDuration:true,showCategory:false,badge:"",style:0,aud:"all",picks:[],step:"edit"},o);if(ui.compose.kind!=="recap"&&S.settings.defaultVis==="everyone")ui.compose.aud="everyone";openPage({type:"compose"})}
-const setProfile=h=>Soc.write("profiles",{handle:h||Soc.me().handle,discoverable:!S.settings.privateProfile,pub:S.keys.pub,at:Date.now()});
+const setProfile=h=>Soc.write("profiles",Object.assign({},Soc.me(),{handle:h||Soc.me().handle,discoverable:!S.settings.privateProfile,pub:S.keys.pub,at:Date.now()}));
 const myPosts=()=>Soc.posts[Cloud.uid]||{};
 const busy=async f=>{if(ui.busy)return;ui.busy=true;render();try{await f()}finally{ui.busy=false;render()}};
 const A={
@@ -938,7 +961,7 @@ const A={
     if(p&&p.type==="expEdit"&&ui.xd){ui.xd.added.forEach(id=>Photos.del(id));ui.xd=null}
     if(p&&p.type==="compose")ui.compose=null;
     ui.page=p&&p.from?p.from:null;ui.err="";render(true)},
-  page(e){openPage({type:e.dataset.page})},
+  page(e){openPage({type:e.dataset.page,...(e.dataset.page==="user"?{id:Cloud.uid}:{}),from:ui.page})},
   sheet(e){ui.err="";sheet({type:e.dataset.s,id:e.dataset.id})},
   closeSheet(){ui.err="";sheet(null)},
   overlay(e,ev){if(ev.target===e&&!(ui.sheet&&ui.sheet.type==="legacy"))A.closeSheet()},
@@ -1038,10 +1061,10 @@ const A={
       S.settings.social=true;S.settings.privateProfile=priv;save();await Soc.start();await setProfile(h.slice(0,24));ui.sheet=null;ui.err="";ui.busy=false;go("social");toast("Social is on. Nothing is shared yet.")})},
   async handleSave(){const h=($("#s-handle").value||"").trim();if(h.length<2){ui.err="Pick a handle of at least 2 characters.";return render()}ui.sheet=null;ui.err="";await setProfile(h.slice(0,24));render()},
   socialOffYes(){const wipe=ui.sheet.wipe;return busy(async()=>{ui.sheet=null;
-    if(Cloud.state==="ready"){if(!wipe)await Soc.stash();for(const c of SHARED)await Soc.write(c,null);
+    if(Cloud.state==="ready"){if(!wipe)await Soc.stash();await Media.purge(!wipe);for(const c of SHARED)await Soc.write(c,null);
       if(wipe){await Promise.allSettled([Cloud.priv("stash").delete(),Cloud.priv("keys").delete()]);S.keys=null;K.reset()}}
     S.settings.social=false;save();Soc.stop();if(ui.tab==="social")ui.tab="profile";ui.page=null;ui.busy=false;render(true);toast(wipe?"Social is off and your shared content is deleted.":"Social is off. Your cards are stored privately.")})},
-  async wipeSharedYes(){ui.sheet=null;for(const c of ["posts","reactions","comments"])await Soc.write(c,null);render();toast("Everything you shared is deleted.")},
+  async wipeSharedYes(){ui.sheet=null;await Media.purge(false);for(const c of ["posts","reactions","comments","couples"])await Soc.write(c,null);render();toast("Everything you shared is deleted.")},
   async togglePrivate(){S.settings.privateProfile=!S.settings.privateProfile;save();render();await setProfile()},
   defVis(e){S.settings.defaultVis=e.dataset.v;save();render()},
   react(e){const cur=Object.assign({},(Soc.reactions[Cloud.uid]||{}).r),k=e.dataset.k;if(cur[k]===e.dataset.e)delete cur[k];else cur[k]=e.dataset.e;buzz(8);Soc.write("reactions",{r:cur});render()},
@@ -1051,7 +1074,7 @@ const A={
   delComment(e){Soc.write("comments",{items:((Soc.comments[Cloud.uid]||{}).items||[]).filter(c=>c.id!==e.dataset.id)})},
   hideComment(e){const cur=myPosts();Soc.write("posts",{items:cur.items||[],hidden:(cur.hidden||[]).concat([e.dataset.id]).slice(-500)})},
   postMenu(e){sheet({type:"postMenu",a:e.dataset.a,id:e.dataset.id})},
-  delPost(e){const id=e.dataset.id;sheet({type:"confirm",title:"Delete this card?",body:"It disappears from every feed. Your private session isn't affected.",yes:"Delete card",danger:true,fn(){const cur=myPosts();Soc.write("posts",{items:(cur.items||[]).filter(i=>i.id!==id),hidden:cur.hidden||[]});render();toast("Card deleted.")}})},
+  delPost(e){const id=e.dataset.id;sheet({type:"confirm",title:"Delete this post?",body:"It disappears from every feed, with its photos and video. Your private records aren't affected.",yes:"Delete post",danger:true,fn(){const cur=myPosts(),x=Soc.items.find(i=>i.a===Cloud.uid&&i.it.id===id);Soc.write("posts",{items:(cur.items||[]).filter(i=>i.id!==id),hidden:cur.hidden||[]});if(x)(x.it.media||[]).forEach(m=>Media.del(m));render();toast("Post deleted.")}})},
   audOpen(e){const x=Soc.items.find(i=>i.a===Cloud.uid&&i.it.id===e.dataset.id);if(!x)return;sheet({type:"aud",id:e.dataset.id,aud:x.aud==="all"?"all":"pick",picks:Array.isArray(x.aud)?x.aud.slice():[]})},
   audMode(e){ui.sheet.aud=e.dataset.v;render()},
   audPick(e){const p=ui.sheet.picks,i=p.indexOf(e.dataset.id);if(i>=0)p.splice(i,1);else p.push(e.dataset.id);render()},
@@ -1060,8 +1083,8 @@ const A={
   report(e){sheet({type:"report",a:e.dataset.a,id:e.dataset.id,kind:e.dataset.kind,why:""})},
   reportWhy(e){ui.sheet.why=e.dataset.v;render()},
   async reportSend(){const s=ui.sheet;ui.sheet=null;render();try{const ref=Cloud.db.doc("reports/"+Cloud.uid),snap=await ref.get();const items=((snap.exists&&snap.data().items)||[]).concat([{id:uid(),about:s.a,ref:s.id,kind:s.kind,why:s.why,at:Date.now()}]).slice(-100);await ref.set({items});toast("Report sent. Thank you.")}catch(err){toast("Couldn't send the report. Try again.")}},
-  async block(e){const id=e.dataset.id;ui.sheet=null;await Soc.setLink(id,false);if(!S.blocks.includes(id))S.blocks.push(id);save();Soc.sched();render();toast("Blocked. Their access to your connections-only cards is removed.")},
-  unblock(e){S.blocks=S.blocks.filter(i=>i!==e.dataset.id);save();Soc.sched();render()},
+  async block(e){const id=e.dataset.id;ui.sheet=null;await Soc.setLink(id,false);try{await Soc.markBlock(id,true)}catch(x){}if(!S.blocks.includes(id))S.blocks.push(id);save();Soc.sched();render();toast("Blocked. They can't see your posts or profile, and you won't see theirs.")},
+  unblock(e){S.blocks=S.blocks.filter(i=>i!==e.dataset.id);Soc.markBlock(e.dataset.id,false).catch(()=>{});save();Soc.sched();render()},
   async request(e){await Soc.setLink(e.dataset.id,true);toast("Request sent. They need to approve it.")},
   async approve(e){await Soc.setLink(e.dataset.id,true);toast("Connected.")},
   ignore(e){S.ignored.push(e.dataset.id);save();render()},
@@ -1909,9 +1932,287 @@ function consentCard(){if(!S.settings.social)return"";const open=Soc.creq.filter
 function consentGiven(){if(!S.settings.social)return"";const given=Soc.creq.filter(r=>S.consent.ans&&S.consent.ans[r.id]===true);if(!given.length)return"";
   return`<div class="card"><h3>Sharing you've agreed to</h3><div>${given.map(r=>`<div class="hist"><span class="grow">“${esc(r.title)}” <span class="sub small">by ${esc(Soc.handle(r.by))}</span></span><button class="btn sm ghost" data-act="consentAns" data-v="${esc(r.id)}" data-ok="0">Withdraw</button></div>`).join("")}</div><p class="tiny">Withdrawing stops new cards. A card already shared can't be called back.</p></div>`}
 
-function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
+/* ============ Feed: Explore & Friends ============
+   Posts live in each author's posts document. Public posts are stored readable; Friends and Private posts are sealed
+   (see Soc.seal) so only the people they were shared with can open them. Media is stored in pieces under
+   media/<author>/m/<id>-<n>, encrypted with a per-file key that travels only inside the sealed post. */
+const PKINDS={memory:"Memory card",photo:"Photo",video:"Video",date:"Date",trip:"Trip",milestone:"Milestone",idea:"Recommendation",achievement:"Badge"};
+const PK_CATS={date:["dinner","romantic","movie","celebration"],trip:["trip"],milestone:["milestone"]};
+const VIS={public:"Public",friends:"Friends",private:"Private"};
+const visOf=x=>!x.sealed?"public":x.a===Cloud.uid?(x.aud==="all"?"friends":"private"):(x.it.v==="private"?"private":"friends");
+const LOC_BAD=/\d{2,}|\b(st|street|ave|avenue|rd|road|apt|unit|suite|blvd|lane|ln|dr|drive)\b\.?/i;   // a neighborhood or city, never an address or coordinates
+const u8b64=u=>{let s="";for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
+
+/* Videos can carry the camera's GPS position in their metadata. Overwrite those boxes and any ISO 6709 coordinates in place. */
+function scrubVideo(u){const T=[[0xA9,0x78,0x79,0x7A],[0x6C,0x6F,0x63,0x69]];let hits=0;
+  for(let i=4;i<u.length-4;i++){for(const t of T){if(u[i]===t[0]&&u[i+1]===t[1]&&u[i+2]===t[2]&&u[i+3]===t[3]){const sz=(u[i-4]<<24|u[i-3]<<16|u[i-2]<<8|u[i-1])>>>0;
+      if(sz>=8&&i-4+sz<=u.length){u[i]=0x66;u[i+1]=0x72;u[i+2]=0x65;u[i+3]=0x65;u.fill(0,i+4,i-4+sz);hits++}}}}
+  let s="";for(let i=0;i<u.length;i+=65536)s+=String.fromCharCode.apply(null,u.subarray(i,i+65536));
+  const re=/[+-]\d{1,2}\.\d{3,}[+-]\d{1,3}\.\d{3,}/g;let m;while((m=re.exec(s))){u.fill(0x30,m.index,m.index+m[0].length);hits++}
+  return hits}
+async function videoMeta(blob){return new Promise(res=>{const v=document.createElement("video");v.preload="metadata";v.muted=true;const u=URL.createObjectURL(blob);
+  const done=r=>{URL.revokeObjectURL(u);res(r)};v.onloadedmetadata=()=>done({dur:v.duration,w:v.videoWidth,h:v.videoHeight});v.onerror=()=>done(null);setTimeout(()=>done(null),5000);v.src=u})}
+async function shrinkTo(file,max,q){const bmp=await createImageBitmap(file),k=Math.min(1,max/Math.max(bmp.width,bmp.height)),c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(bmp.width*k));c.height=Math.max(1,Math.round(bmp.height*k));c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);if(bmp.close)bmp.close();
+  return{blob:await new Promise((r,j)=>c.toBlob(b=>b?r(b):j(new Error("encode")),"image/jpeg",q)),w:c.width,h:c.height}}
+const Media={CH:180000,MAXV:10e6,MAXS:60,urls:new Map(),
+  async put(file,seal){let blob,t,mime,w=0,h=0;
+    if(/^image\//.test(file.type)){const r=await shrinkTo(file,1440,.82);blob=r.blob;w=r.w;h=r.h;t="image";mime="image/jpeg"}
+    else if(/^video\//.test(file.type)){if(file.size>this.MAXV)throw{code:"too_big"};const meta=await videoMeta(file);if(meta&&meta.dur>this.MAXS+0.5)throw{code:"too_long"};
+      const u=new Uint8Array(await file.arrayBuffer());scrubVideo(u);blob=new Blob([u],{type:file.type});t="video";mime=file.type;w=meta?meta.w:0;h=meta?meta.h:0}
+    else throw{code:"type"};
+    const bytes=new Uint8Array(await blob.arrayBuffer()),id=uid(),n=Math.ceil(bytes.length/this.CH);let raw=null,key=null;
+    if(seal){raw=crypto.getRandomValues(new Uint8Array(32));key=await K.aes(raw)}
+    for(let i=0;i<n;i++){const part=bytes.subarray(i*this.CH,(i+1)*this.CH);await Cloud.db.doc("media/"+Cloud.uid+"/m/"+id+"-"+i).set({d:key?await K.enc(key,part):u8b64(part),i,n,e:!!key})}
+    S.myMedia=(S.myMedia||[]).concat([{id,n,p:!key}]).slice(-2000);save();   // private index, so my uploads can always be found and deleted
+    return{id,t,n,mime,w,h,...(raw?{k:b64(raw)}:{})}},
+  async blob(a,m){const ck=a+"|"+m.id;if(this.urls.has(ck))return this.urls.get(ck);const key=m.k?await K.aes(ub64(m.k)):null,parts=[];
+    for(let i=0;i<Math.min(m.n,80);i++){const d=await Cloud.db.doc("media/"+a+"/m/"+m.id+"-"+i).get();if(!d.exists)throw{code:"missing"};const v=d.data().d;parts.push(key?await K.dec(key,v):ub64(v))}
+    const b=new Blob(parts,{type:m.mime||"application/octet-stream"});this.urls.set(ck,b);return b},
+  async del(m,who){for(let i=0;i<m.n;i++){try{await Cloud.db.doc("media/"+(who||Cloud.uid)+"/m/"+m.id+"-"+i).delete()}catch(e){}}
+    if(!who&&S.myMedia){S.myMedia=S.myMedia.filter(x=>x.id!==m.id);saveLocal()}},
+  /* Delete my uploads: all of them, or only the unencrypted (public) ones. */
+  async purge(onlyPublic){for(const m of (S.myMedia||[]).slice())if(!onlyPublic||m.p)await this.del(m)}};
+/* Fill <img>/<video> elements once their media arrives. Images use inline data so nothing depends on blob addresses. */
+function hydrateMedia(){document.querySelectorAll("[data-media]:not([data-ld])").forEach(async el=>{el.dataset.ld="1";const[a,id]=el.dataset.media.split("|"),m=Soc.media[a+"|"+id];if(!m)return;
+  try{const b=await Media.blob(a,m);if(el.tagName==="VIDEO"){const u=URL.createObjectURL(b);el.onerror=async()=>{el.onerror=null;el.src="data:"+m.mime+";base64,"+await blobB64(b)};el.src=u}else el.src="data:"+m.mime+";base64,"+await blobB64(b);el.closest(".pm")&&el.closest(".pm").classList.add("ok")}
+  catch(x){const p=el.closest(".pm");if(p){p.classList.add("gone");p.setAttribute("aria-label","Media unavailable")}}})}
+
+/* ---- couple profiles: live only while both partners hold the identical, approved version ---- */
+async function coupleHash(c){return hex(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify([c.id,[c.a,c.b].sort(),c.data])))).slice(0,24)}
+const cleanCouple=d=>({name:String(d.name||"").slice(0,40),bio:String(d.bio||"").slice(0,200),photo:typeof d.photo==="string"&&d.photo.startsWith("data:image/jpeg;base64,")&&d.photo.length<60000?d.photo:"",favs:(d.favs||[]).filter(f=>IDEA[f]).slice(0,6),badges:(d.badges||[]).filter(b=>RW.BADGES.some(x=>x.id===b)).slice(0,6)});
+Object.assign(Soc,{media:{},couplesLive:{},couplesPending:[],coupleMine:null,
+  blockedMe(a){const r=this.rel[a];return!!(r&&((this.links[a]||{}).bl||[]).includes(r.in))},
+  async readCouples(){const me=Cloud.uid,live={},pend=[];let mine=null;
+    for(const u in this.couples){if(S.blocks.includes(u))continue;for(const c of ((this.couples[u]||{}).items||[])){if(!c||!c.id||!c.with||c.with===u)continue;
+      const other=((this.couples[c.with]||{}).items||[]).find(x=>x&&x.id===c.id&&x.with===u);const data=cleanCouple(c.data||{}),h=await coupleHash({id:c.id,a:u,b:c.with,data});
+      if(h!==c.h)continue;
+      if(other&&other.h===c.h){live[c.id]={id:c.id,members:[u,c.with].sort(),data,h};if(u===me||c.with===me)mine=live[c.id]}
+      else if(c.with===me)pend.push({id:c.id,from:u,data,h,item:c})}}
+    this.couplesLive=live;this.couplesPending=pend;this.coupleMine=mine||null;
+    const myItem=((this.couples[me]||{}).items||[])[0];if(!mine&&myItem)this.coupleMine={id:myItem.id,members:[me,myItem.with].sort(),data:cleanCouple(myItem.data),h:myItem.h,waiting:true}},
+  coupleOf(u){return Object.values(this.couplesLive).find(c=>c.members.includes(u))||null},
+  /* A post shown as a couple's needs the partner's approval for that exact post. */
+  coupleOk(x){if(!x.it.co)return true;const c=this.couplesLive[x.it.co];if(!c||!c.members.includes(x.a))return false;const p=c.members.find(u=>u!==x.a);return((this.couples[p]||{}).postOk||[]).includes(x.key)}
+});
+
+/* ---- ranking: every factor is shown to the reader on request ---- */
+function myInterests(){const g=new Set(S.settings.chPrefs.interests||[]);for(const e of S.exps)if(!e.demo&&e.idea&&IDEA[e.idea])IDEA[e.idea].g.forEach(x=>g.add(x));const cats=new Set(S.exps.filter(e=>!e.demo).map(e=>e.cat));return{g,cats}}
+function likeCount(key){let n=0;for(const u in Soc.reactions){if(S.blocks.includes(u))continue;const v=(Soc.reactions[u].r||{})[key];if(v)n++}return n}
+function likedByMe(key){return!!((Soc.reactions[Cloud.uid]||{}).r||{})[key]}
+function scorePost(x,ctx){const age=(Date.now()-(x.it.postedAt||0))/36e5,rec=Math.round(40*Math.pow(.5,age/72)),eng=Math.min(25,Math.round(10*Math.log2(1+likeCount(x.key)+2*(Soc.cm[x.key]||[]).length)));
+  const it=x.it,idea=it.idea&&IDEA[it.idea],intr=(idea&&idea.g.some(g=>ctx.g.has(g)))||(it.cat&&ctx.cats.has(it.cat))?15:0,qual=((it.media||[]).length?5:0)+(String(it.caption||"").length>=30?3:0)+(it.loc?2:0);
+  return{rec,eng,intr,qual,total:rec+eng+intr+qual}}
+function feedFilter(list,f){const q=String(f.q||"").trim().toLowerCase();return list.filter(x=>{const it=x.it;if(f.kind&&f.kind!=="all"){const k=f.kind==="media"?["photo","video"].includes(it.kind):it.kind===f.kind;if(!k)return false}
+  if(!q)return true;return[it.title,it.caption,it.loc,Soc.handle(x.a),it.co&&Soc.couplesLive[it.co]?Soc.couplesLive[it.co].data.name:""].some(v=>String(v||"").toLowerCase().includes(q))})}
+function visiblePosts(){return Soc.items.filter(x=>x.a===Cloud.uid||(!S.blocks.includes(x.a)&&!Soc.blockedMe(x.a)&&Soc.coupleOk(x)))}
+function exploreList(){const f=ui.feed,ctx=myInterests(),pub=feedFilter(visiblePosts().filter(x=>!x.sealed&&x.a!==Cloud.uid),f);
+  if(f.mode==="latest")return pub.map(x=>({x,s:null}));
+  const scored=pub.map(x=>({x,s:scorePost(x,ctx)})).sort((a,b)=>b.s.total-a.s.total),seen={},out=[];
+  for(const r of scored){const n=seen[r.x.a]=(seen[r.x.a]||0)+1;r.s.div=n>1?-12*(n-1):0;r.s.total+=r.s.div}   // no author fills the feed
+  return scored.sort((a,b)=>b.s.total-a.s.total)}
+function friendsList(){const fr=new Set(Soc.conns());return visiblePosts().filter(x=>fr.has(x.a)||x.it.co&&Soc.couplesLive[x.it.co]&&Soc.couplesLive[x.it.co].members.some(u=>fr.has(u))&&x.a!==Cloud.uid)}
+
+/* ---- post view ---- */
+function authorLine(x){const c=x.it.co&&Soc.couplesLive[x.it.co];return c?`<button class="link-u" data-act="openCouple" data-id="${esc(c.id)}">${esc(c.data.name||names(c.members))}</button>`:`<button class="link-u" data-act="openUser" data-id="${esc(x.a)}">${esc(Soc.handle(x.a))}</button>`}
+function postView(x,s){const it=x.it,me=Cloud.uid,mine=x.a===me,v=visOf(x),liked=likedByMe(x.key),lc=likeCount(x.key),hidden=(Soc.posts[x.a]||{}).hidden||[],cms=(Soc.cm[x.key]||[]).filter(c=>!hidden.includes(c.id)&&!S.blocks.includes(c.u)),open=ui.feed.open===x.key;
+  const media=(it.media||[]).slice(0,4),saved=(S.saved||[]).includes(x.key),canShare=!x.sealed||mine,waitCo=it.co&&mine&&!Soc.coupleOk(x);
+  const av=(()=>{const c=it.co&&Soc.couplesLive[it.co];const ph=c?c.data.photo:(Soc.profiles[x.a]||{}).avatar;return ph?`<img class="av" src="${esc(ph)}" alt="">`:`<span class="av" aria-hidden="true">${esc((c?c.data.name:Soc.handle(x.a))[0]||"?").toUpperCase()}</span>`})();
+  return`<article class="post2" aria-label="Post by ${esc(Soc.handle(x.a))}">
+   <div class="row ph2">${av}<span class="grow"><b>${authorLine(x)}</b><span class="sub small" style="display:block">${ago(it.postedAt)}${it.editedAt?" · edited":""} · ${{public:"Public",friends:"Friends",private:"Private"}[v]}${it.loc?` · ${ic("pin")} ${esc(it.loc)}`:""}</span></span><button class="ib bare" data-act="postMenu" data-a="${esc(x.a)}" data-id="${esc(it.id)}" aria-label="Post options">${ic("dots")}</button></div>
+   ${waitCo?`<p class="tiny warn-t">Waiting for your partner to approve posting this as your couple. Until then only you see it.</p>`:""}
+   ${media.length?`<div class="pmg n${media.length}">${media.map(m=>`<div class="pm" style="${m.w&&m.h&&media.length===1?`aspect-ratio:${m.w}/${m.h}`:""}">${m.t==="video"?`<video data-media="${esc(x.a)}|${esc(m.id)}" controls playsinline preload="metadata" aria-label="Video"></video>`:`<img data-media="${esc(x.a)}|${esc(m.id)}" alt="${esc(it.title||"Photo")}">`}</div>`).join("")}</div>`:it.card&&!it.title?cardHTML(it.card):""}
+   ${it.title?`<div class="ptitle">${it.kind&&PKINDS[it.kind]?`<span class="tiny">${PKINDS[it.kind]}</span>`:""}<b>${esc(it.title)}</b>${it.badge?`<span class="sub small">${esc(it.badge.d||"")}</span>`:""}</div>`:""}
+   ${it.caption?`<p class="pcap">${esc(it.caption)}</p>`:""}
+   <div class="pact"><button data-act="like" data-k="${esc(x.key)}" aria-pressed="${liked}" aria-label="${liked?"Unlike":"Like"}${lc?", "+lc+" likes":""}">${ic("heart")}<span>${lc||""}</span></button>
+    <button data-act="cmOpen" data-k="${esc(x.key)}" aria-expanded="${open}" aria-label="Comments, ${cms.length}">${ic("chat")}<span>${cms.length||""}</span></button>
+    <span class="grow"></span>${canShare?`<button data-act="sharePost" data-a="${esc(x.a)}" data-id="${esc(it.id)}" aria-label="Share">${ic("share")}</button>`:""}
+    <button data-act="savePost" data-k="${esc(x.key)}" aria-pressed="${saved}" aria-label="${saved?"Remove from saved":"Save"}">${ic("bookmark")}</button></div>
+   ${s&&ui.feed.why===x.key?`<p class="tiny why">Why you're seeing this: recent ${s.rec}, engagement ${s.eng}, your interests ${s.intr}, detail ${s.qual}${s.div?", spread across people "+s.div:""}. Total ${s.total}.</p>`:s?`<button class="tiny link why" data-act="why" data-k="${esc(x.key)}">Why this post?</button>`:""}
+   ${open?`<div class="pcm">${cms.map(c=>`<div class="cm row between"><span><b>${esc(Soc.handle(c.u))}</b> ${esc(c.text)}</span>${c.u===me||mine?`<button class="tiny link" data-act="${c.u===me?"delComment":"hideComment"}" data-id="${esc(c.id)}">${c.u===me?"Delete":"Hide"}</button>`:`<button class="tiny link" data-act="report" data-a="${esc(c.u)}" data-id="${esc(c.id)}" data-kind="comment">Report</button>`}</div>`).join("")}
+     <div class="row"><input type="text" id="c-${esc(x.key)}" maxlength="200" placeholder="Add a comment" autocomplete="off" aria-label="Add a comment"><button class="btn sm" data-act="comment" data-k="${esc(x.key)}">Send</button></div></div>`:""}
+  </article>`}
+
+function notifs(){const me=Cloud.uid,out=[],myKeys=new Set(Soc.items.filter(x=>x.a===me).map(x=>x.key)),title=k=>{const x=Soc.items.find(i=>i.key===k);return x?(x.it.title||x.it.caption||"your post").slice(0,40):"your post"};
+  for(const i in Soc.rel){const r=Soc.rel[i];if(r.theirs&&!r.mine&&!S.ignored.includes(i)&&!S.blocks.includes(i))out.push({at:0,t:`${Soc.handle(i)} sent you a friend request`,act:"page",pg:"social",need:1})}
+  for(const u in Soc.reactions){if(u===me||S.blocks.includes(u))continue;for(const[k,v] of Object.entries(Soc.reactions[u].r||{}))if(myKeys.has(k))out.push({at:v&&v.at||0,t:`${Soc.handle(u)} liked “${title(k)}”`})}
+  for(const k of myKeys)for(const c of (Soc.cm[k]||[]))if(c.u!==me&&!S.blocks.includes(c.u))out.push({at:c.at||0,t:`${Soc.handle(c.u)} commented on “${title(k)}”: ${String(c.text).slice(0,60)}`})
+  for(const p of Soc.couplesPending)out.push({at:0,t:`${Soc.handle(p.from)} asked you to approve a couple profile: ${p.data.name}`,act:"page",pg:"couple",need:1});
+  for(const x of jointPending())out.push({at:x.it.postedAt,t:`${Soc.handle(x.a)} wants to post “${(x.it.title||x.it.caption||"a post").slice(0,40)}” as your couple`,act:"page",pg:"couple",need:1});
+  for(const r of Soc.creq)if(!(r.id in (S.consent.ans||{})))out.push({at:r.at||0,t:`${Soc.handle(r.by)} asked to share “${r.title}”`,act:"tab",tab:"home",need:1});
+  return out.sort((a,b)=>(b.need||0)-(a.need||0)||b.at-a.at)}
+const unread=()=>notifs().filter(n=>n.need||n.at>(S.notifSeen||0)).length;
+function jointPending(){const me=Cloud.uid,c=Soc.coupleMine;if(!c||c.waiting)return[];const p=c.members.find(u=>u!==me),ok=(Soc.couples[me]||{}).postOk||[];
+  return Soc.items.filter(x=>x.a===p&&x.it.co===c.id&&!ok.includes(x.key)&&!(S.declinedJoint||[]).includes(x.key))}
+
+function vFeed(){const f=ui.feed,ready=Soc.ready(),me=Cloud.uid;
+  const n=ready?unread():0,head=`<div class="row between"><div><h1>Feed</h1></div><div class="row" style="gap:6px">${ready?`<button class="ib" data-act="page" data-page="notifs" aria-label="Notifications${n?", "+n+" new":""}">${ic("bell")}${n?`<span class="dot">${n>9?"9+":n}</span>`:""}</button><button class="ib" data-act="page" data-page="social" aria-label="Friends">${ic("people")}</button><button class="ib" data-act="page" data-page="saved" aria-label="Saved posts">${ic("bookmark")}</button>`:""}</div></div>`;
+  if(!S.settings.social)return`<div class="scroll">${head}<div class="card"><h2>See what others are <em>up to.</em></h2><p class="sub">Explore shows public posts from people on VOUZ. Friends shows posts from people you've added. You choose who sees every post you make, and nothing is posted for you.</p><p class="sub small">Turn on Connections in Profile to start. It's off by default.</p><button class="btn sm primary" style="align-self:flex-start" data-act="tab" data-tab="profile">Profile</button></div></div>`;
+  if(!ready)return`<div class="scroll" aria-busy="true">${head}${Soc.status==="error"||Soc.status==="slow"?`<div class="card"><p class="sub">The feed can't be reached right now. Nothing of yours has been shared in the meantime.</p></div>`:`<div class="skel tall"></div><div class="skel tall"></div><span class="tiny" role="status">Loading the feed…</span>`}</div>`;
+  const tabs=`<div class="seg3" role="group" aria-label="Feed">${[["explore","Explore"],["friends","Friends"]].map(([v,l])=>`<button data-act="feedSeg" data-v="${v}" aria-pressed="${f.seg===v}">${l}</button>`).join("")}</div>`;
+  const compose=`<button class="card rowcard" data-act="postNew"><span class="av" aria-hidden="true">${esc(((Soc.me()||{}).handle||"?")[0].toUpperCase())}</span><span class="grow sub">Share a memory, a date, a photo…</span>${ic("plus")}</button>`;
+  let list,body;
+  if(f.seg==="explore"){list=exploreList();
+    body=`<div class="row"><input type="search" id="f-q" data-bind="feed.q" value="${esc(f.q||"")}" placeholder="Search posts, places, people" aria-label="Search posts" autocomplete="off"></div>
+     <div class="chips sm scrollx" role="group" aria-label="Kind">${[["all","All"],["date","Dates"],["trip","Trips"],["milestone","Milestones"],["memory","Memory cards"],["media","Photos & video"],["idea","Ideas"],["achievement","Badges"]].map(([v,l])=>`<button class="chip" data-act="feedKind" data-v="${v}" aria-pressed="${(f.kind||"all")===v}">${l}</button>`).join("")}</div>
+     <div class="row between"><span class="tiny">${f.mode==="latest"?"Newest first, no personalization.":"Mixed by recency, engagement, your interests and detail, never popularity alone."}</span><button class="link small" data-act="feedMode">${f.mode==="latest"?"For you":"Latest"}</button></div>`;
+    body+=list.length?list.slice(0,f.n).map(r=>postView(r.x,r.s)).join(""):`<div class="card line"><p class="sub small">${f.q||f.kind&&f.kind!=="all"?"Nothing matches. Try another search or filter.":"No public posts yet. Be the first: share something with Public visibility."}</p></div>`}
+  else{list=friendsList().map(x=>({x}));
+    body=list.length?list.slice(0,f.n).map(r=>postView(r.x,null)).join(""):`<div class="card"><h2>Nothing from friends yet.</h2><p class="sub">${Soc.conns().length?"When the people you've added share something with you, it shows up here, newest first.":"Add friends to see what they share. Friendships only happen when both of you agree."}</p><button class="btn sm" style="align-self:flex-start" data-act="page" data-page="social">${ic("people")} Find friends</button></div>`}
+  const more=list.length>f.n?`<button class="btn ghost block" data-act="feedMore" id="feed-more">Show more</button>`:list.length?`<p class="tiny" style="text-align:center">You're all caught up.</p>`:"";
+  return`<div class="scroll">${head}${tabs}${compose}${body}${more}</div>`}
+
+function vSaved(){const keys=S.saved||[],list=visiblePosts().filter(x=>keys.includes(x.key));
+  return hdr("Saved")+`<div class="scroll">${list.length?list.map(x=>postView(x,null)).join(""):`<div class="card line"><p class="sub small">Nothing saved. Tap ${ic("bookmark").replace('class="i"','class="i" style="width:13px;height:13px;vertical-align:-2px"')} on a post to keep it here. Only you see this list.</p></div>`}${keys.length>list.length?`<p class="tiny">${keys.length-list.length} saved post${keys.length-list.length===1?" is":"s are"} no longer visible to you.</p>`:""}</div>`}
+
+function vNotifs(){const list=notifs();S.notifSeen=Date.now();saveLocal();
+  return hdr("Notifications")+`<div class="scroll">${list.length?`<div class="card">${list.map(n=>`<${n.act?`button data-act="${n.act}" ${n.pg?`data-page="${n.pg}"`:""} ${n.tab?`data-tab="${n.tab}"`:""}`:"div"} class="hist${n.need?" need":""}" style="width:100%;text-align:left"><span class="grow"><span style="display:block;overflow-wrap:anywhere">${esc(n.t)}</span>${n.at?`<span class="sub small">${ago(n.at)}</span>`:`<span class="sub small">Needs your answer</span>`}</span></${n.act?"button":"div"}>`).join("")}</div>`:`<div class="card line"><p class="sub small">Nothing new.</p></div>`}<p class="tiny">In the app only. VOUZ doesn't send push notifications, and intimacy records never appear here.</p></div>`}
+
+function vUser(){const id=ui.page.id,me=Cloud.uid,p=Soc.profiles[id],r=Soc.rel[id]||{};if(!p){ui.page=null;return vFeed()+vTabs()}
+  if(id!==me&&(S.blocks.includes(id)||Soc.blockedMe(id)))return hdr("Profile")+`<div class="scroll"><div class="card line"><p class="sub small">This profile isn't available.</p></div>${S.blocks.includes(id)?`<button class="btn ghost" data-act="unblock" data-id="${esc(id)}">Unblock</button>`:""}</div>`;
+  const posts=visiblePosts().filter(x=>x.a===id),c=Soc.coupleOf(id),friend=r.mutual,st=id===me?"":friend?`<button class="btn sm ghost" data-act="disconnect" data-id="${esc(id)}">Remove friend</button>`:r.mine?`<button class="btn sm ghost" data-act="disconnect" data-id="${esc(id)}">Cancel request</button>`:r.theirs?`<button class="btn sm primary" data-act="approve" data-id="${esc(id)}">Accept request</button>`:`<button class="btn sm primary" data-act="request" data-id="${esc(id)}">Add friend</button>`;
+  return hdr(id===me?"Your profile":"Profile",id===me?`<button class="ib" data-act="page" data-page="meEdit" aria-label="Edit profile">${ic("edit")}</button>`:`<button class="ib" data-act="postMenuUser" data-a="${esc(id)}" aria-label="More">${ic("dots")}</button>`)+`<div class="scroll">
+   <div class="phead">${p.avatar?`<img class="av lg" src="${esc(p.avatar)}" alt="">`:`<span class="av lg" aria-hidden="true">${esc((p.handle||"?")[0].toUpperCase())}</span>`}<div class="grow"><h2>${esc(p.handle||"Someone")}</h2>${p.bio?`<p class="sub small" style="overflow-wrap:anywhere">${esc(p.bio)}</p>`:""}<span class="tiny">${friend?"Friends":id===me?(S.settings.privateProfile?"Only friends can find you":"People can find you by name"):""}</span></div></div>
+   <div class="row">${st}</div>
+   ${c?`<button class="card rowcard" data-act="openCouple" data-id="${esc(c.id)}">${c.data.photo?`<img class="av" src="${esc(c.data.photo)}" alt="">`:`<span class="av" aria-hidden="true">${ic("heart")}</span>`}<span class="grow"><b>${esc(c.data.name)}</b><span class="sub small" style="display:block">Couple profile</span></span>${ic("next")}</button>`:""}
+   <div class="sec"><h3>Posts</h3>${posts.length?posts.map(x=>postView(x,null)).join(""):`<p class="sub small">${id===me?"You haven't posted anything.":friend?"Nothing shared yet.":"Nothing public yet."}</p>`}</div></div>`}
+
+function vMeEdit(){const p=Soc.me()||{},d=ui.me=ui.me||{handle:p.handle||"",bio:p.bio||"",avatar:p.avatar||""};
+  return hdr("Edit profile")+`<div class="scroll"><div class="phead">${d.avatar?`<img class="av lg" src="${esc(d.avatar)}" alt="">`:`<span class="av lg" aria-hidden="true">${esc((d.handle||"?")[0].toUpperCase())}</span>`}<div class="col" style="gap:6px"><label class="btn sm" for="me-photo">${ic("photo")} ${d.avatar?"Change photo":"Add photo"}<input type="file" id="me-photo" accept="image/*" class="vh"></label>${d.avatar?`<button class="link small" data-act="meNoPhoto">Remove photo</button>`:""}</div></div>
+   <label class="f" for="me-h">Name<input type="text" id="me-h" data-bind="me.handle" maxlength="24" value="${esc(d.handle)}" autocomplete="off"></label>
+   <label class="f" for="me-b">Bio <em>Optional, public on your profile</em><textarea id="me-b" data-bind="me.bio" maxlength="160">${esc(d.bio)}</textarea></label>
+   ${sw("mePriv",!S.settings.privateProfile,"Let people find me by name","Off: only people with your code can send a request.")}
+   <p class="tiny">Your profile shows your name, photo and bio to people on VOUZ. Never your intimacy records, partners, or location.</p>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}
+   <button class="btn primary block" data-act="meSave">Save</button></div>`}
+
+function vCouple(){const me=Cloud.uid,c=ui.page.id?Soc.couplesLive[ui.page.id]:Soc.coupleMine,pend=Soc.couplesPending,jp=jointPending();
+  if(ui.page.id&&c){const posts=visiblePosts().filter(x=>x.it.co===c.id);
+    return hdr("Couple")+`<div class="scroll"><div class="phead">${c.data.photo?`<img class="av lg" src="${esc(c.data.photo)}" alt="">`:`<span class="av lg" aria-hidden="true">${ic("heart")}</span>`}<div class="grow"><h2>${esc(c.data.name)}</h2><span class="tiny">${c.members.map(u=>u===me?"You":esc(Soc.handle(u))).join(" & ")}</span>${c.data.bio?`<p class="sub small" style="overflow-wrap:anywhere">${esc(c.data.bio)}</p>`:""}</div></div>
+     ${c.data.favs.length?`<div class="sec"><h3>Favorite things to do</h3><div class="chips sm">${c.data.favs.map(f=>`<span class="chip">${esc(IDEA[f].t)}</span>`).join("")}</div></div>`:""}
+     ${c.data.badges.length?`<div class="sec"><h3>Achievements</h3><div class="row wrap">${c.data.badges.map(b=>{const x=RW.BADGES.find(y=>y.id===b);return x?`<span class="col" style="align-items:center;gap:4px;width:84px">${badgeArt(x,true,52)}<span class="tiny" style="text-align:center">${esc(x.name)}</span></span>`:""}).join("")}</div></div>`:""}
+     <div class="sec"><h3>Shared posts</h3>${posts.length?posts.map(x=>postView(x,null)).join(""):`<p class="sub small">Nothing shared as a couple yet.</p>`}</div>
+     ${c.members.includes(me)?`<button class="btn ghost block" data-act="page" data-page="couple">Manage couple profile</button>`:""}</div>`}
+  const mine=Soc.coupleMine,partners=Soc.conns(),d=ui.cp;
+  return hdr("Couple profile")+`<div class="scroll">
+   ${pend.map(p=>`<div class="card line"><h3>${esc(Soc.handle(p.from))} proposed a couple profile</h3><p><b>${esc(p.data.name)}</b>${p.data.bio?` · ${esc(p.data.bio)}`:""}</p><p class="sub small">It only goes public if you approve this exact version. Either of you can take it down at any time.</p><div class="row"><button class="btn sm primary grow" data-act="cpApprove" data-id="${esc(p.id)}">Approve</button><button class="btn sm ghost grow" data-act="cpDecline" data-id="${esc(p.id)}">Not now</button></div></div>`).join("")}
+   ${jp.map(x=>`<div class="card line"><h3>Post as your couple?</h3><p>${esc(Soc.handle(x.a))} wants to post “${esc(x.it.title||x.it.caption||"this")}” as ${esc(mine.data.name)}.</p><div class="row"><button class="btn sm primary grow" data-act="jointOk" data-k="${esc(x.key)}">Approve</button><button class="btn sm ghost grow" data-act="jointNo" data-k="${esc(x.key)}">Decline</button></div></div>`).join("")}
+   ${mine?`<div class="card"><div class="row between"><h2>${esc(mine.data.name)}</h2><span class="pill ${mine.waiting?"w":"ok"}">${mine.waiting?"Waiting for approval":"Live"}</span></div><p class="sub small">With ${esc(Soc.handle(mine.members.find(u=>u!==me)))}. ${mine.waiting?"Not public until they approve.":"Public on VOUZ. Any change needs both of you again."}</p>
+     <div class="row"><button class="btn sm" data-act="cpEdit">Edit</button>${mine.waiting?"":`<button class="btn sm ghost" data-act="openCouple" data-id="${esc(mine.id)}">View</button>`}<button class="btn sm danger" data-act="cpLeave">Take down</button></div></div>`:""}
+   ${d?`<div class="card"><h3>${mine?"Edit":"Create"} couple profile</h3>
+     ${mine?"":`<div class="col"><span class="tiny">With (must be a friend)</span><div class="chips">${partners.map(u=>`<button class="chip" data-act="cpWith" data-v="${esc(u)}" aria-pressed="${d.with===u}">${esc(Soc.handle(u))}</button>`).join("")||`<span class="sub small">Add your partner as a friend first.</span>`}</div></div>`}
+     <div class="row">${d.photo?`<img class="av lg" src="${esc(d.photo)}" alt="">`:""}<label class="btn sm" for="cp-photo">${ic("photo")} ${d.photo?"Change photo":"Add photo"}<input type="file" id="cp-photo" accept="image/*" class="vh"></label></div>
+     <label class="f" for="cp-name">Display name<input type="text" id="cp-name" data-bind="cp.name" maxlength="40" value="${esc(d.name)}" autocomplete="off"></label>
+     <label class="f" for="cp-bio">Bio <em>Optional</em><textarea id="cp-bio" data-bind="cp.bio" maxlength="200">${esc(d.bio)}</textarea></label>
+     <div class="col"><span class="tiny">Favorite things to do (up to 6)</span><div class="chips sm">${IDEAS.map(i=>`<button class="chip" data-act="cpFav" data-v="${i.id}" aria-pressed="${d.favs.includes(i.id)}">${esc(i.t)}</button>`).join("")}</div></div>
+     <div class="col"><span class="tiny">Achievements to show (yours, never private ones)</span><div class="chips sm">${R().badges.filter(b=>b.earnedAt).map(b=>`<button class="chip" data-act="cpBadge" data-v="${b.id}" aria-pressed="${d.badges.includes(b.id)}">${esc(b.name)}</button>`).join("")||`<span class="sub small">None earned yet.</span>`}</div></div>
+     ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn primary block" data-act="cpSave">${mine?"Save and ask again":"Propose"}</button>
+     <p class="tiny">Your partner approves this exact version before it's public. Your individual profile stays yours.</p></div>`:mine?"":`<div class="card"><h2>A profile for <em>the two of you.</em></h2><p class="sub">Optional. A shared name, photo, bio, favorite things to do and achievements, plus posts you both approve. Your own profiles stay separate.</p><button class="btn sm primary" style="align-self:flex-start" data-act="cpEdit">Create one</button></div>`}</div>`}
+
+/* ---- composer ---- */
+function vPostNew(){const c=ui.pc,me=Cloud.uid;if(!c){ui.page=null;return vFeed()+vTabs()}
+  const memKinds=["memory","date","trip","milestone"].includes(c.kind),mems=S.exps.filter(e=>!e.demo&&e.kind==="done"&&(!PK_CATS[c.kind]||PK_CATS[c.kind].includes(e.cat))).sort((a,b)=>b.date-a.date),e=c.expId?S.exps.find(x=>x.id===c.expId):null;
+  const cs=e?consentState(e,"me"):{ok:true},earned=R().badges.filter(b=>b.earnedAt),couple=Soc.coupleMine&&!Soc.coupleMine.waiting?Soc.coupleMine:null,conns=Soc.conns();
+  c.ready=memKinds?!!e:c.kind==="photo"?c.files.length>0:c.kind==="video"?c.files.length===1:c.kind==="idea"?!!c.idea:c.kind==="achievement"?!!c.badge:false;
+  const locBad=c.loc&&LOC_BAD.test(c.loc),blocked=!cs.ok||locBad||(c.vis==="private"&&!c.picks.length)||!c.ready;
+  return hdr("New post")+`<div class="scroll">
+   <div class="chips sm" role="group" aria-label="What are you sharing">${Object.entries(PKINDS).map(([k,l])=>`<button class="chip" data-act="pcKind" data-v="${k}" aria-pressed="${c.kind===k}">${l}</button>`).join("")}</div>
+   ${memKinds?`<div class="col"><h3>Which memory?</h3>${mems.length?`<div>${mems.slice(0,12).map(m=>`<button class="pick" data-act="pcExp" data-v="${m.id}" aria-pressed="${c.expId===m.id}"><span class="grow"><b>${esc(m.title)}</b><span class="sub small" style="display:block">${fmtDate(m.date)} · ${XCATS[m.cat]}${m.space&&Soc.sp[m.space]?" · shared in "+esc(Soc.sp[m.space].name):""}</span></span><span class="tick" aria-hidden="true">${ic(c.expId===m.id?"check":"plus")}</span></button>`).join("")}</div>`:`<p class="sub small">No ${c.kind==="memory"?"":PKINDS[c.kind].toLowerCase()+" "}memories yet. Add one in Our Story first.</p>`}</div>
+     ${e&&c.kind==="memory"?`<p class="tiny">Posts as a memory card. Use “Share as a card” on the memory to choose a template first; otherwise the Minimal card is used.</p>`:""}
+     ${e&&c.kind!=="memory"&&(e.photos||[]).length?`<div class="col"><h3>Photos</h3><div class="phs">${e.photos.map(id=>`<button class="ph pickph" data-act="pcPh" data-v="${esc(id)}" aria-pressed="${c.photos.includes(id)}" aria-label="Include photo"><img data-photo="${esc(id)}" alt=""><span class="tick" aria-hidden="true">${c.photos.includes(id)?c.photos.indexOf(id)+1:"+"}</span></button>`).join("")}</div></div>`:""}`:""}
+   ${c.kind==="photo"||c.kind==="video"?`<div class="col"><h3>${c.kind==="photo"?"Photos (up to 4)":"Video (up to 60 seconds, 10 MB)"}</h3>${c.files.length?`<div class="phs">${c.files.map((f,i)=>`<span class="ph">${f.prev?`<img src="${f.prev}" alt="">`:`<span class="sub small" style="padding:10px">${esc(f.name)}</span>`}<button class="ib" data-act="pcRm" data-i="${i}" aria-label="Remove">${ic("x")}</button></span>`).join("")}</div>`:""}
+     ${c.files.length<(c.kind==="photo"?4:1)?`<label class="btn sm" style="align-self:flex-start" for="pc-file">${ic("photo")} Choose ${c.kind==="photo"?"photos":"a video"}<input type="file" id="pc-file" accept="${c.kind==="photo"?"image/*":"video/*"}" ${c.kind==="photo"?"multiple":""} class="vh"></label>`:""}<p class="tiny">Photos are re-saved without location data. Location data in videos is removed before upload.</p></div>`:""}
+   ${c.kind==="idea"?`<div class="col"><h3>Recommend an idea</h3><div class="chips sm">${IDEAS.map(i=>`<button class="chip" data-act="pcIdea" data-v="${i.id}" aria-pressed="${c.idea===i.id}">${esc(i.t)}</button>`).join("")}</div></div>`:""}
+   ${c.kind==="achievement"?`<div class="col"><h3>Which badge?</h3>${earned.length?`<div class="chips">${earned.map(b=>`<button class="chip" data-act="pcBadge" data-v="${b.id}" aria-pressed="${c.badge===b.id}">${esc(b.name)}</button>`).join("")}</div>`:`<p class="sub small">No badges earned yet. Private intimacy achievements can't be posted.</p>`}</div>`:""}
+   ${e&&!cs.ok?`<div class="card line"><h3>Everyone in ${esc(cs.x?cs.x.name:"the space")} has to agree</h3><p class="sub small">This memory is shared in a space, so it's theirs too.</p><button class="btn sm" style="align-self:flex-start" data-act="mcOpen" data-id="${esc(e.id)}" data-a="me">Ask from the card screen</button></div>`:""}
+   <label class="f" for="pc-cap">Caption <em>Optional</em><textarea id="pc-cap" data-bind="pc.caption" maxlength="500">${esc(c.caption)}</textarea></label>
+   <label class="f" for="pc-loc">Place tag <em>Optional: a neighborhood or city, never an address</em><input type="text" id="pc-loc" data-bind="pc.loc" maxlength="40" value="${esc(c.loc)}" autocomplete="off"></label>
+   ${locBad?`<p class="err" role="alert">Use a neighborhood or city. Numbers and street names aren't allowed in place tags.</p>`:""}
+   <div class="col"><h3>Who can see it</h3><div class="seg3" role="group" aria-label="Visibility">${[["public","Public"],["friends","Friends"],["private","Private"]].map(([v,l])=>`<button data-act="pcVis" data-v="${v}" aria-pressed="${c.vis===v}">${l}</button>`).join("")}</div>
+    <p class="tiny">${c.vis==="public"?"Anyone on VOUZ, in Explore and on your profile.":c.vis==="friends"?`Your ${conns.length} friend${conns.length===1?"":"s"}, and friends you add later. Encrypted for them only.`:"Only the people you choose. Encrypted for them only."}</p>
+    ${c.vis==="private"?`<div class="chips">${conns.map(u=>`<button class="chip" data-act="pcPick" data-v="${esc(u)}" aria-pressed="${c.picks.includes(u)}">${esc(Soc.handle(u))}</button>`).join("")||`<span class="sub small">Add friends first.</span>`}</div>`:""}</div>
+   ${couple?sw("pcCo",c.co,"Post as "+couple.data.name,"Your partner approves this post before anyone else sees it."):""}
+   <p class="tiny">Never posted: intimacy records, session details, private notes, partners' names, or your location. Nothing is posted until you tap Post.</p>
+   ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}${c.prog?`<p class="sub small" role="status">${esc(c.prog)}</p>`:""}
+   <button class="btn primary block ${ui.busy?"busy":""}" data-act="pcPost" ${blocked?"disabled":""}>Post</button></div>`}
+
+/* ---- moderation (artifact owner only; reports are unreadable to everyone else) ---- */
+function vMod(){const reps=[];for(const u in (Soc.reportsAll||{}))for(const r of (Soc.reportsAll[u].items||[]))if(!(S.modDone||[]).includes(r.id))reps.push({...r,by:u});
+  return hdr("Moderation")+`<div class="scroll">${reps.length?reps.sort((a,b)=>b.at-a.at).map(r=>{const x=Soc.items.find(i=>i.a===r.about&&i.it.id===r.ref);return`<div class="card"><p><b>${esc(r.why)}</b> <span class="sub small">· ${r.kind} by ${esc(Soc.handle(r.about))} · ${ago(r.at)}</span></p>${x?postView(x,null):`<p class="sub small">${r.kind==="post"?"Not readable here (sealed or removed).":"A comment."}</p>`}
+    <div class="row">${r.kind==="post"&&x&&!x.sealed?`<button class="btn sm danger" data-act="modRemove" data-a="${esc(r.about)}" data-id="${esc(r.ref)}" data-r="${esc(r.id)}">Remove post</button>`:""}<button class="btn sm ghost" data-act="modDone" data-r="${esc(r.id)}">Dismiss</button></div></div>`}).join(""):`<div class="card line"><p class="sub small">No open reports.</p></div>`}</div>`}
+
+Object.assign(A,{
+  feedSeg(e){ui.feed.seg=e.dataset.v;ui.feed.n=10;render(true)},feedKind(e){ui.feed.kind=e.dataset.v;ui.feed.n=10;render()},
+  feedMode(){ui.feed.mode=ui.feed.mode==="latest"?"ranked":"latest";render()},feedMore(){ui.feed.n+=10;render()},
+  why(e){ui.feed.why=ui.feed.why===e.dataset.k?null:e.dataset.k;render()},
+  cmOpen(e){ui.feed.open=ui.feed.open===e.dataset.k?null:e.dataset.k;render()},
+  like(e){const k=e.dataset.k,cur=Object.assign({},(Soc.reactions[Cloud.uid]||{}).r);if(cur[k])delete cur[k];else cur[k]={e:"❤️",at:Date.now()};buzz(8);Soc.write("reactions",{r:cur});render()},
+  savePost(e){const k=e.dataset.k;S.saved=(S.saved||[]).includes(k)?S.saved.filter(x=>x!==k):[k].concat(S.saved||[]).slice(0,500);save();render();toast(S.saved.includes(k)?"Saved. Only you see your saved posts.":"Removed from saved.")},
+  async sharePost(e){const x=Soc.items.find(i=>i.a===e.dataset.a&&i.it.id===e.dataset.id);if(!x)return;if(x.sealed&&x.a!==Cloud.uid)return toast("Only public posts can be shared outside VOUZ.");
+    const it=x.it,img=(it.media||[]).find(m=>m.t==="image");let blob;
+    try{if(img)blob=await Media.blob(x.a,Soc.media[x.a+"|"+img.id]);else{const cv=await renderCard({tpl:"editorial",fmt:"portrait",bg:"wine",caption:String(it.caption||"").slice(0,160),showDate:false,showLoc:!!it.loc,showBrand:true,photos:[]},{title:it.title||PKINDS[it.kind]||"A VOUZ moment",location:it.loc||""});blob=await canvasBlob(cv,"image/png")}}
+    catch(z){return toast("This post can't be shared from here.")}
+    const name="vouz-post."+(img?"jpg":"png"),file=typeof File==="function"?new File([blob],name,{type:blob.type}):null;
+    if(file&&navigator.canShare&&navigator.share){let can=false;try{can=navigator.canShare({files:[file]})}catch(z){}if(can){try{await navigator.share({files:[file]});return}catch(z){if(z&&z.name==="AbortError")return}}}
+    const r=await saveOut(blob,name);toast(r==="saved"?"Ready to share.":r==="declined"?"Not saved.":"Sharing isn't available in this view.")},
+  openUser(e){openPage({type:"user",id:e.dataset.id,from:ui.page})},
+  openCouple(e){openPage({type:"couple",id:e.dataset.id,from:ui.page})},
+  postMenuUser(e){sheet({type:"postMenu",a:e.dataset.a,id:null})},
+  postNew(){ui.err="";ui.pc={kind:"memory",expId:null,photos:[],files:[],idea:null,badge:null,caption:"",loc:"",vis:"friends",picks:[],co:false,prog:""};openPage({type:"postNew",from:ui.page})},
+  pcKind(e){const c=ui.pc;c.kind=e.dataset.v;c.expId=null;c.photos=[];c.files=[];c.idea=null;c.badge=null;render()},
+  pcExp(e){const c=ui.pc,m=S.exps.find(x=>x.id===e.dataset.v);c.expId=m.id;c.photos=(m.photos||[]).slice(0,1);if(!c.loc&&m.location)c.loc=String(m.location).slice(0,40);render()},
+  pcPh(e){const c=ui.pc,v=e.dataset.v;c.photos=c.photos.includes(v)?c.photos.filter(x=>x!==v):c.photos.concat([v]).slice(0,4);render()},
+  pcRm(e){ui.pc.files.splice(+e.dataset.i,1);render()},
+  pcIdea(e){ui.pc.idea=e.dataset.v;render()},pcBadge(e){ui.pc.badge=e.dataset.v;render()},
+  pcVis(e){ui.pc.vis=e.dataset.v;render()},pcPick(e){const c=ui.pc,v=e.dataset.v;c.picks=c.picks.includes(v)?c.picks.filter(x=>x!==v):c.picks.concat([v]);render()},
+  pcCo(){ui.pc.co=!ui.pc.co;render()},
+  pcPost(){return busy(async()=>{const c=ui.pc;if(!c||!Soc.ready())return;const loc=String(c.loc||"").trim().slice(0,40);if(loc&&LOC_BAD.test(loc)){ui.err="Use a neighborhood or city for the place tag.";return}
+    const e=c.expId?S.exps.find(x=>x.id===c.expId):null;if(e&&!consentState(e,"me").ok){ui.err="Everyone in the space has to agree first.";return}
+    const seal=c.vis!=="public",body={v:c.vis,kind:c.kind,caption:String(c.caption||"").trim().slice(0,500),loc,title:"",cat:null,media:[],idea:null,badge:null};
+    try{const files=[];
+      if(e){body.title=String(e.title||"").slice(0,80);body.cat=e.cat;
+        if(c.kind==="memory"){const mc=ui.mc&&ui.mc.id===e.id?ui.mc:{tpl:"minimal",fmt:"portrait",bg:"wine",caption:"",showDate:true,showLoc:!!loc,showBrand:true,photos:(e.photos||[]).slice(0,1)};
+          const cv=await renderCard({...mc,showLoc:mc.showLoc&&!!loc},{...e,location:loc}),b=await canvasBlob(cv,"image/jpeg");files.push(new File([b],"card.jpg",{type:"image/jpeg"}))}
+        else for(const id of c.photos){const b=await Photos.get(id);if(b)files.push(new File([b],"p.jpg",{type:"image/jpeg"}))}}
+      else if(c.kind==="photo"||c.kind==="video")files.push(...c.files.map(f=>f.file));
+      else if(c.kind==="idea"){const i=IDEA[c.idea];body.title=i.t;body.idea=i.id;body.caption=body.caption||i.d}
+      else if(c.kind==="achievement"){const b=RW.BADGES.find(x=>x.id===c.badge);body.title=b.name;body.badge={id:b.id,d:b.d}}
+      for(let i=0;i<files.length;i++){c.prog="Uploading "+(i+1)+" of "+files.length+"…";render();body.media.push(await Media.put(files[i],seal))}
+      if(c.co&&Soc.coupleMine&&!Soc.coupleMine.waiting)body.co=Soc.coupleMine.id;
+      const at=Date.now(),id=uid(),item=seal?await Soc.seal(id,body,c.vis==="private"?c.picks.slice():"all",at):{id,vis:"everyone",postedAt:at,...body};
+      const cur=myPosts();await Soc.write("posts",{items:[item].concat(cur.items||[]).slice(0,60),hidden:cur.hidden||[]});
+      ui.pc=null;ui.err="";ui.page=null;ui.tab="feed";ui.feed.seg=c.vis==="public"?"explore":"friends";toast(body.co?"Posted. Your partner approves it before anyone else sees it.":"Posted.")}
+    catch(z){c.prog="";ui.err=z&&z.code==="too_big"?"That video is over 10 MB.":z&&z.code==="too_long"?"That video is over 60 seconds.":z&&z.code==="quota_exceeded"?"VOUZ's storage here is full. Try fewer or smaller files.":"The post couldn't be uploaded. Nothing was posted."}})},
+  editPost(e){const x=Soc.items.find(i=>i.a===Cloud.uid&&i.it.id===e.dataset.id);if(!x)return;sheet({type:"editPost",id:x.it.id,caption:x.it.caption||"",loc:x.it.loc||""})},
+  editPostSave(){const s=ui.sheet,cap=(($("#ep-cap")||{}).value||"").trim().slice(0,500),loc=(($("#ep-loc")||{}).value||"").trim().slice(0,40);if(loc&&LOC_BAD.test(loc)){ui.err="Use a neighborhood or city.";return render()}
+    return busy(async()=>{const cur=myPosts(),items=[];for(const it of (cur.items||[])){if(it.id!==s.id){items.push(it);continue}
+      if(it.c){const x=Soc.items.find(i=>i.a===Cloud.uid&&i.it.id===s.id);const body={...x.it};delete body.id;delete body.vis;delete body.postedAt;body.caption=cap;body.loc=loc;body.editedAt=Date.now();
+        const n=await Soc.seal(it.id,body,x.aud,it.postedAt);n.wk=Object.assign({},it.wk,{self:n.wk.self});items.push(n)}else items.push({...it,caption:cap,loc,editedAt:Date.now()})}
+      await Soc.write("posts",{items,hidden:cur.hidden||[]});ui.sheet=null;ui.err="";toast("Post updated.")})},
+  meNoPhoto(){ui.me.avatar="";render()},mePriv(){S.settings.privateProfile=!S.settings.privateProfile;save();render()},
+  meSave(){const d=ui.me,h=String(d.handle||"").trim();if(h.length<2){ui.err="A name needs at least 2 characters.";return render()}
+    Soc.write("profiles",Object.assign({},Soc.me(),{handle:h.slice(0,24),bio:String(d.bio||"").trim().slice(0,160),avatar:d.avatar||"",discoverable:!S.settings.privateProfile,at:Date.now()}));ui.me=null;ui.err="";A.back();toast("Profile saved.")},
+  cpEdit(){const m=Soc.coupleMine;ui.err="";ui.cp=m?{...m.data,with:m.members.find(u=>u!==Cloud.uid),favs:m.data.favs.slice(),badges:m.data.badges.slice()}:{with:null,name:"",bio:"",photo:"",favs:[],badges:[]};render()},
+  cpWith(e){ui.cp.with=e.dataset.v;render()},
+  cpFav(e){const d=ui.cp,v=e.dataset.v;d.favs=d.favs.includes(v)?d.favs.filter(x=>x!==v):d.favs.concat([v]).slice(0,6);render()},
+  cpBadge(e){const d=ui.cp,v=e.dataset.v;d.badges=d.badges.includes(v)?d.badges.filter(x=>x!==v):d.badges.concat([v]).slice(0,6);render()},
+  cpSave(){const d=ui.cp,me=Cloud.uid,m=Soc.coupleMine;if(!d.with||!Soc.conns().includes(d.with)){ui.err="Choose your partner from your friends.";return render()}if(String(d.name||"").trim().length<2){ui.err="Give it a name.";return render()}
+    return busy(async()=>{const data=cleanCouple({...d,name:String(d.name).trim()}),id=m&&m.members.includes(d.with)?m.id:uid(),h=await coupleHash({id,a:me,b:d.with,data});
+      await Soc.write("couples",{items:[{id,with:d.with,data,h,at:Date.now()}],postOk:(Soc.couples[me]||{}).postOk||[]});ui.cp=null;ui.err="";toast("Sent to "+Soc.handle(d.with)+" to approve.")})},
+  cpApprove(e){const p=Soc.couplesPending.find(x=>x.id===e.dataset.id);if(!p)return;return busy(async()=>{await Soc.write("couples",{items:[{id:p.id,with:p.from,data:p.data,h:p.h,at:Date.now()}],postOk:(Soc.couples[Cloud.uid]||{}).postOk||[]});toast("Couple profile approved. It's live.")})},
+  cpDecline(e){S.declinedCouples=(S.declinedCouples||[]).concat([e.dataset.id]);Soc.couplesPending=Soc.couplesPending.filter(x=>x.id!==e.dataset.id);save();render()},
+  cpLeave(){sheet({type:"confirm",title:"Take down the couple profile?",body:"It disappears from VOUZ straight away. Posts made as the couple stop showing as the couple.",yes:"Take it down",danger:true,fn(){Soc.write("couples",{items:[],postOk:[]});toast("Taken down.")}})},
+  jointOk(e){const me=Cloud.uid,cur=Soc.couples[me]||{};Soc.write("couples",{items:cur.items||[],postOk:(cur.postOk||[]).concat([e.dataset.k]).slice(-300)});toast("Approved.")},
+  jointNo(e){S.declinedJoint=(S.declinedJoint||[]).concat([e.dataset.k]);save();render();toast("Declined. It stays visible only to them.")},
+  async modRemove(e){const a=e.dataset.a,id=e.dataset.id;try{const ref=Cloud.db.doc("posts/"+a),d=await ref.get();if(d.exists){const v=d.data(),gone=(v.items||[]).find(i=>i.id===id);await ref.set({...v,items:(v.items||[]).filter(i=>i.id!==id)});for(const m of ((gone&&gone.media)||[]))await Media.del(m,a)}S.modDone=(S.modDone||[]).concat([e.dataset.r]);save();toast("Post removed.")}catch(z){toast("Only the owner of this VOUZ can remove posts.")}render()},
+  modDone(e){S.modDone=(S.modDone||[]).concat([e.dataset.r]);save();render()}
+});
+document.addEventListener("change",async ev=>{const t=ev.target;
+  if(t.id==="pc-file"&&ui.pc){const c=ui.pc,room=(c.kind==="photo"?4:1)-c.files.length;for(const f of Array.from(t.files||[]).slice(0,room)){let prev="";if(/^image\//.test(f.type)){try{const r=await shrinkTo(f,320,.7);prev="data:image/jpeg;base64,"+await blobB64(r.blob)}catch(x){}}c.files.push({file:f,name:f.name,prev})}render()}
+  if((t.id==="me-photo"&&ui.me)||(t.id==="cp-photo"&&ui.cp)){const f=t.files&&t.files[0];if(!f)return;try{const r=await shrinkTo(f,256,.78),d="data:image/jpeg;base64,"+await blobB64(r.blob);if(t.id==="me-photo")ui.me.avatar=d;else ui.cp.photo=d}catch(x){toast("That photo couldn't be used.")}render()}});
+
+function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={feed:ui.feed,pc:ui.pc,me:ui.me,cp:ui.cp,soc:ui.soc,ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
-document.addEventListener("input",ev=>{bind(ev.target);if(ev.target.id==="mc-cap"){clearTimeout(refreshCard.t);refreshCard.t=setTimeout(refreshCard,250)}if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
+document.addEventListener("input",ev=>{bind(ev.target);const sid=ev.target.id;if(sid==="f-q"||sid==="s-q"||sid==="pc-loc"){clearTimeout(bind.t);bind.t=setTimeout(()=>{ui.feed.n=10;render();const el=document.getElementById(sid);if(el){el.focus();const n=el.value.length;try{el.setSelectionRange(n,n)}catch(x){}}},250)}if(ev.target.id==="mc-cap"){clearTimeout(refreshCard.t);refreshCard.t=setTimeout(refreshCard,250)}if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
 document.addEventListener("change",ev=>{if(ev.target.dataset&&ev.target.dataset.live&&ev.target.type==="date"){bind(ev.target);render()}});
 document.addEventListener("keydown",ev=>{const t=ev.target;
   if(ev.key==="Escape"&&ui.sheet){ev.preventDefault();return A.closeSheet()}
@@ -1934,7 +2235,7 @@ window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.on
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 })();
-window.__vouz={buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+window.__vouz={Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>

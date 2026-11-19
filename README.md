@@ -7,7 +7,7 @@ Private by default. Shared only by choice. No scores.
 
 | Path | What it is | State |
 |---|---|---|
-| `web/index.html` | The working app (single file, no build step): Home, Intimacy, Discover, Our Story, Profile | Working, browser-tested |
+| `web/index.html` | The working app (single file, no build step): Home, Feed, Intimacy, Discover, Our Story, Profile | Working, browser-tested |
 | `core/timer.js` | Session timer state machine over stored timestamps | Tested, not yet wired into the app |
 | `core/streaks.js` | Weekly streaks, Monday to Sunday | Tested, not yet wired into the app |
 | `core/storage.js` | Vault: migrations, backup, corruption recovery, export/import, optional encryption | Tested, not yet wired into the app |
@@ -16,16 +16,16 @@ Private by default. Shared only by choice. No scores.
 | `supabase/migrations/` | Database schema and row-level security | Tested on local Postgres, not deployed |
 | `supabase/functions/` | Account deletion, purchase verification | Written, never run |
 | `watch/` | Apple Watch app source and iPhone bridge | Written, never compiled |
-| `e2e/run.py` | Browser tests for the app, including three simulated users | 214 checks |
+| `e2e/run.py` | Browser tests for the app, including four simulated users | 249 checks |
 
 The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in this repository. See CHECKLIST.md.
 
 ## Running the tests
 
 ```
-npm test            # 84 unit tests (incl. private matching and rewards, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
-npm run test:db     # 124 policy tests on a throwaway local Postgres (needs initdb and psql)
-npm run test:ui     # 214 browser checks (needs Python, Playwright and Chrome)
+npm test            # 89 unit tests (incl. private matching, rewards and feed helpers, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
+npm run test:db     # 167 policy tests on a throwaway local Postgres (needs initdb and psql)
+npm run test:ui     # 249 browser checks (needs Python, Playwright and Chrome)
 ```
 
 No packages are installed by any of these. There are no runtime dependencies.
@@ -48,11 +48,12 @@ The service role key and store credentials belong only in Supabase function secr
 
 | Tab | What's there |
 |---|---|
+| Feed | Explore (public posts, ranked or latest, search, filters) and Friends (newest first); compose, notifications, saved, friends |
 | Home | Greeting, quick actions, invitations, coming-up plans, an idea, recent memories, this week's intimacy count (private) |
 | Intimacy | Track (timer, Couple/Poly, quick log), History (week ring, calendar, list, achievements), Insights |
 | Discover | Ideas with filters, AI Planner, private Mutual Match inside a shared space, Plans |
 | Our Story | Timeline of memories, anniversary reminders, filter by shared space |
-| Profile | Rewards and achievements, storage and sync, Connections, shared spaces, social feed, passcode, export, VOUZ Plus, delete |
+| Profile | Rewards and achievements, storage and sync, Connections, shared spaces, friends, public and couple profiles, moderation (owner), passcode, export, VOUZ Plus, delete |
 
 Sessions are **Couple** (exactly 2) or **Poly** (3 to 20, with a counter). Confirmation status is Self-reported,
 Pending confirmation or Mutually confirmed. Confirmation is voluntary and is never described as proof.
@@ -82,3 +83,21 @@ on a canvas and encoded straight to PNG or JPEG, so the file carries no camera o
 Share uses, in order: the native share plugin in the Capacitor app (untested), the browser share sheet with the
 image file, then the platform save (which opens the iOS share sheet inside the Claude iPhone app). Memories in a
 shared space can only be exported once everyone else in the space agrees; agreement can be withdrawn.
+
+## Feed
+
+Feed → Explore shows public posts from everyone who can open the app; Friends shows what friends shared with you,
+newest first. Every post is Public, Friends or Private. Friends and Private posts are sealed with a fresh key that is
+wrapped only for their audience, and their photos and video are encrypted with a key carried inside the sealed post.
+Public posts and their media are readable by anyone who can open the app.
+
+Explore's score is shown on each post: recency (40, halving every 3 days), engagement (up to 25, log of likes plus
+twice the comments), your interests (15), detail (media 5, a real caption 3, a place 2), and −12 for each further post
+by the same author. "Latest" skips all of it. The same formula runs server-side in `explore_feed()` (migration 0005).
+
+Nothing is posted automatically. Intimacy records, session details, private notes, partners' names and locations are
+never part of a post. Place tags are a neighborhood or city only.
+
+**Scale.** In the web app, "public" means everyone the page is shared with, and on a personal plan only people
+invited as editors can write. Media is stored in 180 KB pieces in the page's database. Real public use needs the
+Supabase backend (migration 0005 plus a private Storage bucket), which isn't deployed.

@@ -9,12 +9,13 @@ STORE={}; WRITES=[]
 def can_read(u,p):
     s=p.split('/')
     if p.startswith('data/users/'): return s[2]==u
-    if s[0]=='reports': return s[1]==u
+    if s[0]=='reports': return s[1]==u or u=='dave'   # dave plays the artifact owner (admin)
     return True
 def can_write(u,p):
     s=p.split('/')
     if p.startswith('data/users/'): return s[2]==u
-    return s[0] in('profiles','posts','reactions','comments','links','invites','spaces','exps','match','consent','reports') and s[1]==u
+    if u=='dave' and s[0]=='posts': return True   # the owner can moderate
+    return s[0] in('profiles','posts','reactions','comments','links','invites','spaces','exps','match','consent','reports','couples','media') and s[1]==u
 def db_get(src,u,p): return STORE.get(p) if can_read(u,p) else None
 def db_set(src,u,p,d):
     if not can_write(u,p): raise Exception('invalid_argument')
@@ -28,7 +29,7 @@ MOCK=r"""
 const snap=(p,v)=>({id:p.split('/').pop(),exists:v!==null&&v!==undefined,data:()=>v,metadata:{fromCache:false,hasPendingWrites:false}});
 const doc=(p)=>({id:p.split('/').pop(),path:p,get:async()=>snap(p,await window.__dbGet(U,p)),set:async(d)=>{try{await window.__dbSet(U,p,JSON.stringify(d))}catch(e){throw {code:'invalid_argument'}}},delete:async()=>{await window.__dbDel(U,p)}});
 const coll=(c)=>({path:c,doc:(id)=>doc(c+'/'+id),onSnapshot:(next)=>{let last=null,on=true;const f=async()=>{if(!on)return;const m=await window.__dbList(U,c);const j=JSON.stringify(m);if(j!==last){last=j;next({docs:Object.keys(m).map(k=>snap(c+'/'+k,m[k]))})}setTimeout(f,120)};f();return()=>{on=false}}});
-window.claude={use:async(n)=>n==='db'?{doc,collection:coll}:n==='user'?{id:async()=>U,can:async()=>true}:null};})();
+window.claude={use:async(n)=>n==='db'?{doc,collection:coll}:n==='user'?{id:async()=>U,can:async()=>true,isOwner:async()=>U==='dave'}:null};})();
 """
 res=[]
 def ok(name,cond,extra=""):
@@ -50,7 +51,7 @@ def newctx(b,uid=None,motion="reduce"):
     if uid:
         ctx.expose_binding("__dbGet",db_get); ctx.expose_binding("__dbSet",db_set); ctx.expose_binding("__dbDel",db_del); ctx.expose_binding("__dbList",db_list)
         ctx.add_init_script(MOCK.replace("__UID__",uid))
-    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)))
+    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)+" @ "+str(getattr(e,"stack",""))[:600]))
     p.on("console",lambda m: errs.append(m.text) if m.type=="error" and "ERR_" not in m.text and "Failed to load" not in m.text else None)
     return ctx,p
 def log(p,title,mins,**kw):
@@ -67,11 +68,16 @@ def nav(p,t):
         if p.locator(".sheet").count(): act(p,"closeSheet")
         act(p,"back")
     if t in ("track","history","insights"): nav(p,"intimacy"); act(p,"iSeg",v=t)
-    elif t=="social": nav(p,"profile"); act(p,"page",page="social")
+    elif t=="social": nav(p,"feed"); act(p,"page",page="social")
     elif t in ("ideas","planner","match","plans"): nav(p,"discover"); act(p,"discSeg",v=t)
     else: act(p,"tab",tab=t)
-def feed(p):
-    nav(p,"social"); act(p,"socSeg",v="feed"); p.wait_for_timeout(700); return p.inner_text(".scroll")
+def feed(p,seg=None):
+    """Everything this person can see: Friends feed, Explore (latest), then their own posts. Ends on Friends > My posts, or on seg if given."""
+    nav(p,"feed"); p.wait_for_timeout(700); t=""
+    for v in ("friends","explore"):
+        if p.locator('[data-act="feedSeg"]').count(): act(p,"feedSeg",v=v); p.wait_for_timeout(150); t+=p.inner_text(".scroll")
+    if seg: act(p,"feedSeg",v=seg); return t
+    act(p,"page",page="social"); act(p,"socSeg",v="mine"); p.wait_for_timeout(150); return t+p.inner_text(".scroll")
 with sync_playwright() as pw:
     b=pw.chromium.launch(executable_path="/usr/bin/google-chrome",args=["--no-sandbox"])
     # ---------- local mode ----------
@@ -79,7 +85,7 @@ with sync_playwright() as pw:
     ok("onboarding is 3 steps with required 18+ acknowledgment",p.locator(".steps i").count()==3)
     onboard(p)
     s=S(p); ok("onboarding: social off by default, local mode",s["onboarded"] and not s["settings"]["social"] and s["user"]["mode"]=="local")
-    ok("nav: five tabs: Home, Intimacy, Discover, Our Story, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Intimacy","Discover","Our Story","Profile"])
+    ok("nav: six tabs: Home, Feed, Intimacy, Discover, Our Story, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Feed","Intimacy","Discover","Our Story","Profile"])
     t=p.inner_text(".scroll"); ok("home: a new account gets one welcome card, no fabricated stats","Start your" in t and "story." in t and p.locator(".trio").count()==0 and p.locator(".sec").count()==0)
     ok("home: kept short",len(t.split())<=45,str(len(t.split())))
     ok("brand: old tagline gone","cardio" not in p.content().lower())
@@ -172,9 +178,10 @@ with sync_playwright() as pw:
     ok("after both approve, exactly one recipient key is added",len(STORE["posts/alice"]["items"][0]["wk"])==2)
     ok("J7 approved connection can open the card","CONNCAPTION" in feed(bb))
     ok("unconnected user still cannot","CONNCAPTION" not in feed(c))
-    tk=bb.locator('[data-act="comment"]').first.get_attribute("data-k"); bb.fill(f'[id="c-{tk}"]',"SECRETCOMMENT"); act(bb,"comment",k=tk); act(bb,"react",k=tk,e="🔥"); bb.wait_for_timeout(900)
+    feed(bb,"friends"); tk=bb.locator('[data-act="cmOpen"]').first.get_attribute("data-k"); act(bb,"cmOpen",k=tk); bb.fill(f'[id="c-{tk}"]',"SECRETCOMMENT"); act(bb,"comment",k=tk); act(bb,"like",k=tk); bb.wait_for_timeout(900)
     ok("comment on a connections-only card is encrypted, and unlinkable to the card","SECRETCOMMENT" not in json.dumps(STORE["comments/bob"]) and STORE["posts/alice"]["items"][0]["id"] not in json.dumps(STORE["comments/bob"])+json.dumps(STORE["reactions/bob"]))
-    ok("author reads the comment and reaction","SECRETCOMMENT" in feed(a) and "🔥 1" in a.inner_text(".scroll"))
+    feed(a); act(a,"cmOpen",k=a.locator('[data-act="cmOpen"]').first.get_attribute("data-k")); a.wait_for_timeout(200)
+    ok("author reads the comment and the like","SECRETCOMMENT" in a.inner_text(".scroll") and a.locator('[data-act="like"]').first.get_attribute("aria-label").endswith("1 likes"))
     # public card: only achievement cards can go to everyone
     nav(a,"history"); act(a,"openReplay",id=sid); act(a,"composeRecap",id=sid)
     ok("a session card can never be shared with everyone",a.locator('[data-act="cAud"][data-v="everyone"]').count()==0)
@@ -282,8 +289,80 @@ with sync_playwright() as pw:
     ok("block removes the key and the link",len([i for i in STORE["posts/alice"]["items"] if i.get("c")][0]["wk"])==1 and STORE["links/alice"]["out"]=={} and "CONNCAPTION" not in feed(bb))
     act(a,"socSeg",v="people"); act(a,"unblock",id="bob"); a.wait_for_timeout(300)
     # report
-    act(c,"postMenu",a="alice"); act(c,"report",a="alice"); act(c,"reportWhy",v="Harassment"); act(c,"reportSend"); c.wait_for_timeout(400)
+    feed(c,"explore"); act(c,"postMenu",a="alice"); act(c,"report",a="alice"); act(c,"reportWhy",v="Harassment"); act(c,"reportSend"); c.wait_for_timeout(400)
     ok("report filed, unreadable by the reported user",len(STORE["reports/carol"]["items"])==1 and db_get(None,"alice","reports/carol") is None)
+    # ---------- Feed: Explore & Friends ----------
+    nav(a,"social"); act(a,"socSeg",v="people"); a.wait_for_timeout(300); act(a,"approve" if a.locator('[data-act="approve"][data-id="bob"]').count() else "request",id="bob"); a.wait_for_timeout(1500); bb.wait_for_timeout(800)
+    ok("feed: friends again after unblock",a.evaluate("!!(window.__vouz.Soc.rel.bob||{}).mutual"))
+    def newpost(pg,kind,cap,vis="friends",loc=""):
+        nav(pg,"feed"); act(pg,"postNew"); act(pg,"pcKind",v=kind); pg.fill("#pc-cap",cap)
+        if loc: pg.fill("#pc-loc",loc)
+        act(pg,"pcVis",v=vis)
+    newpost(a,"photo","FRIENDPHOTO caption for the friends feed",loc="123 Main St")
+    a.set_input_files("#pc-file",os.path.join(HERE,"fixtures","")+"gps.jpg"); a.wait_for_selector(".phs img"); a.locator("#pc-cap").click()
+    ok("feed: an address-like place tag blocks posting",a.locator('[data-act="pcPost"]').is_disabled() and a.locator(".err").count()==1)
+    a.fill("#pc-loc","Mission District"); a.wait_for_timeout(500)
+    ok("feed: nothing is stored before Post",not any(k.startswith("media/alice") for k in STORE))
+    a.screenshot(path=SH+"feed-compose.png"); act(a,"pcPost"); a.wait_for_timeout(1500)
+    chunks=[k for k in STORE if k.startswith("media/alice/")]
+    rawp=json.dumps(STORE["posts/alice"])
+    ok("feed: friends photo stored encrypted, caption sealed",len(chunks)>=1 and all(STORE[k]["e"] for k in chunks) and "FRIENDPHOTO" not in rawp and "Mission" not in rawp)
+    tb=feed(bb,"friends"); bb.wait_for_selector(".pm.ok img",timeout=8000)
+    ok("feed: a friend sees the photo, caption and place in Friends","FRIENDPHOTO" in tb and "Mission District" in tb and bb.locator(".pm.ok img").count()>=1)
+    bb.screenshot(path=SH+"feed-friends.png")
+    gps=bb.evaluate("""()=>{const s=document.querySelector('.pm.ok img').src;const b=atob(s.split(',')[1]);return {exif:b.includes('Exif'),gps:b.includes('GPS')}}""")
+    ok("feed: uploaded photo carries no EXIF/GPS",not gps["exif"] and not gps["gps"],str(gps))
+    ok("feed: a non-friend can't see it","FRIENDPHOTO" not in feed(c))
+    # video: GPS atom scrubbed before upload
+    newpost(a,"video","VIDEOCLIP",vis="private"); act(a,"pcPick",v="bob"); a.set_input_files("#pc-file",os.path.join(HERE,"fixtures","")+"gps.mp4"); a.wait_for_timeout(400); act(a,"pcPost"); a.wait_for_timeout(1500)
+    vid=a.evaluate("""async()=>{const V=window.__vouz,x=V.Soc.items.find(i=>i.it.caption==='VIDEOCLIP');const m=V.Soc.media[x.a+'|'+x.it.media[0].id];const b=new Uint8Array(await (await V.Media.blob(x.a,m)).arrayBuffer());let s='';for(const c of b)s+=String.fromCharCode(c);return {xyz:s.includes('\\u00a9xyz'),coord:s.includes('+37.7749'),n:b.length}}""")
+    ok("feed: video location atom and coordinates removed",not vid["xyz"] and not vid["coord"] and vid["n"]>2000,str(vid))
+    ok("feed: private post reaches the chosen friend only","VIDEOCLIP" in feed(bb,"friends") and "Private" in bb.inner_text(".scroll") and "VIDEOCLIP" not in feed(c))
+    # public post, Explore ranking, search, likes, saves
+    newpost(a,"idea","PUBLICIDEA worth trying this weekend together",vis="public",loc="Oakland"); act(a,"pcIdea",v=a.locator('[data-act="pcIdea"]').first.get_attribute("data-v")); act(a,"pcPost"); a.wait_for_timeout(1200)
+    tc=feed(c,"explore")
+    ok("explore: public post visible to anyone, with transparent ranking","PUBLICIDEA" in tc and c.locator('[data-act="why"]').count()>=1)
+    c.screenshot(path=SH+"feed-explore.png"); k=c.locator('[data-act="like"]').first.get_attribute("data-k")
+    act(c,"why",k=k); ok("explore: 'why this post' shows every factor","Why you're seeing this" in c.inner_text(".scroll") and "engagement" in c.inner_text(".scroll"))
+    act(c,"feedMode"); ok("explore: Latest is newest first with no personalization","no personalization" in c.inner_text(".scroll") and c.locator('[data-act="why"]').count()==0); act(c,"feedMode")
+    c.fill("#f-q","oakland"); c.wait_for_timeout(500); ok("explore: search matches place tags","PUBLICIDEA" in c.inner_text(".scroll") and "PUBLICCAP" not in c.inner_text(".scroll"))
+    c.fill("#f-q","zzzz"); c.wait_for_timeout(500); ok("explore: search empty state","Nothing matches" in c.inner_text(".scroll")); c.fill("#f-q",""); c.wait_for_timeout(500)
+    act(c,"feedKind",v="idea"); ok("explore: kind filter","PUBLICIDEA" in c.inner_text(".scroll") and "PUBLICCAP" not in c.inner_text(".scroll")); act(c,"feedKind",v="all")
+    act(c,"like",k=k); act(c,"savePost",k=k); c.wait_for_timeout(700)
+    ok("likes: one per person, stored with time",isinstance(STORE["reactions/carol"]["r"][k],dict) and c.locator(f'[data-act="like"][data-k="{k}"]').get_attribute("aria-pressed")=="true")
+    ok("saved: kept in the private vault only",k in S(c)["saved"] and '"saved"' not in json.dumps({x:STORE[x] for x in STORE if not x.startswith("data/")}))
+    nav(c,"feed"); act(c,"page",page="saved"); ok("saved page lists it","PUBLICIDEA" in c.inner_text(".scroll"))
+    a.wait_for_timeout(600); nav(a,"feed"); ok("notifications: bell shows unread",a.locator('[data-page="notifs"] .dot').count()==1)
+    act(a,"page",page="notifs"); ok("notifications: like listed","caz liked" in a.inner_text(".scroll"))
+    # edit own post
+    feed(a); pid=[i for i in STORE["posts/alice"]["items"] if i.get("vis")=="everyone" and "PUBLICIDEA" in i.get("caption","")][0]["id"]
+    act(a,"postMenu",a="alice",id=pid); act(a,"editPost",id=pid); a.fill("#ep-cap","EDITEDCAP"); act(a,"editPostSave"); a.wait_for_timeout(900)
+    ok("edit: author can change the caption","EDITEDCAP" in feed(c,"explore") and "edited" in c.inner_text(".scroll"))
+    # profile
+    nav(a,"profile"); act(a,"page",page="user"); act(a,"page",page="meEdit"); a.fill("#me-b","BIOTEXT"); act(a,"meSave"); a.wait_for_timeout(500)
+    ok("profile: bio saved, key kept",STORE["profiles/alice"].get("bio")=="BIOTEXT" and STORE["profiles/alice"].get("pub"))
+    # couple profile: needs both
+    nav(a,"profile"); act(a,"page",page="couple"); act(a,"cpEdit"); act(a,"cpWith",v="bob"); a.fill("#cp-name","Ali and Bobby"); act(a,"cpSave"); a.wait_for_timeout(1200)
+    ok("couple: proposal alone is not public",c.evaluate("Object.keys(window.__vouz.Soc.couplesLive).length")==0)
+    nav(bb,"profile"); act(bb,"page",page="couple"); bb.wait_for_timeout(300); act(bb,"cpApprove",id=bb.locator('[data-act="cpApprove"]').first.get_attribute("data-id")); bb.wait_for_timeout(1500); c.wait_for_timeout(600)
+    ok("couple: live once both approve the same version",c.evaluate("Object.values(window.__vouz.Soc.couplesLive).map(x=>x.data.name)")==["Ali and Bobby"])
+    newpost(a,"idea","JOINTPOST from the two of us",vis="public"); act(a,"pcIdea",v=a.locator('[data-act="pcIdea"]').first.get_attribute("data-v")); act(a,"pcCo"); act(a,"pcPost"); a.wait_for_timeout(1200)
+    ok("couple: joint post hidden until the partner approves","JOINTPOST" not in feed(c,"explore"))
+    nav(bb,"profile"); act(bb,"page",page="couple"); bb.wait_for_timeout(300); act(bb,"jointOk",k=bb.locator('[data-act="jointOk"]').first.get_attribute("data-k")); bb.wait_for_timeout(1300)
+    tc=feed(c,"explore"); c.screenshot(path=SH+"feed-couple.png"); ok("couple: approved joint post shows under the couple's name","JOINTPOST" in tc and "Ali and Bobby" in tc)
+    # block hides both ways
+    act(c,"postMenu",a="alice",id=pid); act(c,"block",id="alice"); c.wait_for_timeout(1300); a.wait_for_timeout(900)
+    ok("block: blocker stops seeing them","EDITEDCAP" not in feed(c))
+    ok("block: blocked person can't see the blocker's profile",a.evaluate("window.__vouz.Soc.blockedMe('carol')"))
+    nav(c,"social"); act(c,"socSeg",v="people"); act(c,"unblock",id="alice"); c.wait_for_timeout(1300); a.wait_for_timeout(600)
+    ok("unblock restores",not a.evaluate("window.__vouz.Soc.blockedMe('carol')") and "EDITEDCAP" in feed(c))
+    # moderation by the owner
+    feed(c,"explore"); act(c,"postMenu",a="alice",id=pid); act(c,"report",a="alice"); act(c,"reportWhy",v="Something else"); act(c,"reportSend"); c.wait_for_timeout(500)
+    cd,d=newctx(b,"dave"); d.goto(URL); d.wait_for_timeout(400); onboard(d,account=True); nav(d,"profile"); act(d,"toggleSocial"); d.fill("#s-handle","mod"); act(d,"sheetPrivate"); act(d,"socialOnYes"); d.wait_for_function("window.__vouz.S.settings.social===true"); d.wait_for_timeout(1200)
+    nav(d,"profile"); nav(c,"profile"); ok("moderation: only the owner gets the page",d.locator('[data-page="mod"]').count()==1 and c.locator('[data-page="mod"]').count()==0)
+    act(d,"page",page="mod"); d.wait_for_timeout(300); act(d,"modRemove",id=pid); d.wait_for_timeout(700)
+    ok("moderation: owner removes a reported public post",not any(i.get("id")==pid for i in STORE["posts/alice"]["items"]))
+    cd.close()
     # J8 social off (keep) -> nothing left in shared storage, stashed privately; back on -> restored
     nav(a,"profile"); act(a,"toggleSocial"); act(a,"socialOffYes"); a.wait_for_timeout(900)
     ok("J8 Social off: nothing of mine left in shared storage, tracking intact",not any(k.endswith("/alice") and not k.startswith("data/") for k in STORE) and "data/users/alice/stash" in STORE and a.locator('[data-page="spaces"]').count()==0 and len(S(a)["sessions"])==1,str([k for k in STORE if "alice" in k]))
@@ -312,7 +391,7 @@ with sync_playwright() as pw:
          "sessions":[L("osolo","solo",3),L("opart","partnered",2),L("oduo","duo",4),L("otrio","trio",5),L("ogrp","group",6,groupSize=6),L("ogrpx","group",7),L("onone",None,8)],
          "active":None,"draft":None,"blocks":[],"ignored":[]}
     ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script("if(!localStorage.getItem('vouz.v1'))localStorage.setItem('vouz.v1',"+json.dumps(json.dumps(LEG))+")")
-    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e))); p.goto(URL); p.wait_for_selector(".sheet")
+    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)+" @ "+str(getattr(e,"stack",""))[:600])); p.goto(URL); p.wait_for_selector(".sheet")
     t=p.inner_text(".sheet"); ok("legacy: a notice explains the change before anything is removed","1 Solo session and 1 Partnered session" in t and len(S(p)["sessions"])==7,t[:160])
     by={x["id"]:x for x in S(p)["sessions"]}
     ok("legacy: Duo becomes Couple, Trio and Group become Poly with their head count",[by[k]["category"] for k in ("oduo","otrio","ogrp","ogrpx")]==["couple","poly","poly","poly"] and [by[k]["participants"] for k in ("oduo","otrio","ogrp","ogrpx")]==[2,3,6,4] and "groupSize" not in by["ogrp"])
@@ -393,7 +472,7 @@ with sync_playwright() as pw:
     PMOCK="""window.__prompts=[];window.__planFail=null;(()=>{const f=async()=>({text:''});f.json=async(input,opts)=>{window.__prompts.push({input,opts:Object.keys(opts||{})});if(window.__planFail)throw {code:window.__planFail};
       return {suggestions:[{title:'<img src=x onerror="window.__xss=1">Sunset walk',why:'Easy and free',cost:'Free',time:'1 hour',setting:'Outdoors',steps:['Pick a spot','Bring a blanket']},{title:'Cook a new recipe',cost:'$',steps:[]},{bogus:1}]}};
       window.claude={use:async n=>n==='sample'?f:null}})();"""
-    ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script(PMOCK); p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)))
+    ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script(PMOCK); p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)+" @ "+str(getattr(e,"stack",""))[:600]))
     p.goto(URL); p.wait_for_selector(".ob"); onboard(p)
     log(p,"SESSIONTITLE",20,notes="SESSIONSECRET",cat="poly"); nav(p,"story"); act(p,"expNew",kind="done"); p.fill("#x-title","MEMTITLE"); p.fill("#x-notes","MEMNOTE"); act(p,"expSave")
     nav(p,"planner"); ok("planner: offered in Discover, nothing sent until asked",p.locator('[data-act="plAsk"]').count()==1 and p.evaluate("window.__prompts.length")==0)
@@ -473,7 +552,7 @@ with sync_playwright() as pw:
       window.__noDl=sessionStorage.getItem('noDl')==='1';window.claude={use:async n=>n==='downloads'?(window.__noDl?null:dl):null};"""
     ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script(CMOCK)
     ctx.route("**/index.html",lambda route:route.fulfill(response=route.fetch(),headers={**route.fetch().headers,"content-security-policy":"img-src 'self' data:"}))
-    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)))
+    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)+" @ "+str(getattr(e,"stack",""))[:600]))
     p.goto(URL); p.wait_for_selector(".ob"); onboard(p)
     jpg=open(os.path.join(HERE,"fixtures","gps.jpg"),"rb").read()
     nav(p,"story"); act(p,"expNew",kind="done"); p.fill("#x-title","Sunset on the pier"); p.fill("#x-loc","Pier 7"); p.fill("#x-fav","FAVLINE"); p.fill("#x-notes","PRIVNOTE"); act(p,"xMood",v="Tender")
