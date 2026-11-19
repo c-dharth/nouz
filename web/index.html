@@ -278,6 +278,14 @@ body.th-champagne{--bg:#0E0C09;--surface:#1B1813;--surface2:#27221A;--line:#3A33
 .pickph{padding:0;border:0}.pickph .tick{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:rgba(14,11,12,.78);color:var(--text)}
 .pickph[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--coral)}.pickph[aria-pressed="true"] .tick{background:var(--wine)}
 .pickph:not([aria-pressed="true"]) img{opacity:.55}
+
+/* ---- home, simplified ---- */
+.prog2{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border-radius:var(--r-sm);padding:12px 14px;min-height:56px}
+.prog2 .grow{display:flex;flex-direction:column;gap:6px}.prog2 b{font-size:14px}.prog2 .bar.lv{height:6px}
+.lvd{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--wine);color:var(--text);flex:none}
+.vpn{font-variant-numeric:tabular-nums;font-weight:600;color:var(--pink);font-size:14px}
+.ideal{display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:var(--r-sm);padding:10px 8px 10px 16px}
+.ideal .grow{display:flex;flex-direction:column;gap:2px}.ideal b{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.15}
 </style>
 </head>
 <body>
@@ -610,7 +618,7 @@ const vTabs=()=>`<nav class="tabs" aria-label="Primary">${TABS().map(([id,l,i])=
 const hdr=(title,right="")=>`<div class="top"><button class="ib" data-act="back" aria-label="Back">${ic("back")}</button><div class="grow" style="font-weight:700;text-align:center">${esc(title)}</div>${right||'<span style="width:44px"></span>'}</div>`;
 const sw=(act,on,label,sub="",extra="")=>`<button class="sw" role="switch" aria-checked="${!!on}" data-act="${act}" ${extra}><span class="grow"><b>${label}</b>${sub?`<span class="sub small" style="display:block">${sub}</span>`:""}</span><span class="k"></span></button>`;
 const sessRow=s=>{const d=new Date(s.start);return`<button class="sess" data-act="openReplay" data-id="${s.id}"><span class="d"><b>${d.getDate()}</b><span>${MO[d.getMonth()]}</span></span><span class="grow"><span class="t" style="display:block">${esc(s.title||"Session")}</span><span class="sub small">${WD[d.getDay()]} ${fmtTime(s.start)}${catLabel(s)?" · "+esc(catLabel(s)):""}${s.mood?" · "+esc(s.mood):""}${verifyStatus(s).k==="mutual"?" · confirmed":verifyStatus(s).k==="pending"?" · pending":""}${s.demo?" · demo":""}</span></span><span class="pill c">${fmtDur(s.durationSec)}</span></button>`};
-const demoBanner=()=>hasDemo()?`<div class="banner"><span>Demo data is showing. None of it is yours.</span><button class="link" data-act="removeDemo">Remove</button></div>`:"";
+const demoBanner=()=>hasDemo()?`<div class="banner"><span>Showing demo data</span><button class="link" data-act="removeDemo">Remove</button></div>`:"";
 
 /* ---- onboarding: three steps ---- */
 function vOnboard(){const o=ui.ob,n=3,i=o.step;
@@ -1411,19 +1419,27 @@ function ideaCard(x,extra=""){const planned=S.exps.some(e=>e.kind==="plan"&&e.id
 function suggestion(){const used=new Set(S.exps.map(e=>e.idea).filter(Boolean)),pool=IDEAS.filter(x=>!used.has(x.id));if(!pool.length)return null;
   return pool[(Math.floor(Date.now()/DAY)+(ui.sugOff||0))%pool.length]}
 
+/* Home: one line per thing. Detail lives one tap away. */
+function homeRow(e){const plan=e.kind==="plan",t=new Date(e.date||Date.now()),timed=e.date&&(t.getHours()||t.getMinutes());
+  const lead=plan?`<span class="badge on" aria-hidden="true">${ic("compass")}</span>`:e.photos&&e.photos[0]?`<span class="ph sm"><img data-photo="${esc(e.photos[0])}" alt=""></span>`:`<span class="d"><b>${t.getDate()}</b><span>${MO[t.getMonth()]}</span></span>`;
+  const sub=(plan?(e.date?fmtDate(e.date)+(timed?" · "+fmtTime(e.date):""):"Unscheduled"):(XCATS[e.cat]||"Other"))+(e.a!=="me"?" · from "+esc(whoX(e)):"");
+  return`<button class="sess" data-act="expOpen" data-id="${esc(e.id)}" data-a="${esc(e.a)}">${lead}<span class="grow"><span class="t" style="display:block">${esc(e.title)}</span><span class="sub small">${sub}</span></span></button>`}
 function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning":h<18?"Afternoon":"Evening";
-  const head=`<div class="row between"><div class="mark">vouz<b>.</b></div><button class="pill" data-act="tab" data-tab="profile" aria-label="Privacy settings">${ic("lock")} Private</button></div>`;
-  const plans=allPlans().slice(0,3),mem=storyItems("all").slice(0,2),ws=startOfWeek(Date.now()),wk=S.sessions.filter(s=>s.start>=ws),sug=suggestion();
+  const head=`<div class="row between"><div class="mark">vouz<b>.</b></div><button class="ib" data-act="tab" data-tab="profile" aria-label="Privacy and settings">${ic("lock")}</button></div>`;
+  const plans=allPlans().slice(0,2),mem=storyItems("all").slice(0,2),ws=startOfWeek(Date.now()),wk=S.sessions.filter(s=>s.start>=ws).length,sug=suggestion(),fresh=!S.sessions.length&&!S.exps.length;
   const live=S.active?`<button class="card rowcard" data-act="tab" data-tab="track" aria-label="Return to your running session"><span class="badge on" aria-hidden="true">${ic(running()?"pause":"play")}</span><span class="grow"><b>Session ${running()?"running":"paused"}</b><span class="sub small" style="display:block" id="miniclock">${fmtClock(elapsed(S.active))}</span></span>${ic("next")}</button>`
     :S.draft&&S.draft.fromTimer?`<button class="card rowcard" data-act="resumeDraft"><span class="badge on" aria-hidden="true">${ic("edit")}</span><span class="grow"><b>Finish saving your session</b></span>${ic("next")}</button>`:"";
+  const r=S.settings.games?R():null;
+  const prog=r?`<button class="prog2" data-act="page" data-page="rewards" aria-label="Rewards: level ${r.level.n}, ${r.level.name}, ${r.balance} points"><span class="lvd" aria-hidden="true">${r.level.n}</span><span class="grow"><b>${r.level.name}</b><span class="bar lv"><i style="width:${r.level.pct}%"></i></span></span><span class="vpn">${r.balance} VP</span></button>`:"";
+  const idea=sug?`<div class="ideal"><span class="grow"><span class="tiny">An idea</span><b>${esc(sug.t)}</b></span><button class="ib" data-act="sugNext" aria-label="Show another idea">${ic("next")}</button><button class="ib" data-act="ideaSave" data-v="${sug.id}" aria-label="Save ${esc(sug.t)} to plans">${ic("plus")}</button></div>`:"";
+  const sec=(title,go,goLabel,body)=>`<div class="sec"><div class="row between"><h3>${title}</h3>${go}</div>${body}</div>`;
   return`<div class="scroll">${head}${demoBanner()}${invitesCard()}${spaceInvitesCard()}${consentCard()}
-   <div><h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1><p class="sub">Less scrolling. More together.</p></div>${live}${progressCard(R())}
-   <div class="qa"><button data-act="quick">${ic("heart")}<span>Quick log</span></button><button data-act="expNew" data-kind="done">${ic("book")}<span>Add a memory</span></button><button data-act="tab" data-tab="discover">${ic("compass")}<span>Find an idea</span></button></div>
-   <div class="sec"><div class="row between"><h3>Coming up</h3><button class="link small" data-act="discSeg" data-v="plans">All plans</button></div>${plans.length?`<div>${plans.map(planRow).join("")}</div>`:`<p class="sub small">Nothing planned. Save an idea from Discover, or one you match on together.</p>`}</div>
-   ${sug?`<div class="sec"><div class="row between"><h3>An idea</h3><button class="link small" data-act="sugNext">Something else</button></div>${ideaCard(sug)}</div>`:""}
-   <div class="sec"><div class="row between"><h3>Recent memories</h3><button class="link small" data-act="tab" data-tab="story">Our Story</button></div>${mem.length?`<div>${mem.map(storyRow).join("")}</div>`:`<p class="sub small">Nothing here yet. Add a dinner, a trip, a milestone: anything worth keeping.</p>`}</div>
-   <button class="card rowcard" data-act="tab" data-tab="history"><span class="badge" aria-hidden="true">${ic("heart")}</span><span class="grow"><b>Intimacy this week</b><span class="sub small" style="display:block">${wk.length?wk.length+" session"+(wk.length===1?"":"s")+", "+fmtDur(stats(wk).tot):"Nothing logged this week"} · only you see this</span></span>${ic("next")}</button>
-   ${!S.sessions.length&&!S.exps.length?`<div class="sec" style="text-align:center;align-items:center"><p class="sub small">Everything here starts empty and fills in from what you add.</p><button class="btn sm ghost" data-act="loadDemo">See it with demo data</button></div>`:""}</div>`}
+   <h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1>${live}${prog}
+   <div class="qa"><button data-act="quick">${ic("heart")}<span>Quick log</span></button><button data-act="expNew" data-kind="done">${ic("book")}<span>Memory</span></button><button data-act="tab" data-tab="discover">${ic("compass")}<span>Ideas</span></button></div>
+   ${fresh?`<div class="card"><h2>Start your <em>story.</em></h2><p class="sub small">Everything stays private unless you choose to share it.</p><button class="link small" style="align-self:flex-start" data-act="loadDemo">See it with demo data</button></div>${idea}`
+    :`${plans.length?sec("Coming up",`<button class="link small" data-act="discSeg" data-v="plans">All</button>`,"",`<div>${plans.map(homeRow).join("")}</div>`):idea}
+   ${mem.length?sec("Recent",`<button class="link small" data-act="tab" data-tab="story">All</button>`,"",`<div>${mem.map(homeRow).join("")}</div>`):""}
+   <button class="card rowcard" data-act="tab" data-tab="history" aria-label="Intimacy: ${wk} this week, private"><span class="badge" aria-hidden="true">${ic("heart")}</span><span class="grow"><b>Intimacy</b><span class="sub small" style="display:block">${wk?wk+" this week":"None this week"}</span></span>${ic("lock")}</button>`}</div>`}
 
 function storyRow(e){const t=new Date(e.date||0);return`<button class="sess" data-act="expOpen" data-id="${esc(e.id)}" data-a="${esc(e.a)}">${e.photos&&e.photos[0]?`<span class="ph sm"><img data-photo="${esc(e.photos[0])}" alt=""></span>`:`<span class="d"><b>${t.getDate()}</b><span>${MO[t.getMonth()]}</span></span>`}<span class="grow"><span class="t" style="display:block">${esc(e.title)}</span><span class="sub small">${XCATS[e.cat]||"Other"}${e.location?" · "+esc(e.location):""}${e.a!=="me"?" · from "+esc(whoX(e)):e.sp?" · "+esc(Soc.spaceName(e.sp)):" · private"}${e.demo?" · demo":""}</span></span></button>`}
 

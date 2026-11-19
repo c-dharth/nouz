@@ -80,8 +80,9 @@ with sync_playwright() as pw:
     onboard(p)
     s=S(p); ok("onboarding: social off by default, local mode",s["onboarded"] and not s["settings"]["social"] and s["user"]["mode"]=="local")
     ok("nav: five tabs: Home, Intimacy, Discover, Our Story, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Intimacy","Discover","Our Story","Profile"])
-    t=p.inner_text(".scroll"); ok("home: empty states, no fabricated stats","Nothing planned" in t and "Nothing logged this week" in t and "Nothing here yet" in t and p.locator(".trio").count()==0)
-    ok("brand: new tagline, old one gone","Less scrolling. More together." in t and "cardio" not in p.content().lower())
+    t=p.inner_text(".scroll"); ok("home: a new account gets one welcome card, no fabricated stats","Start your" in t and "story." in t and p.locator(".trio").count()==0 and p.locator(".sec").count()==0)
+    ok("home: kept short",len(t.split())<=45,str(len(t.split())))
+    ok("brand: old tagline gone","cardio" not in p.content().lower())
     nav(p,"history"); ok("history: empty state, no fabricated stats",p.locator("text=Nothing logged yet").count()==1 and p.locator(".trio").count()==0)
     nav(p,"track"); act(p,"start"); p.wait_for_timeout(2100); act(p,"pause"); p.wait_for_timeout(1000)
     t_paused=p.inner_text("#clock"); p.wait_for_timeout(1100)
@@ -252,7 +253,7 @@ with sync_playwright() as pw:
     ma=sorted(x.inner_text() for x in a.locator(".idea .it").all())
     ok("match: changing picks updates the result privately (museum now shared)",ma==["Cook something new together","Pack a picnic","Visit a museum or gallery"],str(ma))
     act(a,"matchSave",v="cook"); a.wait_for_timeout(1000); bb.wait_for_timeout(600)
-    ok("match: a matched idea becomes a plan the partner sees","Cook something new together" in home(bb) and "planned by ali" in bb.inner_text(".scroll"))
+    ok("match: a matched idea becomes a plan the partner sees","Cook something new together" in home(bb) and "from ali" in bb.inner_text(".scroll"))
     # sharing a memory that belongs to a space needs everyone's agreement
     nav(a,"story"); act(a,"expOpen",id=xid); act(a,"mcOpen"); a.wait_for_timeout(400)
     ok("consent: a space memory can't be shared until everyone agrees",a.locator('[data-act="mcShare"]').is_disabled() and a.locator('[data-act="mcSave"]').first.is_disabled() and "Not asked" in a.inner_text(".scroll"))
@@ -365,9 +366,9 @@ with sync_playwright() as pw:
     ok("discover: filters narrow the ideas to free, at-home ones",0<len(titles)<n_all and "Write each other letters" in titles and "Take a road trip" not in titles,str(titles))
     act(p,"fClear"); ok("discover: clearing filters brings everything back",p.locator('[data-act="ideaSave"]').count()==n_all)
     act(p,"ideaSave",v="picnic"); ok("discover: an idea saves to plans once",p.locator('[data-act="ideaSave"][data-v="picnic"]').is_disabled() and len([e for e in S(p)["exps"] if e["idea"]=="picnic"])==1)
-    nav(p,"home"); ok("home: the plan shows under Coming up","Pack a picnic" in p.inner_text(".scroll") and "Not scheduled" in p.inner_text(".scroll"))
+    nav(p,"home"); ok("home: the plan shows under Coming up","Pack a picnic" in p.inner_text(".scroll") and "Unscheduled" in p.inner_text(".scroll"))
     pid=[e for e in S(p)["exps"] if e["idea"]=="picnic"][0]["id"]
-    act(p,"planSched",id=pid); p.fill("#sch-in",time.strftime("%Y-%m-%dT18:30",time.localtime(time.time()+3*86400))); act(p,"schedSave"); ok("plans: scheduling sets the date",S(p)["exps"][-1]["date"] is not None and "6:30pm" in p.inner_text(".scroll"))
+    nav(p,"plans"); act(p,"planSched",id=pid); p.fill("#sch-in",time.strftime("%Y-%m-%dT18:30",time.localtime(time.time()+3*86400))); act(p,"schedSave"); ok("plans: scheduling sets the date",S(p)["exps"][-1]["date"] is not None and "6:30pm" in p.inner_text(".scroll"))
     act(p,"planDone",id=pid); ok("plans: marking done opens the memory form",p.locator("#x-title").input_value()=="Pack a picnic")
     p.fill("#x-fav","FAVMOMENT"); p.fill("#x-notes","PRIVNOTE"); act(p,"xMood",v="Relaxed"); act(p,"expSave"); p.wait_for_timeout(150); e=[x for x in S(p)["exps"] if x["id"]==pid][0]
     ok("plans: done moves it to Our Story with today's date",e["kind"]=="done" and e["favorite"]=="FAVMOMENT" and e["date"]<=time.time()*1000+86400000 and "Private: only you see this." in p.inner_text(".scroll"))
@@ -419,7 +420,7 @@ with sync_playwright() as pw:
         if loc: p.fill("#x-loc",loc)
         act(p,"expSave"); p.wait_for_timeout(150)
     def R_(): return p.evaluate("(()=>{const r=window.__vouz.R();return {earned:r.earned,balance:r.balance,level:r.level.n,awards:r.awards.map(a=>[a.k,a.vp,a.why]),badges:r.badges.filter(b=>b.earnedAt).map(b=>b.id)}})()")
-    nav(p,"home"); ok("rewards: Home shows level and points, starting from nothing","LEVEL 1 · SPARK" in p.inner_text(".scroll").upper() and R_()["earned"]==0)
+    nav(p,"home"); ok("rewards: Home shows level and points, starting from nothing",p.locator(".prog2").count()==1 and "Spark" in p.inner_text(".prog2") and "0 VP" in p.inner_text(".prog2") and R_()["earned"]==0)
     addmem("FIRSTDINNER","dinner","Corner bistro")
     ok("rewards: a memory earns 20, a first kind 50, and First Spark",R_()["earned"]==70 and "spark" in R_()["badges"])
     ok("rewards: earning celebrates, with the points and the badge",p.locator(".cel").count()==1 and "+70 VP" in p.inner_text(".cel") and "First Spark" in p.inner_text(".cel"))
@@ -459,10 +460,10 @@ with sync_playwright() as pw:
     # switches
     act(p,"rwSeg",v="progress"); act(p,"rwCel"); addmem("QUIETONE","celebration"); ok("switch: celebrations can be turned off",p.locator(".cel").count()==0 and R_()["earned"]>0)
     nav(p,"profile"); act(p,"page",page="rewards"); act(p,"rwCel"); act(p,"rwGames"); nav(p,"home")
-    ok("switch: gamification off hides levels and points everywhere","LEVEL" not in p.inner_text(".scroll").upper() and p.evaluate("document.body.className")=="")
+    ok("switch: gamification off hides levels and points everywhere",p.locator(".prog2").count()==0 and "VP" not in p.inner_text(".scroll") and p.evaluate("document.body.className")=="")
     addmem("WHILEOFF","movie"); ok("switch: nothing celebrates while it's off",p.locator(".cel").count()==0)
     nav(p,"profile"); act(p,"page",page="rewards"); act(p,"rwGames"); nav(p,"home"); p.wait_for_timeout(200)
-    ok("switch: turning it back on picks up quietly from the records",p.locator(".cel").count()==0 and "LEVEL" in p.inner_text(".scroll").upper())
+    ok("switch: turning it back on picks up quietly from the records",p.locator(".cel").count()==0 and p.locator(".prog2").count()==1)
     ctx.close()
     # ---------- shareable memory cards ----------
     CMOCK="""window.__saved=[];window.__dlFail=null;window.__shared=[];window.__copied=[];
