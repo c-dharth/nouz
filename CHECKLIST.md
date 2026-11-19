@@ -25,6 +25,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 
 | Feature | State |
 |---|---|
+| Connection guide (AI) | Done in the web app: Insights → Connection. Opt-in, aggregated totals only, tested with Claude mocked |
 | AI experience planner | Done. Discover → Planner. Sends only the request, budget, time, a typed area and (optional) memory titles |
 | Personalized recommendations | Done in the web app: Discover For You / Nearby / Saved with Yelp, Ask VOUZ day plans, learning from saves, plans, ratings and feedback. Server tables in migration 0006, tested locally |
 | Monthly and yearly recaps | Not started |

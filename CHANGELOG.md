@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0 — 2026-11-19
+
+Added:
+- Connection guide, in Intimacy → Insights → Connection. An AI guide (Claude, through the platform) that gives a gentle read of the whole relationship: dates and memories, private ratings and moods, plans done, and intimacy patterns, with ideas to try next.
+- Off until turned on. It receives totals and trends from the last 24 weeks, built on the device and viewable in full ("What the guide sees"). Never individual records, notes, titles, names, places, photos, tags or heart rate.
+- Told never to treat more intimacy as better, never to set targets, never to present dates as a way to get more intimacy, and that it is not a therapist or doctor. Links are stripped from answers; only real ideas from VOUZ's list are offered.
+- If a question suggests someone may not be safe, it shows the National Domestic Violence Hotline and 988.
+- Conversations aren't saved and aren't shared with partners.
+
 ## 0.9.1 — 2026-11-19
 
 Changed:

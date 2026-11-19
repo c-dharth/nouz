@@ -211,7 +211,7 @@ with sync_playwright() as pw:
     nav(a,"history"); act(a,"openReplay",id=sid); act(a,"composeRecap",id=sid)
     ok("a session card can never be shared with everyone",a.locator('[data-act="cAud"][data-v="everyone"]').count()==0)
     a.evaluate("()=>{}"); nav(a,"profile"); act(a,"page",page="achievements"); act(a,"composeAch",id="first"); a.fill("#c-cap","PUBLICCAP"); act(a,"cAud",v="everyone"); act(a,"composeStep",v="preview"); act(a,"publish"); a.wait_for_timeout(800)
-    pub=json.dumps([i for i in STORE["posts/alice"]["items"] if i.get("vis")=="everyone"])
+    pub=json.dumps([{k:v for k,v in i.items() if k not in ("postedAt","id")} for i in STORE["posts/alice"]["items"] if i.get("vis")=="everyone"])
     ok("everyone-card is sanitized whitelist only","PUBLICCAP" in pub and not any(w in pub for w in ["SECRETNOTE","SECRETTAG","PRIVATETITLE","Electric","123","About",sid]),pub)
     ok("everyone-card visible to unconnected user","PUBLICCAP" in feed(c))
     # permission off -> key withdrawn
@@ -494,7 +494,7 @@ with sync_playwright() as pw:
     nav(p,"match"); ok("Mutual Match: explains it needs Connections when they're off","needs Connections" in p.inner_text(".scroll"))
     ctx.close()
     # ---------- AI planner (Claude mocked: records exactly what would be sent) ----------
-    PMOCK="""window.__prompts=[];window.__planFail=null;(()=>{const f=async()=>({text:''});f.json=async(input,opts)=>{window.__prompts.push({input,opts:Object.keys(opts||{})});if(window.__planFail)throw {code:window.__planFail};
+    PMOCK="""window.__prompts=[];window.__planFail=null;(()=>{const f=async()=>({text:''});f.json=async(input,opts)=>{window.__prompts.push({input,opts:Object.keys(opts||{})});if(String(input).includes('connection guide')&&!window.__planFail)return{answer:'You two tend to enjoy outdoor dates. https://evil.example/x',ideas:['hike','nope']};if(window.__planFail)throw {code:window.__planFail};
       return {suggestions:[{title:'<img src=x onerror="window.__xss=1">Sunset walk',why:'Easy and free',cost:'Free',time:'1 hour',setting:'Outdoors',steps:['Pick a spot','Bring a blanket']},{title:'Cook a new recipe',cost:'$',steps:[]},{bogus:1}]}};
       window.claude={use:async n=>n==='sample'?f:null}})();"""
     ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script(PMOCK); p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)+" @ "+str(getattr(e,"stack",""))[:600]))
@@ -516,6 +516,22 @@ with sync_playwright() as pw:
     ok("planner: 'try again' asks afresh",p.evaluate("window.__prompts[1].opts").count("cache")==1)
     p.evaluate("window.__planFail='rate_limited'"); act(p,"plAsk",again="1"); p.wait_for_selector(".err"); ok("planner: errors are explained, not retried",p.evaluate("window.__prompts.length")==3 and "Try again in a little while" in p.inner_text(".err"))
     p.evaluate("window.__planFail='not_granted'"); act(p,"plAsk",again="1"); p.wait_for_timeout(300); ok("planner: hides itself if Claude isn't allowed","isn't available here" in p.inner_text(".scroll"))
+    # ---------- connection guide (Insights → Your connection) ----------
+    p.evaluate("window.__planFail=null"); n0=p.evaluate("window.__prompts.length")
+    nav(p,"insights"); act(p,"insTab",v="connection")
+    ok("guide: off until turned on, explains what it gets, sends nothing","Turn on the guide" in p.inner_text(".scroll") and "never gets" in p.inner_text(".scroll").lower() and p.evaluate("window.__prompts.length")==n0)
+    act(p,"guideOn"); act(p,"guideEx",i="0"); act(p,"guideAsk"); p.wait_for_selector(".ga")
+    pr=p.evaluate("window.__prompts.slice(-1)[0].input")
+    ok("guide: sends totals across dates, memories and intimacy",all(w in pr for w in ["memoriesLogged","sessions","datesAndHowTheyFelt","How are we doing lately?"]))
+    ok("guide: never sends titles, notes or individual records",not any(w in pr for w in ["SESSIONTITLE","SESSIONSECRET","MEMTITLE","MEMNOTE"]))
+    ok("guide: told never to treat more as better or to act as a therapist","Never treat more intimacy" in pr and "not a therapist" in pr)
+    t=p.inner_text(".ga")
+    ok("guide: answer shown, links stripped, only real ideas offered","outdoor dates" in t and "evil.example" not in t and "Go hiking" in t and p.locator('.ga [data-act="ideaSave"]').count()==1)
+    p.locator(".ga").scroll_into_view_if_needed(); p.screenshot(path=SH+"guide.png")
+    ok("guide: shows exactly what it sees",p.locator(".gsum").count()==1 and "SESSIONTITLE" not in p.inner_text(".gsum"))
+    p.fill("#g-q","I feel unsafe, he hurts me"); act(p,"guideAsk"); p.wait_for_timeout(300)
+    ok("guide: points to help when someone may not be safe","1-800-799-7233" in p.inner_text(".scroll") and "988" in p.inner_text(".scroll"))
+    act(p,"guideOff"); ok("guide: can be turned off, conversation cleared",not S(p)["settings"]["guide"] and "Turn on the guide" in p.inner_text(".scroll"))
     ctx.close()
     # ---------- rewards: points, caps, badges, challenges, redemption, switches ----------
     ctx,p=newctx(b); p.goto(URL); p.wait_for_selector(".ob"); onboard(p)

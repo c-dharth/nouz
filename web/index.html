@@ -186,6 +186,8 @@ textarea{min-height:84px;resize:vertical}
 .chips.scrollx{flex:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px}.chips.scrollx::-webkit-scrollbar{display:none}.chips.scrollx .chip{flex:none}
 input[type=search]{-webkit-appearance:none;appearance:none}
 .wx{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--surface)}.wx>span:first-child{font-weight:700}
+.gq{align-self:flex-end;max-width:85%;background:var(--surface2);padding:10px 12px;border-radius:14px 14px 4px 14px;overflow-wrap:anywhere}
+.ga{gap:8px}.gsum{white-space:pre-wrap;font-size:11px;color:var(--dim);max-height:240px;overflow:auto;margin:6px 0 0}
 .rec{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
 .rec .rt{display:block;font-size:17px;line-height:1.25}.recph{position:relative;margin:-14px -14px 4px;border-radius:var(--r) var(--r) 0 0;overflow:hidden;aspect-ratio:16/9;background:var(--surface2)}
 .recph img{width:100%;height:100%;object-fit:cover;display:block}.recph .tiny{position:absolute;right:8px;bottom:6px;background:rgba(14,11,12,.7);padding:2px 6px;border-radius:6px}
@@ -578,7 +580,7 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
 
 /* ============ ui state ============ */
 const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
-  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
+  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},guide:{q:"",msgs:[],busy:false,err:null,off:false},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
 const TABS=()=>[["home","Home","home"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
@@ -804,8 +806,9 @@ function vInsights(){const r=ui.ins,inCat=s=>r.cat==="all"||s.category===r.cat,b
    <div class="chips" role="group" aria-label="Time range">${[["week","Week"],["month","Month"],["year","Year"],["custom","Custom"]].map(([v,l])=>`<button class="chip" data-act="insRange" data-v="${v}" aria-pressed="${r.range===v}">${l}</button>`).join("")}</div>
    ${r.range==="custom"?`<div class="row"><label class="f grow" for="i-from">From<input type="date" id="i-from" data-bind="ins.from" data-live="1" value="${esc(r.from)}"></label><label class="f grow" for="i-to">To<input type="date" id="i-to" data-bind="ins.to" data-live="1" value="${esc(r.to)}"></label></div>${rg?"":`<p class="sub small">Pick a start and end date.</p>`}`:""}
    <div class="chips" role="group" aria-label="Who was involved">${[["all","All"]].concat(CAT_PICK.map(v=>[v,CATS[v]])).map(([v,l])=>`<button class="chip" data-act="insCat" data-v="${v}" aria-pressed="${r.cat===v}">${l}</button>`).join("")}</div>`;
-  if(!S.sessions.length)return`<div class="scroll">${head}<div class="card"><h2>Nothing to chart yet.</h2><p class="sub">Save a session and this page fills in from your own records.</p><button class="btn sm primary" data-act="iSeg" data-v="track" style="align-self:flex-start">Go to Track</button></div></div>`;
-  const tabs=`<div class="seg3" role="group" aria-label="Insights section">${[["overview","Overview"],["patterns","Patterns"],["mood","Mood"]].map(([v,l])=>`<button data-act="insTab" data-v="${v}" aria-pressed="${r.tab===v}">${l}</button>`).join("")}</div>`;
+  const tabs=`<div class="seg3" role="group" aria-label="Insights section">${[["overview","Overview"],["patterns","Patterns"],["mood","Mood"],["connection","Connection"]].map(([v,l])=>`<button data-act="insTab" data-v="${v}" aria-pressed="${r.tab===v}">${l}</button>`).join("")}</div>`;
+  if(r.tab==="connection")return`<div class="scroll"><div><h1>Your <em>connection.</em></h1><p class="sub small">A gentle read of your dates, memories and intimacy together. There's no right amount of anything.</p></div>${demoBanner()}${tabs}${vGuide()}</div>`;
+  if(!S.sessions.length)return`<div class="scroll">${head}${tabs}<div class="card"><h2>Nothing to chart yet.</h2><p class="sub">Save a session and this page fills in from your own records.</p><button class="btn sm primary" data-act="iSeg" data-v="track" style="align-self:flex-start">Go to Track</button></div></div>`;
   const none=`<div class="card line"><p class="sub small">No sessions ${rl}${r.cat!=="all"?" in this category":""}. Try a wider range.</p></div>`;
   let body="";
   if(r.tab==="overview"){let chart="";
@@ -2600,7 +2603,87 @@ Object.assign(A,{
 /* What a saved place keeps: provider facts only, with the time they were fetched. */
 const snapV=v=>({id:v.id,src:v.src,srcs:(v.srcs||[v.src]).slice(0,3),name:v.name,kind:v.kind,cats:v.cats,addr:v.addr,lat:v.lat,lon:v.lon,rating:v.rating,reviews:v.reviews,price:v.price,free:v.free,photos:(v.photos||[]).slice(0,1),url:v.url,yelpUrl:v.yelpUrl||null,site:v.site||null,hours:v.hours||null,trail:v.trail||null,openNow:null,hoursText:null,distKm:null,at:v.at,demo:!!v.demo});
 
-function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={dsc:ui.dsc,feed:ui.feed,pc:ui.pc,me:ui.me,cp:ui.cp,soc:ui.soc,ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
+/* ============ Connection guide (Insights → Your connection) ============
+   An AI guide that looks at the whole relationship: dates, memories, plans, private ratings and moods, plus intimacy
+   patterns. Off until the person turns it on. It receives totals and trends only, built below on this device, and the
+   person can read exactly what's sent. Never individual records, notes, titles, names, places, tags or heart rate.
+   It's a guide, not a therapist: no diagnosis, no targets, and never "more is better". */
+const WEEK=7*DAY;
+function guideSummary(){const now=Date.now(),wk=12,from=now-wk*WEEK,prevFrom=from-wk*WEEK,real=S.sessions.some(s=>!s.demo)||S.exps.some(e=>!e.demo),ses=S.sessions.filter(s=>!real||!s.demo),exps=S.exps.filter(e=>!real||!e.demo);
+  const inR=(t,a,b)=>t>=a&&t<b,cur=ses.filter(s=>inR(s.start,from,now)),prev=ses.filter(s=>inR(s.start,prevFrom,from));
+  const avg=a=>a.length?+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1):null,bucket=sec=>sec?Math.max(5,Math.round(sec/60/5)*5)+" min":null;
+  const parts=[0,0,0,0],wd=Array(7).fill(0);cur.forEach(s=>{const d=new Date(s.start);parts[partOf(d.getHours())]++;wd[(d.getDay()+6)%7]++});
+  const moods={};cur.forEach(s=>{if(MC[s.mood])moods[s.mood]=(moods[s.mood]||0)+1});
+  const sat=cur.map(s=>s.satisfaction).filter(v=>typeof v==="number");
+  const done=exps.filter(e=>e.kind==="done"&&e.date&&inR(e.date,from,now)),donePrev=exps.filter(e=>e.kind==="done"&&e.date&&inR(e.date,prevFrom,from));
+  const byCat={};done.forEach(e=>{byCat[XCATS[e.cat]||"Other"]=(byCat[XCATS[e.cat]||"Other"]||0)+1});
+  const xm={};done.forEach(e=>{if(MC[e.mood])xm[e.mood]=(xm[e.mood]||0)+1});
+  const rated=exps.filter(e=>e.rating&&e.date&&inR(e.date,from,now)),rByCat={};rated.forEach(e=>{const k=XCATS[e.cat]||"Other";(rByCat[k]=rByCat[k]||[]).push(e.rating)});
+  const plans=exps.filter(e=>e.kind==="plan"),planned=exps.filter(e=>e.planned&&e.doneAt&&inR(e.doneAt,from,now)).length;
+  const lastDate=exps.filter(e=>e.kind==="done"&&e.date).sort((a,b)=>b.date-a.date)[0];
+  /* Weeks with a date or memory vs weeks without: how sessions felt (rating and mood), never how many. */
+  const weeks=[];for(let i=0;i<wk;i++){const a=startOfWeek(now)-i*WEEK,b=a+WEEK;weeks.push({date:done.some(e=>inR(e.date,a,b)),sat:cur.filter(s=>inR(s.start,a,b)&&typeof s.satisfaction==="number").map(s=>s.satisfaction),warm:cur.filter(s=>inR(s.start,a,b)&&["Connected","Tender","Playful","Relaxed"].includes(s.mood)).length,moodN:cur.filter(s=>inR(s.start,a,b)&&MC[s.mood]).length})}
+  const grp=w=>{const s=w.flatMap(x=>x.sat),mN=w.reduce((a,x)=>a+x.moodN,0);return{weeks:w.length,avgRating:s.length>=3?avg(s):null,warmMoodShare:mN>=3?Math.round(w.reduce((a,x)=>a+x.warm,0)/mN*100)+"%":null}};
+  const wD=weeks.filter(w=>w.date),wN=weeks.filter(w=>!w.date);
+  return{period:"last 12 weeks, compared with the 12 before",
+    together:{memoriesLogged:done.length,before:donePrev.length,byKind:byCat,moodsOnMemories:xm,privateRatingsOfPlannedDates:Object.fromEntries(Object.entries(rByCat).map(([k,v])=>[k,avg(v)])),
+      plansCompletedFromPlanning:planned,plansWaiting:plans.filter(e=>!e.date||e.date>now).length,daysSinceLastMemory:lastDate?Math.floor((now-lastDate.date)/DAY):null,savedPlaces:(S.disc&&S.disc.saved||[]).length},
+    intimacy:cur.length+prev.length?{sessions:cur.length,before:prev.length,typicalLength:bucket(stats(cur).avg),timeOfDay:Object.fromEntries(PARTS.map((p,i)=>[p,parts[i]])),
+      byWeekday:Object.fromEntries(["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d,i)=>[d,wd[i]])),moods,avgPrivateRating:sat.length>=3?avg(sat):null,ratedSessions:sat.length,
+      couple:cur.filter(s=>s.category==="couple").length,poly:cur.filter(s=>s.category==="poly").length}:"none logged",
+    datesAndHowTheyFelt:wD.length>=2&&wN.length>=2?{weeksWithADateOrMemory:grp(wD),weeksWithout:grp(wN)}:"not enough weeks to compare"}}
+const GUIDE_EX=["How are we doing lately?","What makes our best weeks?","What should we try next?","Have we been in a rut?","What do our dates say about us?"];
+const GUIDE_RISK=/\b(abus|hit me|hits me|hurt(s)? me|forc(e|ed|ing)|unsafe|scared of|threat|violen|assault|kill myself|suicid|self.?harm|want to die)/i;
+function guidePrompt(q,hist){const ideas=IDEAS.map(i=>i[0]+": "+i[1]).join("; ");
+  return["You are the connection guide inside VOUZ, a private app where adult couples and partners plan dates, keep memories and, privately, log intimacy.",
+    "You talk with one partner about their relationship using only the summary below. Be warm, plain and brief: 2 to 5 short sentences, then up to 2 concrete suggestions.",
+    "Rules you must follow:",
+    "- Base observations only on the numbers given. If the data is thin, say so. Never invent dates, places or events.",
+    "- Never treat more intimacy, longer sessions, or more people as better, and never set a target or quota for them. How often says nothing about how a relationship is doing.",
+    "- Never suggest dates as a way to get more intimacy. Dates are good in themselves.",
+    "- Patterns are correlations, not causes. Say 'tends to' or 'often', not 'because'.",
+    "- You are not a therapist or doctor. No diagnosis, no medical or sexual-health advice, no judgement of the partner. If they describe distress, conflict that feels unsafe, or anything serious, gently suggest talking with a licensed couples therapist or a doctor.",
+    "- Keep it tasteful and non-explicit. Don't mention the partner by name; you don't know it.",
+    "- Suggestions should be experiences to share. Where one fits, pick from this list by id: "+ideas+".",
+    'Reply with only JSON: {"answer":"your reply","ideas":["up to 3 ids from the list"]}',
+    "","Summary (from their device): "+JSON.stringify(guideSummary()),
+    hist.length?"Earlier in this conversation:\n"+hist.slice(-6).map(m=>(m.who==="me"?"Them: ":"You: ")+m.text.slice(0,400)).join("\n"):"",
+    "Their question: "+String(q).slice(0,300)].filter(Boolean).join("\n")}
+function vGuide(){const g=ui.guide;
+  if(!SAMPLE||g.off)return`<div class="card"><h2>The guide isn't available here.</h2><p class="sub">It asks Claude, which this view can't do${g.off?" because it wasn't allowed":""}. Your charts still work.</p></div>`;
+  if(!S.settings.guide)return`<div class="card"><h2>A guide for <em>your connection.</em></h2><p class="sub">Ask how things are going and get a gentle read on your dates, memories and intimacy patterns together, with ideas for what to try next.</p>
+    <div class="col" style="gap:6px"><span class="tiny">What it gets</span><p class="sub small">Totals and trends from the last 24 weeks, made on this device: how many memories and of what kind, your private ratings and moods, plans done, and intimacy counts, timing and moods.</p>
+    <span class="tiny">What it never gets</span><p class="sub small">Any single record, notes, titles, names, places, photos, tags or heart rate. Nothing about your partner's own entries.</p></div>
+    <p class="tiny">Sent to Claude only when you ask a question. Not shared with your partner. It's a guide, not a therapist or a doctor.</p>
+    <button class="btn primary block" data-act="guideOn">Turn on the guide</button></div>`;
+  return`<div class="card ask"><label class="f" for="g-q"><span>${ic("spark")} Ask about your connection</span><textarea id="g-q" data-bind="guide.q" maxlength="300" placeholder="How are we doing lately?">${esc(g.q)}</textarea></label>
+    <div class="chips sm scrollx" role="group" aria-label="Examples">${GUIDE_EX.map((t,i)=>`<button class="chip" data-act="guideEx" data-i="${i}">${esc(t)}</button>`).join("")}</div>
+    ${g.busy?`<div class="row"><span class="grow sub" role="status">Thinking…</span><button class="btn sm ghost" data-act="guideStop">Stop</button></div>`:`<button class="btn primary block" data-act="guideAsk">${ic("spark")} Ask</button>`}</div>
+   ${g.err?`<p class="err" role="alert">${esc(g.err)}</p>`:""}
+   ${g.msgs.map(m=>m.who==="me"?`<p class="gq">${esc(m.text)}</p>`:`<div class="card ga">${m.safe?`<div class="card line" role="note"><p class="sub small"><b>If you don't feel safe, you deserve support.</b> In the US you can reach the National Domestic Violence Hotline at 1-800-799-7233, or call or text 988 if you're thinking about harming yourself. Outside the US, local emergency services can help.</p></div>`:""}<p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(m.text)}</p>
+      ${(m.ideas||[]).map(id=>IDEA[id]?`<div class="ideal"><span class="grow"><span class="tiny">Try</span><b>${esc(IDEA[id].t)}</b></span><button class="ib" data-act="ideaSave" data-v="${id}" aria-label="Save ${esc(IDEA[id].t)} to plans">${ic("plus")}</button></div>`:"").join("")}
+      <span class="tiny">AI guide · a gentle read of your own numbers, not advice from a professional</span></div>`).join("")}
+   <details class="card line"><summary class="small">What the guide sees</summary><pre class="gsum">${esc(JSON.stringify(guideSummary(),null,1))}</pre></details>
+   <div class="row wrap"><button class="btn sm ghost" data-act="guideClear">Clear conversation</button><button class="btn sm ghost" data-act="guideOff">Turn off the guide</button></div>
+   <p class="tiny">The conversation isn't saved. Sent to Claude only when you ask.</p>`}
+Object.assign(A,{
+  guideOn(){S.settings.guide=true;save();render()},
+  guideOff(){S.settings.guide=false;ui.guide.msgs=[];save();render();toast("Guide turned off.")},
+  guideEx(e){ui.guide.q=GUIDE_EX[+e.dataset.i];render()},
+  guideClear(){ui.guide.msgs=[];render()},
+  guideStop(){ui.guide.ctl&&ui.guide.ctl.abort()},
+  async guideAsk(){const g=ui.guide,q=String(g.q||"").trim();if(!q||g.busy||!SAMPLE||!S.settings.guide)return;
+    const hist=g.msgs.slice();g.msgs.push({who:"me",text:q.slice(0,300)});g.q="";g.busy=true;g.err=null;g.ctl=new AbortController();render();
+    try{const v=await SAMPLE.json(guidePrompt(q,hist),{signal:g.ctl.signal,cache:false});
+      let text=v&&typeof v.answer==="string"?v.answer.replace(/https?:\/\/\S+/g,"").trim().slice(0,1200):"";if(!text)throw{code:"empty"};
+      const ideas=Array.isArray(v.ideas)?v.ideas.filter(id=>IDEA[id]).slice(0,3):[];
+      g.msgs.push({who:"guide",text,ideas,safe:GUIDE_RISK.test(q)})}
+    catch(x){const c=x&&x.code;if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(c))g.off=true;else if(c!=="cancelled")g.err=PLAN_ERR[c]||"The guide couldn't answer. Try again.";
+      if(GUIDE_RISK.test(q))g.msgs.push({who:"guide",text:"I couldn't answer just now, but what you wrote matters.",ideas:[],safe:true})}
+    finally{g.busy=false;g.ctl=null;render()}}
+});
+
+function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={guide:ui.guide,dsc:ui.dsc,feed:ui.feed,pc:ui.pc,me:ui.me,cp:ui.cp,soc:ui.soc,ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
 document.addEventListener("input",ev=>{bind(ev.target);const sid=ev.target.id;if(sid==="f-q"||sid==="s-q"||sid==="pc-loc"){clearTimeout(bind.t);bind.t=setTimeout(()=>{ui.feed.n=10;render();const el=document.getElementById(sid);if(el){el.focus();const n=el.value.length;try{el.setSelectionRange(n,n)}catch(x){}}},250)}if(ev.target.id==="mc-cap"){clearTimeout(refreshCard.t);refreshCard.t=setTimeout(refreshCard,250)}if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
 document.addEventListener("change",ev=>{if(ev.target.dataset&&ev.target.dataset.live&&ev.target.type==="date"){bind(ev.target);render()}});
