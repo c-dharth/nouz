@@ -14,7 +14,7 @@ def can_read(u,p):
 def can_write(u,p):
     s=p.split('/')
     if p.startswith('data/users/'): return s[2]==u
-    return s[0] in('profiles','posts','reactions','comments','links','invites','spaces','exps','match','reports') and s[1]==u
+    return s[0] in('profiles','posts','reactions','comments','links','invites','spaces','exps','match','consent','reports') and s[1]==u
 def db_get(src,u,p): return STORE.get(p) if can_read(u,p) else None
 def db_set(src,u,p,d):
     if not can_write(u,p): raise Exception('invalid_argument')
@@ -253,6 +253,20 @@ with sync_playwright() as pw:
     ok("match: changing picks updates the result privately (museum now shared)",ma==["Cook something new together","Pack a picnic","Visit a museum or gallery"],str(ma))
     act(a,"matchSave",v="cook"); a.wait_for_timeout(1000); bb.wait_for_timeout(600)
     ok("match: a matched idea becomes a plan the partner sees","Cook something new together" in home(bb) and "planned by ali" in bb.inner_text(".scroll"))
+    # sharing a memory that belongs to a space needs everyone's agreement
+    nav(a,"story"); act(a,"expOpen",id=xid); act(a,"mcOpen"); a.wait_for_timeout(400)
+    ok("consent: a space memory can't be shared until everyone agrees",a.locator('[data-act="mcShare"]').is_disabled() and a.locator('[data-act="mcSave"]').first.is_disabled() and "Not asked" in a.inner_text(".scroll"))
+    act(a,"mcAsk"); a.wait_for_timeout(1200); raw=json.dumps(STORE.get("consent/alice",{}))
+    ok("consent: the request is encrypted in storage",'"req"' in raw and "BEACHDAY" not in raw and xid not in raw,raw[:120])
+    hb=home(bb); ok("consent: the other person is asked on Home","would like to share a card of" in hb and "BEACHDAY" in hb)
+    ok("consent: someone outside the space isn't asked","would like to share" not in home(c))
+    act(bb,"consentAns",v=bb.evaluate("window.__vouz.Soc.creq[0].id"),ok="1"); bb.wait_for_timeout(1200); a.wait_for_timeout(1200)
+    ok("consent: once everyone agrees, sharing unlocks",not a.locator('[data-act="mcShare"]').is_disabled() and "Agreed" in a.inner_text(".scroll"))
+    nav(bb,"profile"); act(bb,"page",page="spaces"); act(bb,"consentAns",ok="0"); bb.wait_for_timeout(1200); a.wait_for_timeout(1200)
+    ok("consent: agreement can be withdrawn, and sharing locks again",a.locator('[data-act="mcShare"]').is_disabled() and "Didn't agree" in a.inner_text(".scroll"))
+    nav(bb,"story"); act(bb,"expOpen",id=xid,a="alice"); act(bb,"mcOpen"); bb.wait_for_timeout(400)
+    ok("consent: the partner can't share your memory without asking you",bb.locator('[data-act="mcShare"]').is_disabled() and "ali" in bb.inner_text(".scroll"))
+    home(a); home(bb)
     # leaving: key rotates, shared content disappears
     nav(bb,"profile"); act(bb,"page",page="spaces"); act(bb,"spLeave",id=spid); act(bb,"confirmYes"); bb.wait_for_timeout(1000); a.wait_for_timeout(1500)
     ok("spaces: leaving takes them out and the space gets a new key",sp_of(a)[0]["members"]==[] and list(STORE["spaces/alice"]["items"][0]["wk"].keys())==["self"])
@@ -449,6 +463,70 @@ with sync_playwright() as pw:
     addmem("WHILEOFF","movie"); ok("switch: nothing celebrates while it's off",p.locator(".cel").count()==0)
     nav(p,"profile"); act(p,"page",page="rewards"); act(p,"rwGames"); nav(p,"home"); p.wait_for_timeout(200)
     ok("switch: turning it back on picks up quietly from the records",p.locator(".cel").count()==0 and "LEVEL" in p.inner_text(".scroll").upper())
+    ctx.close()
+    # ---------- shareable memory cards ----------
+    CMOCK="""window.__saved=[];window.__dlFail=null;window.__shared=[];window.__copied=[];
+      const dl={save:async({filename,data})=>{const buf=new Uint8Array(await data.arrayBuffer());let s='';for(let i=0;i<Math.min(buf.length,200000);i++)s+=String.fromCharCode(buf[i]);
+        const bmp=await createImageBitmap(data);window.__saved.push({filename,size:buf.length,head:Array.from(buf.subarray(0,4)),exif:s.includes('Exif'),gps:s.includes('GPS'),w:bmp.width,h:bmp.height});
+        if(window.__dlFail)throw {code:window.__dlFail};return {status:'saved'}}};
+      window.__noDl=sessionStorage.getItem('noDl')==='1';window.claude={use:async n=>n==='downloads'?(window.__noDl?null:dl):null};"""
+    ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script(CMOCK); p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)))
+    p.goto(URL); p.wait_for_selector(".ob"); onboard(p)
+    jpg=open(os.path.join(HERE,"fixtures","gps.jpg"),"rb").read()
+    nav(p,"story"); act(p,"expNew",kind="done"); p.fill("#x-title","Sunset on the pier"); p.fill("#x-loc","Pier 7"); p.fill("#x-fav","FAVLINE"); p.fill("#x-notes","PRIVNOTE"); act(p,"xMood",v="Tender")
+    p.set_input_files("#x-photo",files=[{"name":"g.jpg","mimeType":"image/jpeg","buffer":jpg},{"name":"g2.jpg","mimeType":"image/jpeg","buffer":jpg}]); p.wait_for_function("document.querySelectorAll('.ph img').length===2"); act(p,"expSave"); p.wait_for_timeout(200)
+    from PIL import Image as _I; import io as _io; ok("cards: the original photo had camera and GPS data",b"Exif" in jpg and len(_I.open(_io.BytesIO(jpg)).getexif().get_ifd(0x8825))>0)
+    mem=[e for e in S(p)["exps"] if e["title"]=="Sunset on the pier"][0]; up0=mem["updatedAt"]
+    ok("cards: the stored photo already has no camera or location data",p.evaluate("id=>window.__vouz.Photos.get(id).then(b=>b.arrayBuffer()).then(a=>{const u=new Uint8Array(a);let s='';for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return !s.includes('Exif')&&!s.includes('GPS')})",mem["photos"][0]))
+    ok("cards: every memory has a Share button",p.locator('[data-act="mcOpen"]').count()==1); act(p,"mcOpen")
+    p.wait_for_function("document.querySelector('#mc-img')&&document.querySelector('#mc-img').naturalWidth>0",timeout=20000)
+    ok("cards: the preview is the real 1080 × 1920 image",p.evaluate("[document.querySelector('#mc-img').naturalWidth,document.querySelector('#mc-img').naturalHeight]")==[1080,1920] and "1080 × 1920" in p.inner_text("#mc-meta"))
+    p.screenshot(path=SH+"card_editor.png")
+    content=json.dumps(p.evaluate("e=>window.__vouz.cardContent({showDate:true,showLoc:true,showBrand:true,caption:''},e)",mem))
+    ok("cards: only the title, date, place and your caption can appear; never notes, mood or favorite unless chosen",not any(w in content for w in ["PRIVNOTE","Tender","FAVLINE"]) and "Sunset on the pier" in content and "Pier 7" in content)
+    last={"src":None}
+    def img_hash():
+        p.wait_for_function("prev=>{const i=document.querySelector('#mc-img');return i&&i.src&&i.src!==prev&&i.complete&&i.naturalWidth>0}",arg=last["src"],timeout=20000)
+        last["src"]=p.evaluate("document.querySelector('#mc-img').src")
+        return p.evaluate("fetch(document.querySelector('#mc-img').src).then(r=>r.arrayBuffer()).then(a=>crypto.subtle.digest('SHA-256',a)).then(h=>Array.from(new Uint8Array(h)).slice(0,8).join('.'))")
+    h0=img_hash(); hs={"minimal":h0}
+    for tp in ("cinematic","polaroid","editorial"): act(p,"mcTpl",v=tp); hs[tp]=img_hash()
+    ok("cards: four templates, each a different image",len(set(hs.values()))==4)
+    for tp in ("cinematic","polaroid","editorial","minimal"): act(p,"mcTpl",v=tp); img_hash(); p.locator("#mc-img").screenshot(path=SH+f"card_{tp}.png")
+    act(p,"mcFav"); h1=img_hash(); ok("cards: the caption changes the image, and can use the favorite moment",h1!=hs["minimal"] and p.input_value("#mc-cap")=="FAVLINE")
+    p.fill("#mc-cap","Our quiet hour"); h2=img_hash(); ok("cards: typing a caption redraws it",h2!=h1)
+    act(p,"mcDate"); h3=img_hash(); act(p,"mcLoc"); h4=img_hash(); act(p,"mcBrand"); h5=img_hash()
+    ok("cards: date, place and branding can each be hidden",len({h2,h3,h4,h5})==4)
+    act(p,"mcDate"); img_hash(); act(p,"mcLoc"); img_hash(); act(p,"mcBrand"); img_hash()
+    act(p,"mcPhoto",v=mem["photos"][0]); h6=img_hash(); act(p,"mcPhoto",v=mem["photos"][0]); h7=img_hash()
+    act(p,"mcTpl",v="polaroid"); h8=img_hash(); act(p,"mcPhoto",v=mem["photos"][1]); h9=img_hash()
+    ok("cards: you choose which photos appear, and how many",len({h6,h7})==2 and h8!=h9 and len(S(p)["exps"][0]["photos"])==2)
+    act(p,"mcTpl",v="minimal"); h7=img_hash()
+    act(p,"mcBg",v="ivory"); ok("cards: backgrounds change the image",img_hash()!=h7)
+    for fmt,(w,h) in (("square",(1080,1080)),("landscape",(1920,1080)),("portrait",(1080,1920))):
+        act(p,"mcFmt",v=fmt); p.wait_for_function(f"document.querySelector('#mc-img')&&document.querySelector('#mc-img').naturalWidth=={w}",timeout=20000)
+    ok("cards: portrait 9:16, square 1:1 and landscape 16:9",True)
+    act(p,"mcSave",v="png"); p.wait_for_function("window.__saved.length===1"); sv=p.evaluate("window.__saved[0]")
+    ok("save: a real PNG at full size",sv["head"]==[137,80,78,71] and [sv["w"],sv["h"]]==[1080,1920] and sv["filename"].endswith(".png") and sv["size"]>50000,str(sv))
+    act(p,"mcSave",v="jpg"); p.wait_for_function("window.__saved.length===2"); sv=p.evaluate("window.__saved[1]")
+    ok("save: a real JPEG, with no camera or location data",sv["head"][:3]==[255,216,255] and not sv["exif"] and not sv["gps"] and sv["filename"].endswith(".jpg"),str(sv))
+    act(p,"mcFmt",v="landscape"); act(p,"mcSave",v="png"); p.wait_for_function("window.__saved.length===3"); sv=p.evaluate("window.__saved[2]")
+    ok("save: the exported size matches the chosen shape",[sv["w"],sv["h"]]==[1920,1080])
+    p.evaluate("window.__dlFail='declined'"); act(p,"mcSave",v="png"); p.wait_for_selector("text=Not saved."); ok("save: a declined save is reported plainly",True); p.evaluate("window.__dlFail=null")
+    # native share sheet where the browser offers one
+    p.evaluate("""()=>{navigator.canShare=f=>!!(f&&f.files&&f.files.length);navigator.share=async d=>{const f=d.files[0];window.__shared.push({name:f.name,type:f.type,size:f.size});if(window.__shareAbort)throw new DOMException('x','AbortError')}}""")
+    n0=p.evaluate("window.__saved.length"); act(p,"mcShare"); p.wait_for_function("window.__shared.length===1"); sh=p.evaluate("window.__shared[0]")
+    ok("share: opens the share sheet with the image file",sh["type"]=="image/png" and sh["name"].endswith(".png") and sh["size"]>50000 and p.evaluate("window.__saved.length")==n0)
+    p.evaluate("window.__shareAbort=true"); act(p,"mcShare"); p.wait_for_timeout(600); ok("share: cancelling the sheet does nothing else",p.evaluate("window.__saved.length")==n0)
+    p.evaluate("()=>{delete navigator.share;navigator.canShare=undefined}"); act(p,"mcShare"); p.wait_for_function(f"window.__saved.length==={n0+1}")
+    ok("share: without a share sheet, it falls back to the save, which is the share sheet in the Claude iPhone app","Instagram" in p.inner_text(".toast"))
+    p.evaluate("sessionStorage.setItem('noDl','1')"); p.reload(); p.wait_for_selector(".tabs"); nav(p,"story"); act(p,"expOpen",id=mem["id"]); act(p,"mcOpen"); p.wait_for_function("document.querySelector('#mc-img').naturalWidth>0",timeout=20000)
+    p.evaluate("()=>{navigator.share=undefined;navigator.canShare=undefined}"); act(p,"mcShare"); p.wait_for_selector(".toast")
+    ok("share: where nothing works, it says so instead of pretending","isn't available" in p.inner_text(".toast"))
+    p.evaluate("()=>{window.ClipboardItem=window.ClipboardItem||function(o){this.o=o};navigator.clipboard.write=async items=>{window.__copied.push(items.length)}}"); p.reload(); p.wait_for_selector(".tabs"); nav(p,"story"); act(p,"expOpen",id=mem["id"]); act(p,"mcOpen"); p.wait_for_function("document.querySelector('#mc-img').naturalWidth>0",timeout=20000)
+    p.evaluate("()=>{navigator.clipboard.write=async items=>{window.__copied.push(items.length)}}"); act(p,"mcCopy"); p.wait_for_selector("text=Image copied."); ok("copy: the image can be copied where allowed",p.evaluate("window.__copied")==[1])
+    p.evaluate("()=>{navigator.clipboard.write=async()=>{throw new DOMException('no','NotAllowedError')}}"); act(p,"mcCopy"); p.wait_for_selector("text=Copying images isn't allowed here."); ok("copy: a refusal is explained",True); p.evaluate("sessionStorage.removeItem('noDl')")
+    m2=[e for e in S(p)["exps"] if e["id"]==mem["id"]][0]; ok("cards: the memory itself is unchanged and still private",m2["updatedAt"]==up0 and m2["space"] is None and m2["notes"]=="PRIVNOTE")
     ctx.close()
     # screenshots with motion on
     ctx,p=newctx(b,motion="no-preference"); p.goto(URL); p.wait_for_timeout(700); p.screenshot(path=SH+"ob.png"); onboard(p); act(p,"loadDemo"); p.wait_for_timeout(600); p.screenshot(path=SH+"home.png"); nav(p,"history"); p.wait_for_timeout(1200)

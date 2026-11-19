@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 — 2026-11-18
+
+Added (browser-tested):
+- Shareable memory cards: Minimal, Cinematic, Polaroid, Editorial; 9:16, 1:1, 16:9; five backgrounds; live preview of the exact image.
+- Caption (or favorite moment), photo choice (up to 3), show/hide date, place and branding.
+- Share sheet with the image file, save as PNG or JPEG, copy image; clear messages where a route isn't allowed.
+- Exports carry no metadata; source photos with GPS are verified stripped.
+- Consent for memories in a shared space: encrypted request, everyone else agrees, withdrawable; partners can't export yours without asking.
+- Share buttons on memories and keepsake cards.
+
 ## 0.5.0 — 2026-11-18
 
 Added (tested):

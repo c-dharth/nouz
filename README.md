@@ -16,7 +16,7 @@ Private by default. Shared only by choice. No scores.
 | `supabase/migrations/` | Database schema and row-level security | Tested on local Postgres, not deployed |
 | `supabase/functions/` | Account deletion, purchase verification | Written, never run |
 | `watch/` | Apple Watch app source and iPhone bridge | Written, never compiled |
-| `e2e/run.py` | Browser tests for the app, including three simulated users | 184 checks |
+| `e2e/run.py` | Browser tests for the app, including three simulated users | 214 checks |
 
 The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in this repository. See CHECKLIST.md.
 
@@ -25,7 +25,7 @@ The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in thi
 ```
 npm test            # 84 unit tests (incl. private matching and rewards, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
 npm run test:db     # 124 policy tests on a throwaway local Postgres (needs initdb and psql)
-npm run test:ui     # 184 browser checks (needs Python, Playwright and Chrome)
+npm run test:ui     # 214 browser checks (needs Python, Playwright and Chrome)
 ```
 
 No packages are installed by any of these. There are no runtime dependencies.
@@ -72,3 +72,13 @@ double-counted and deleting a record removes its points. Values and caps live in
 frequency, duration or head count. Rewards are virtual only; partner rewards are gated off until a verified server
 feed exists. In the web app the ledger runs on the device; `supabase/migrations/0004_rewards.sql` moves it to
 database triggers so a client can't grant itself points.
+
+## Shareable memory cards
+
+Memory → Share as a card. Four templates (Minimal, Cinematic, Polaroid, Editorial), three shapes (1080×1920,
+1080×1080, 1920×1080), five backgrounds, caption, up to three photos, date/place/branding toggles. The card is drawn
+on a canvas and encoded straight to PNG or JPEG, so the file carries no camera or GPS data.
+
+Share uses, in order: the native share plugin in the Capacitor app (untested), the browser share sheet with the
+image file, then the platform save (which opens the iOS share sheet inside the Claude iPhone app). Memories in a
+shared space can only be exported once everyone else in the space agrees; agreement can be withdrawn.

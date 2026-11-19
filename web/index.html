@@ -271,6 +271,14 @@ h1 em,h2 em{color:var(--coral)}
 body.th-bordeaux{--bg:#12080B;--surface:#21111A;--surface2:#2D1823;--line:#45242F;--coral:#D49AA3}
 body.th-midnight{--bg:#0A0C13;--surface:#141826;--surface2:#1E2335;--line:#2D3349;--coral:#A9B6E2;--pink:#D3DAF3;--wine:#3A4A8C;--burgundy:#1F2850}
 body.th-champagne{--bg:#0E0C09;--surface:#1B1813;--surface2:#27221A;--line:#3A3326;--coral:#D8BE8E;--pink:#EADBC0;--wine:#7A5A2E;--burgundy:#3F2D14}
+
+/* ---- shareable cards ---- */
+.cprev{width:min(100%,340px);margin:0 auto;border-radius:18px;overflow:hidden;background:var(--surface2);display:grid;place-items:center;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+.cprev img{width:100%;height:100%;display:block;object-fit:contain;grid-area:1/1}.cprev span{grid-area:1/1}
+.cprev:has(img[src]) span{display:none}
+.pickph{padding:0;border:0}.pickph .tick{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:rgba(14,11,12,.78);color:var(--text)}
+.pickph[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--coral)}.pickph[aria-pressed="true"] .tick{background:var(--wine)}
+.pickph:not([aria-pressed="true"]) img{opacity:.55}
 </style>
 </head>
 <body>
@@ -303,14 +311,14 @@ const ic=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</sv
 
 /* ============ private store (this device, not encrypted by VOUZ) ============ */
 const LS="vouz.v1"; let storageOK=true;
-const fresh=()=>({v:1,onboarded:false,stamp:0,lastSync:0,syncBase:0,user:{name:"",mode:"local",createdAt:Date.now()},settings:{social:false,privateProfile:true,defaultVis:"connections",regular:null,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0,games:true,celebrate:true,goal:null,chPrefs:{budget:null,interests:[],lowEnergy:false,shortTime:false}},rewards:{spent:[],unlocked:[],cards:[],ch:{},theme:null,frame:null,seen:null,seenB:[],seenL:1},sessions:[],exps:[],picks:{},psi:{},deleted:{},active:null,draft:null,blocks:[],ignored:[],keys:null});
+const fresh=()=>({v:1,onboarded:false,stamp:0,lastSync:0,syncBase:0,user:{name:"",mode:"local",createdAt:Date.now()},settings:{social:false,privateProfile:true,defaultVis:"connections",regular:null,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0,games:true,celebrate:true,goal:null,chPrefs:{budget:null,interests:[],lowEnergy:false,shortTime:false}},rewards:{spent:[],unlocked:[],cards:[],ch:{},theme:null,frame:null,seen:null,seenB:[],seenL:1},sessions:[],exps:[],picks:{},psi:{},consent:{req:[],ans:{}},deleted:{},active:null,draft:null,blocks:[],ignored:[],keys:null});
 function load(){try{const r=localStorage.getItem(LS);if(r){const o=JSON.parse(r);if(o&&o.v===1)return Object.assign(fresh(),o,{settings:Object.assign(fresh().settings,o.settings)})}}catch(e){storageOK=false}return fresh()}
 let S=load();
 function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){storageOK=false}}
 function save(){S.stamp=Date.now();saveLocal();Cloud.queueVault()}
 /* What sync and export carry: never demo rows, never social keys. */
 /* Photos are not in here: they stay on the device. */
-const vaultPayload=()=>({v:1,stamp:S.stamp,user:S.user,settings:S.settings,sessions:S.sessions.filter(s=>!s.demo),exps:S.exps.filter(e=>!e.demo).map(e=>({...e,photos:[]})),picks:S.picks,psi:S.psi,rewards:S.rewards,deleted:S.deleted,blocks:S.blocks,ignored:S.ignored});
+const vaultPayload=()=>({v:1,stamp:S.stamp,user:S.user,settings:S.settings,sessions:S.sessions.filter(s=>!s.demo),exps:S.exps.filter(e=>!e.demo).map(e=>({...e,photos:[]})),picks:S.picks,psi:S.psi,rewards:S.rewards,consent:S.consent,deleted:S.deleted,blocks:S.blocks,ignored:S.ignored});
 /* Two devices: keep the newer copy of each session, honour deletions from either side. */
 function mergeVault(v){const del=Object.assign({},v.deleted||{});for(const k in S.deleted)del[k]=Math.max(del[k]||0,S.deleted[k]);
   const m={};for(const s of (v.sessions||[]).concat(S.sessions)){const c=m[s.id];if(!c||(s.updatedAt||0)>(c.updatedAt||0))m[s.id]=s}
@@ -320,6 +328,7 @@ function mergeVault(v){const del=Object.assign({},v.deleted||{});for(const k in 
   const local=Object.fromEntries((S.exps||[]).map(e=>[e.id,e]));S.exps=Object.values(mx).filter(e=>!(del[e.id]>=(e.updatedAt||0))).map(e=>local[e.id]&&local[e.id].photos&&local[e.id].photos.length?{...e,photos:local[e.id].photos}:e);
   if((v.stamp||0)>S.stamp&&v.picks){S.picks=v.picks;S.psi=v.psi||{}}
   if(v.rewards)S.rewards=mergeRewards(S.rewards,v.rewards);
+  if(v.consent){const by={};for(const r of (v.consent.req||[]).concat((S.consent||{}).req||[]))by[r.id]=r;S.consent={req:Object.values(by),ans:{...(v.consent.ans||{}),...((S.consent||{}).ans||{})}}}
   normCats();
   if((v.stamp||0)>S.stamp){S.settings=Object.assign(fresh().settings,v.settings);S.blocks=v.blocks||[];S.ignored=v.ignored||[];S.user=Object.assign({},v.user,{mode:"account"})}}
 
@@ -343,7 +352,7 @@ const Cloud={db:null,user:null,uid:null,state:"checking",t:null,busy:false,dirty
     this.busy=false;if(this.dirty){this.dirty=false;this.pushVault()}},
   async readVault(){try{const s=await this.priv("vault").get();if(s.exists){const o=JSON.parse(s.data().json);if(o&&o.v===1)return o}}catch(e){}return null},
   async deleteAll(){if(this.state!=="ready")return;const ps=["vault","keys","stash"].map(n=>this.priv(n).delete());
-    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","reports"])ps.push(this.db.doc(c+"/"+this.uid).delete());
+    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","reports"])ps.push(this.db.doc(c+"/"+this.uid).delete());
     await Promise.allSettled(ps)}
 };
 
@@ -376,18 +385,18 @@ const K={ok:!!(window.crypto&&crypto.subtle),priv:null,self:null,pairs:{},
    Shared storage holds: profiles (handle + public key), posts, reactions, comments, links.
    "Everyone" cards are stored readable. Connections-only cards are stored as ciphertext with one wrapped key per
    permitted recipient; reconcile() is the single place that decides who gets a key. No key, no card. */
-const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match"];
-const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
+const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent"];
+const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},consent:{},creq:[],cans:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
   async ensureKeys(){if(!S.keys){const d=await Cloud.priv("keys").get();if(d.exists)S.keys=JSON.parse(d.data().json);else{S.keys=await K.gen();await Cloud.priv("keys").set({json:JSON.stringify(S.keys)})}saveLocal()}
     if(!K.priv)await K.load(S.keys)},
   async start(){if(this.subs.length||Cloud.state!=="ready"||!K.ok)return;this.status="loading";
     try{await this.ensureKeys()}catch(e){this.status="error";return}
     const timer=setTimeout(()=>{if(this.status==="loading"){this.status="slow";render()}},10000);
     for(const c of SHARED)this.subs.push(Cloud.db.collection(c).onSnapshot(q=>{const m={};q.docs.forEach(d=>{m[d.id]=d.data()||{}});this[c]=m;if(c==="posts")clearTimeout(timer);this.sched()},()=>{clearTimeout(timer);this.status="error";render()}))},
-  stop(){this.subs.forEach(u=>{try{u()}catch(e){}});this.subs=[];this.status="off";clearTimeout(this.t);for(const c of SHARED)this[c]={};this.inbox=[];this.inv={};this.invSig="";this.sp={};this.shared=[];this.mres={};this.mdocs={};this.pubSig="";this.rel={};this.items=[];this.cm={};this.perms={};this.cache={};this.au={}},
+  stop(){this.subs.forEach(u=>{try{u()}catch(e){}});this.subs=[];this.status="off";clearTimeout(this.t);for(const c of SHARED)this[c]={};this.inbox=[];this.inv={};this.invSig="";this.sp={};this.shared=[];this.mres={};this.mdocs={};this.creq=[];this.cans={};this.pubSig="";this.rel={};this.items=[];this.cm={};this.perms={};this.cache={};this.au={}},
   sched(){clearTimeout(this.t);this.t=setTimeout(async()=>{if(this.busy){this.again=true;return}this.busy=true;
     try{await this.recompute()}catch(e){}this.busy=false;if(this.status==="loading"||this.status==="slow")this.status="ready";
-    const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.mres]),moved=sig!==this.invSig;this.invSig=sig;
+    const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.mres,this.creq.map(r=>r.id),this.cans]),moved=sig!==this.invSig;this.invSig=sig;
     if((ui.tab==="social"||ui.tab==="profile"||ui.page&&ui.page.type==="compose"||moved)&&!typing())render();
     if(this.again){this.again=false;this.sched()}},40)},
   write(coll,data){this[coll]=Object.assign({},this[coll]);if(data===null)delete this[coll][Cloud.uid];else this[coll][Cloud.uid]=data;
@@ -462,7 +471,7 @@ const Soc={profiles:{},posts:{},reactions:{},comments:{},links:{},invites:{},spa
     const perms=Object.assign({},this.perms);if(!on)delete perms[id];return this.saveLinks(out,perms)},
   setPerm(id,p){return this.saveLinks(Object.assign({},(this.links[Cloud.uid]||{}).out),Object.assign({},this.perms,{[id]:p}))},
   /* Social off without deleting: move my shared documents into my private space, so nothing of mine is left readable. */
-  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
+  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match","consent"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
   async unstash(){try{const s=await Cloud.priv("stash").get();if(!s.exists)return;const o=JSON.parse(s.data().json);for(const c in o)if(SHARED.includes(c))await Cloud.db.doc(c+"/"+Cloud.uid).set(o[c]);await Cloud.priv("stash").delete()}catch(e){}}
 };
 
@@ -587,12 +596,12 @@ function render(resetScroll){
   if(ui.locked)h=vLock();
   else if(!S.onboarded)h=vOnboard();
   else{if(!ui.sheet&&legacySessions().length)ui.sheet={type:"legacy"}}
-  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,social:()=>hdr("Social")+vSocial(),spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
+  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Social")+vSocial(),spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
   else h=({home:vHome,intimacy:vIntimacy,discover:vDiscover,story:vStory,profile:vProfile})[ui.tab]()+vTabs();
   const sheetNew=ui.sheet&&ui.sheet!==lastSheet;lastSheet=ui.sheet;
   app.classList.toggle("enter",changed);
   app.innerHTML=h+(ui.sheet?vSheet(sheetNew):"");
-  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();hydratePhotos();applyTheme();checkRewards();paintCel();
+  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();hydratePhotos();applyTheme();checkRewards();paintCel();if(ui.page&&ui.page.type==="cardEdit")refreshCard();
   if(sheetNew){const f=$(".sheet input,.sheet textarea")||$(".sheet");f&&f.focus({preventScroll:true})}
   else if(changed&&!ui.sheet){if(ns){ns.setAttribute("tabindex","-1");if(!typing())ns.focus({preventScroll:true})}countUp()}
 }
@@ -1303,6 +1312,13 @@ Object.assign(Soc,{sp:{},shared:[],mres:{},mdocs:{},accRaw:[],pubSig:"",
       for(const u of [x.owner,...x.members]){if(S.blocks.includes(u)||u===me)continue;
         for(const it of ((this.exps[u]||{}).items||[]))if(it&&it.t===x.tag){try{const v=sanX(await this.open(x.key,it.c),u,x.id);if(v)shared.push(v)}catch(e){}}}}
     this.shared=shared;
+    /* Requests to share a memory outside its space, and the answers to mine. Readable only inside the space. */
+    const creq=[],cans={},str=(v,n)=>typeof v==="string"?v.slice(0,n):"";
+    for(const x of Object.values(sp)){if(x.role==="invited")continue;
+      for(const u of [x.owner,...x.members]){if(u===me||S.blocks.includes(u))continue;const d=this.consent[u]||{};
+        for(const it of (d.req||[]))if(it&&it.t===x.tag){try{const b=await this.open(x.key,it.c);if(b&&typeof b.id==="string"&&typeof b.expId==="string")creq.push({id:b.id,expId:b.expId,author:str(b.author,64),title:str(b.title,80)||"a memory",by:u,sp:x.id,at:+b.at||0})}catch(e){}}
+        for(const it of (d.ans||[]))if(it&&it.t===x.tag){try{const b=await this.open(x.key,it.c);if(b&&typeof b.req==="string")(cans[b.req]=cans[b.req]||{})[u]=b.ok===true}catch(e){}}}}
+    this.creq=creq;this.cans=cans;
     await this.reconcileSpaces();await this.runMatch();await this.publishMine()},
   /* Mutual Match round for every space I'm in: refresh my own blinded set, forward everyone else's, work out matches. */
   async runMatch(){const me=Cloud.uid,res={},docsOut={};
@@ -1334,10 +1350,14 @@ Object.assign(Soc,{sp:{},shared:[],mres:{},mdocs:{},accRaw:[],pubSig:"",
     if(changed){this.recSp=true;try{await this.write("spaces",{items,acc:cur.acc||[]})}finally{this.recSp=false}}},
   /* My shared experiences and Mutual Match picks are rebuilt from this device's records under each space's current key. */
   async publishMine(){const me=Cloud.uid,inSp=Object.values(this.sp).filter(x=>x.role!=="invited");
-    const md=this.mdocs||{},sig=JSON.stringify([inSp.map(x=>x.tag),S.exps.filter(e=>!e.demo&&e.space).map(e=>[e.id,e.space,e.updatedAt]),inSp.map(x=>md[x.id]||null)]);
+    const md=this.mdocs||{},sig=JSON.stringify([inSp.map(x=>x.tag),S.exps.filter(e=>!e.demo&&e.space).map(e=>[e.id,e.space,e.updatedAt]),inSp.map(x=>md[x.id]||null),S.consent,this.creq.map(r=>r.id)]);
     if(sig===this.pubSig)return;this.pubSig=sig;const ex=[],pk=[];
     for(const x of inSp){for(const e of S.exps.filter(e=>!e.demo&&e.space===x.id))ex.push({t:x.tag,c:await K.encJ(x.key,shareX(e))});
       if(md[x.id])pk.push({t:x.tag,c:await K.encJ(x.key,{ep:md[x.id].ep,own:md[x.id].own,fwd:md[x.id].fwd})})}
+    const cq=[],ca=[],tagOf=Object.fromEntries(inSp.map(x=>[x.id,x]));
+    for(const r of (S.consent.req||[])){const x=tagOf[r.sp];if(x)cq.push({t:x.tag,c:await K.encJ(x.key,{id:r.id,expId:r.expId,author:r.author,title:r.title,at:r.at})})}
+    for(const [rid,ok] of Object.entries(S.consent.ans||{})){const r=this.creq.find(z=>z.id===rid),x=r&&tagOf[r.sp];if(x)ca.push({t:x.tag,c:await K.encJ(x.key,{req:rid,ok})})}
+    if(cq.length||ca.length||((this.consent[me]||{}).req||[]).length||((this.consent[me]||{}).ans||[]).length)await this.write("consent",{req:cq,ans:ca});
     if(ex.length||((this.exps[me]||{}).items||[]).length)await this.write("exps",{items:ex});
     if(pk.length||((this.match[me]||{}).items||[]).length)await this.write("match",{items:pk})},
   async answerSpace(x,ok){const r=this.rel[x.owner];if(!r)throw 0;const cur=this.spaces[Cloud.uid]||{};
@@ -1397,7 +1417,7 @@ function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning
   const plans=allPlans().slice(0,3),mem=storyItems("all").slice(0,2),ws=startOfWeek(Date.now()),wk=S.sessions.filter(s=>s.start>=ws),sug=suggestion();
   const live=S.active?`<button class="card rowcard" data-act="tab" data-tab="track" aria-label="Return to your running session"><span class="badge on" aria-hidden="true">${ic(running()?"pause":"play")}</span><span class="grow"><b>Session ${running()?"running":"paused"}</b><span class="sub small" style="display:block" id="miniclock">${fmtClock(elapsed(S.active))}</span></span>${ic("next")}</button>`
     :S.draft&&S.draft.fromTimer?`<button class="card rowcard" data-act="resumeDraft"><span class="badge on" aria-hidden="true">${ic("edit")}</span><span class="grow"><b>Finish saving your session</b></span>${ic("next")}</button>`:"";
-  return`<div class="scroll">${head}${demoBanner()}${invitesCard()}${spaceInvitesCard()}
+  return`<div class="scroll">${head}${demoBanner()}${invitesCard()}${spaceInvitesCard()}${consentCard()}
    <div><h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1><p class="sub">Less scrolling. More together.</p></div>${live}${progressCard(R())}
    <div class="qa"><button data-act="quick">${ic("heart")}<span>Quick log</span></button><button data-act="expNew" data-kind="done">${ic("book")}<span>Add a memory</span></button><button data-act="tab" data-tab="discover">${ic("compass")}<span>Find an idea</span></button></div>
    <div class="sec"><div class="row between"><h3>Coming up</h3><button class="link small" data-act="discSeg" data-v="plans">All plans</button></div>${plans.length?`<div>${plans.map(planRow).join("")}</div>`:`<p class="sub small">Nothing planned. Save an idea from Discover, or one you match on together.</p>`}</div>
@@ -1428,6 +1448,7 @@ function vExp(){const p=ui.page,e=findX(p.id,p.a);if(!e){ui.page=null;return vSt
    ${e.sharedNote?`<div class="card"><h3>Shared note</h3><p style="overflow-wrap:anywhere">${esc(e.sharedNote)}</p></div>`:""}
    ${mine&&e.notes?`<div class="card line"><h3>Private notes</h3><p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(e.notes)}</p><p class="tiny">Only you see these.</p></div>`:""}
    <p class="tiny">${mine?(sp?"Shared with "+esc(sp.name)+": "+esc(names(Soc.people(sp).filter(u=>u!==Cloud.uid))||"no one else yet")+". Private notes and photos stay with you.":e.space?"Private: the space this was shared to has ended.":"Private: only you see this."):"Shared by "+esc(Soc.handle(e.a))+" in "+esc(sp?sp.name:"a space")+"."}</p>
+   ${e.kind==="done"?`<button class="btn block" data-act="mcOpen" data-id="${esc(e.id)}" data-a="${mine?"me":esc(e.a)}">${ic("share")} Share as a card</button>`:""}
    ${mine&&e.kind==="plan"?`<div class="row"><button class="btn grow" data-act="planSched" data-id="${e.id}">${ic("clock")} Schedule</button><button class="btn primary grow" data-act="planDone" data-id="${e.id}">${ic("check")} Mark done</button></div>`:""}
    ${mine?`<button class="btn danger block" data-act="expDelAsk" data-id="${e.id}">${ic("trash")} Delete</button>`:""}</div>`}
 
@@ -1477,7 +1498,7 @@ function vSpaces(){const ready=Soc.ready();
   const card=x=>{const owner=x.role==="owner";return`<div class="card"><div class="row between"><h2>${esc(x.name)}</h2><span class="pill">${owner?"You created it":"Created by "+esc(Soc.handle(x.owner))}</span></div>
     <div>${[x.owner,...x.members,...x.invited].filter((u,i,a)=>a.indexOf(u)===i).map(u=>`<div class="ach"><span class="av" aria-hidden="true">${esc((u===Cloud.uid?"you":Soc.handle(u))[0].toUpperCase())}</span><span class="grow"><b>${u===Cloud.uid?"You":esc(Soc.handle(u))}</b><span class="sub small" style="display:block">${u===x.owner?"Created the space":x.invited.includes(u)?"Invited":x.role==="joining"&&u===Cloud.uid?"Joining":"Member"}</span></span>${owner&&u!==Cloud.uid?`<button class="btn sm ghost" data-act="spRemove" data-id="${esc(x.id)}" data-u="${esc(u)}" aria-label="Remove ${esc(Soc.handle(u))}">Remove</button>`:""}</div>`).join("")}</div>
     ${owner?`<button class="btn sm danger" style="align-self:flex-start" data-act="spDelete" data-id="${esc(x.id)}">Delete space</button>`:`<button class="btn sm ghost" style="align-self:flex-start" data-act="spLeave" data-id="${esc(x.id)}">Leave</button>`}</div>`};
-  return hdr("Shared spaces")+`<div class="scroll">${spaceInvitesCard()}
+  return hdr("Shared spaces")+`<div class="scroll">${spaceInvitesCard()}${consentCard()}${consentGiven()}
    ${mine.length?mine.map(card).join(""):`<p class="sub">You're not in a shared space yet.</p>`}
    <div class="card line"><h3>New shared space</h3><label class="f" for="sp-name">Name<input type="text" id="sp-name" maxlength="40" placeholder="Us" autocomplete="off" value="${esc(ui.spName||"")}"></label>
     ${conns.length?`<div class="col"><span class="tiny">Invite from your connections</span><div class="chips">${conns.map(i=>`<button class="chip" data-act="spPick" data-v="${esc(i)}" aria-pressed="${pick.includes(i)}">${esc(Soc.handle(i))}</button>`).join("")}</div></div>`:`<p class="sub small">You have no connections yet.</p>`}
@@ -1664,7 +1685,7 @@ function vRewards(){const seg=ui.rw||"progress",s=S.settings;
        return`<div class="card idea"><div class="row between"><b class="it">${esc(x.name)}</b><span class="pill">${x.cost} VP</span></div><p class="sub small">${esc(x.d)}</p>
         ${have?(x.type==="theme"||x.type==="frame"?`<button class="btn sm ${inUse?"":"primary"}" style="align-self:flex-start" data-act="rwUse" data-v="${x.id}">${inUse?"In use · Turn off":"Use"}</button>`:`<span class="pill ok">${ic("check")} Yours</span>`)
         :`<button class="btn sm" style="align-self:flex-start" data-act="rwBuy" data-v="${x.id}" ${cant||noMile?"disabled":""}>${noMile?"Add a milestone memory first":cant?`${x.cost-r.balance} VP more needed`:"Redeem"}</button>`}</div>`}).join("")}
-     ${cards.length?`<div class="sec"><h3>Your keepsake cards</h3>${cards.map(c=>{const e=S.exps.find(x=>x.id===c.expId);return e?`<div class="keep"><span class="tiny">VOUZ keepsake · ${fmtDate(e.date)} ${new Date(e.date).getFullYear()}</span><b>${esc(e.title)}</b>${e.favorite?`<i>“${esc(e.favorite)}”</i>`:""}<span class="tiny">Card ${cards.indexOf(c)+1}</span></div>`:""}).join("")}</div>`:""}`}
+     ${cards.length?`<div class="sec"><h3>Your keepsake cards</h3>${cards.map(c=>{const e=S.exps.find(x=>x.id===c.expId);return e?`<div class="keep"><span class="tiny">VOUZ keepsake · ${fmtDate(e.date)} ${new Date(e.date).getFullYear()}</span><b>${esc(e.title)}</b>${e.favorite?`<i>“${esc(e.favorite)}”</i>`:""}<span class="tiny">Card ${cards.indexOf(c)+1}</span><button class="btn sm" style="align-self:flex-start" data-act="mcOpen" data-id="${esc(e.id)}" data-a="me">${ic("share")} Share</button></div>`:""}).join("")}</div>`:""}`}
   else{const spent=(S.rewards.spent||[]).map(x=>({at:x.at,vp:-x.cost,why:"Redeemed: "+((RWD[x.rid]||{}).name||x.rid)}));const rows=r.awards.concat(spent).sort((a,b)=>b.at-a.at);
     body=rows.length?`<div class="card"><div>${rows.slice(0,100).map(a=>`<div class="hist"><span class="grow"><span style="display:block;overflow-wrap:anywhere">${esc(a.why)}</span><span class="sub small">${fmtDate(a.at)}${a.capped?" · not counted: "+esc(a.capped):""}</span></span><b class="${a.vp<0?"neg":a.vp?"":"zero"}">${a.vp>0?"+":""}${a.vp}</b></div>`).join("")}</div></div><p class="tiny">Everything that earned or spent points. Private logs are never described.</p>`:`<div class="card line"><p class="sub small">Nothing yet. Points appear as you log memories and complete plans.</p></div>`}
   return head+`<div class="scroll">${tabs}${body}</div>`}
@@ -1717,9 +1738,163 @@ function redeem(x,expId){const r=R();if(r.balance<x.cost)return toast("Not enoug
 function mergeRewards(a,b){a=a||{};b=b||{};const by=(l,k)=>Object.values(Object.fromEntries((l||[]).map(x=>[x[k],x])));
   return{...a,...b,spent:by((a.spent||[]).concat(b.spent||[]),"id"),unlocked:[...new Set((a.unlocked||[]).concat(b.unlocked||[]))],cards:by((a.cards||[]).concat(b.cards||[]),"id"),ch:{...(b.ch||{}),...(a.ch||{})},seen:a.seen||b.seen,seenB:a.seenB||b.seenB,seenL:Math.max(a.seenL||0,b.seenL||0)}}
 
-function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan}[o];if(!tgt)return;tgt[k]=e.value;
+/* ============ shareable memory cards ============
+   Drawn onto a canvas at full size and encoded straight to PNG or JPEG, so the file is the real image, not a screenshot.
+   Re-encoding means no camera metadata (and so no GPS position) can survive into the file. The memory itself is never
+   changed or uploaded by making a card. */
+const CARD_FMT={portrait:[1080,1920,"9:16"],square:[1080,1080,"1:1"],landscape:[1920,1080,"16:9"]};
+const CARD_TPL={minimal:"Minimal",cinematic:"Cinematic",polaroid:"Polaroid",editorial:"Editorial"};
+const CARD_BG={wine:{n:"Wine",bg:["#6B1F33","#1C0B10"],fg:"#F3ECE3",ac:"#E8CBC6",mu:"rgba(243,236,227,.72)"},noir:{n:"Noir",bg:["#231D1F","#0B0909"],fg:"#F3ECE3",ac:"#C9939B",mu:"rgba(243,236,227,.66)"},
+  midnight:{n:"Midnight",bg:["#18203A","#07080D"],fg:"#EEF0F7",ac:"#A9B6E2",mu:"rgba(238,240,247,.7)"},ivory:{n:"Ivory",bg:["#F6F0E7","#E4D7C6"],fg:"#2A1C1F",ac:"#8C2A43",mu:"rgba(42,28,31,.66)"},
+  sand:{n:"Sand",bg:["#E2CDAA","#B99D74"],fg:"#2A1C0B",ac:"#5E1A2B",mu:"rgba(42,28,11,.7)"}};
+const CARD_FONT={d:'"Instrument Serif","Iowan Old Style","Palatino Linotype",Georgia,serif',b:'"Schibsted Grotesk","Avenir Next","Helvetica Neue",Arial,sans-serif'};
+const MOFULL=["January","February","March","April","May","June","July","August","September","October","November","December"];
+/* Exactly what can appear on a card: the memory's title, date, typed place and the caption written in the editor. Nothing else is read. */
+function cardContent(mc,e){return{title:String(e.title||"").slice(0,80),date:mc.showDate&&e.date?new Date(e.date).getDate()+" "+MOFULL[new Date(e.date).getMonth()]+" "+new Date(e.date).getFullYear():"",
+  place:mc.showLoc?String(e.location||"").slice(0,80):"",caption:String(mc.caption||"").trim().slice(0,160),brand:!!mc.showBrand}}
+function wrapLines(ctx,text,maxW,maxLines){const words=String(text).split(/\s+/).filter(Boolean),lines=[];let cur="";
+  for(const w of words){const t=cur?cur+" "+w:w;if(ctx.measureText(t).width<=maxW||!cur)cur=t;else{lines.push(cur);cur=w}}if(cur)lines.push(cur);
+  if(lines.length>maxLines){const keep=lines.slice(0,maxLines);let last=keep[maxLines-1];while(last&&ctx.measureText(last+"…").width>maxW)last=last.replace(/\s*\S+$/,"");keep[maxLines-1]=(last||keep[maxLines-1].slice(0,10))+"…";return keep}
+  return lines}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function cover(ctx,img,x,y,w,h,r=0){ctx.save();if(r){rr(ctx,x,y,w,h,r);ctx.clip()}else{ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip()}
+  const k=Math.max(w/img.width,h/img.height),iw=img.width*k,ih=img.height*k;ctx.drawImage(img,x+(w-iw)/2,y+(h-ih)/2,iw,ih);ctx.restore()}
+function textBlock(ctx,c,th,x,y,maxW,u,align="left",big=96){ctx.textAlign=align;ctx.textBaseline="alphabetic";let yy=y;
+  if(c.date){ctx.font=`600 ${26*u}px ${CARD_FONT.b}`;ctx.fillStyle=th.ac;ctx.fillText(c.date.toUpperCase().split("").join(String.fromCharCode(8202)),x,yy);yy+=26*u+26*u}
+  ctx.font=`400 ${big*u}px ${CARD_FONT.d}`;ctx.fillStyle=th.fg;const tl=wrapLines(ctx,c.title,maxW,3);for(const l of tl){yy+=big*u*.92;ctx.fillText(l,x,yy)}yy+=big*u*.32;
+  if(c.place){ctx.font=`500 ${30*u}px ${CARD_FONT.b}`;ctx.fillStyle=th.mu;yy+=34*u;ctx.fillText(c.place,x,yy);yy+=18*u}
+  if(c.caption){ctx.font=`italic 400 ${44*u}px ${CARD_FONT.d}`;ctx.fillStyle=th.fg;for(const l of wrapLines(ctx,c.caption,maxW,4)){yy+=54*u;ctx.fillText(l,x,yy)}}
+  return yy}
+function brand(ctx,c,th,W,H,u,light){if(!c.brand)return;ctx.textAlign="right";ctx.textBaseline="alphabetic";ctx.font=`italic 400 ${40*u}px ${CARD_FONT.d}`;ctx.fillStyle=light||th.fg;ctx.globalAlpha=.78;
+  ctx.fillText("vouz",W-64*u-14*u,H-56*u);ctx.fillStyle=th.ac;ctx.fillText(".",W-64*u,H-56*u);ctx.globalAlpha=1}
+async function loadBitmaps(ids){const out=[];for(const id of ids.slice(0,3)){try{const b=await Photos.get(id);if(b)out.push(await createImageBitmap(b))}catch(e){}}return out}
+async function renderCard(mc,e){const[W,H]=CARD_FMT[mc.fmt]||CARD_FMT.portrait,u=Math.min(W,H)/1080,th=CARD_BG[mc.bg]||CARD_BG.wine,c=cardContent(mc,e),port=H>W,land=W>H;
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;const ctx=cv.getContext("2d");
+  try{await document.fonts.ready}catch(x){}
+  const g=ctx.createLinearGradient(0,0,W*.4,H);g.addColorStop(0,th.bg[0]);g.addColorStop(1,th.bg[1]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const imgs=await loadBitmaps(mc.photos||[]),M=88*u;
+  if(mc.tpl==="cinematic"){
+    if(imgs[0])cover(ctx,imgs[0],0,0,W,H);
+    const v=ctx.createLinearGradient(0,H*.18,0,H);v.addColorStop(0,"rgba(8,5,6,0)");v.addColorStop(.45,"rgba(8,5,6,.62)");v.addColorStop(1,"rgba(8,5,6,.94)");ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+    const bar=(land?.07:.05)*H;ctx.fillStyle="#050304";ctx.fillRect(0,0,W,bar);ctx.fillRect(0,H-bar,W,bar);
+    const lt={...th,fg:"#F6F1EA",mu:"rgba(246,241,234,.78)",ac:"#E8CBC6"};
+    const tw=(land?W*.6:W)-2*M;ctx.save();ctx.globalAlpha=0;const hh=textBlock(ctx,c,lt,M,0,tw,u,"left",104);ctx.restore();   /* measure, then sit the text on the bottom */
+    ctx.save();ctx.shadowColor="rgba(0,0,0,.55)";ctx.shadowBlur=18*u;textBlock(ctx,c,lt,M,H-bar-M-hh,tw,u,"left",104);ctx.restore();brand(ctx,c,lt,W,H-bar+20*u,u,"#F6F1EA")}
+  else if(mc.tpl==="polaroid"){
+    const n=Math.max(1,imgs.length),pw=(land?H*.62:W*.66),ph=pw*1.18,cx=land?W*.3:W/2,cy=land?H/2:(port?H*.36:H*.42);
+    const rots=[-4,3.2,-1.2].slice(0,n).reverse(),offs=[[-.12,-.05],[.1,.03],[0,0]].slice(3-n);
+    rots.forEach((rot,i)=>{const img=imgs[n-1-i],o=offs[i]||[0,0];ctx.save();ctx.translate(cx+o[0]*pw,cy+o[1]*pw);ctx.rotate(rot*Math.PI/180);
+      ctx.shadowColor="rgba(0,0,0,.35)";ctx.shadowBlur=40*u;ctx.shadowOffsetY=18*u;ctx.fillStyle="#FBF8F3";ctx.fillRect(-pw/2,-ph/2,pw,ph);ctx.shadowColor="transparent";
+      const pad=pw*.06;if(img)cover(ctx,img,-pw/2+pad,-ph/2+pad,pw-2*pad,pw-2*pad);else{ctx.fillStyle=th.bg[0];ctx.fillRect(-pw/2+pad,-ph/2+pad,pw-2*pad,pw-2*pad)}
+      if(i===rots.length-1){ctx.fillStyle="#2A1C1F";ctx.textAlign="center";ctx.font=`italic 400 ${Math.round(pw*.075)}px ${CARD_FONT.d}`;ctx.fillText(wrapLines(ctx,c.title,pw-2*pad,1)[0]||"",0,ph/2-pw*.075)}
+      ctx.restore()});
+    const tx=land?W*.6:M,ty=land?H*.32:cy+ph/2+M,tw=land?W*.4-M:W-2*M,cc={...c,title:""};
+    textBlock(ctx,{...cc,title:c.title},th,tx,ty,tw,u,"left",land?84:80);brand(ctx,c,th,W,H,u)}
+  else if(mc.tpl==="editorial"){
+    ctx.fillStyle=th.ac;ctx.font=`700 ${24*u}px ${CARD_FONT.b}`;ctx.textAlign="left";ctx.fillText("A MEMORY"+(c.date?"   ·   "+c.date.toUpperCase():""),M,M+20*u);
+    ctx.fillStyle=th.fg;ctx.fillRect(M,M+44*u,W-2*M,2*u);
+    let y=M+80*u;const colW=land?W*.46:W-2*M;
+    ctx.font=`400 ${(land?104:116)*u}px ${CARD_FONT.d}`;ctx.textAlign="left";for(const l of wrapLines(ctx,c.title,colW,3)){y+=(land?100:110)*u;ctx.fillText(l,M,y)}
+    y+=58*u;if(c.place){ctx.font=`600 ${28*u}px ${CARD_FONT.b}`;ctx.fillStyle=th.mu;ctx.fillText(c.place,M,y);y+=28*u}
+    if(c.caption){y+=40*u;ctx.fillStyle=th.ac;ctx.fillRect(M,y-30*u,6*u,Math.min(4,wrapLines(ctx,c.caption,colW-40*u,4).length)*56*u);ctx.fillStyle=th.fg;ctx.font=`italic 400 ${46*u}px ${CARD_FONT.d}`;for(const l of wrapLines(ctx,c.caption,colW-40*u,4)){ctx.fillText(l,M+32*u,y);y+=56*u}}
+    const gx=land?W*.52:M,gy=land?M+80*u:y+40*u,gw=land?W-gx-M:W-2*M,gh=(land?H-gy-M-60*u:H-gy-M-90*u);
+    if(imgs.length&&gh>120*u){const s=16*u;if(imgs.length===1)cover(ctx,imgs[0],gx,gy,gw,gh,18*u);
+      else if(imgs.length===2){cover(ctx,imgs[0],gx,gy,(gw-s)/2,gh,18*u);cover(ctx,imgs[1],gx+(gw+s)/2,gy,(gw-s)/2,gh,18*u)}
+      else{cover(ctx,imgs[0],gx,gy,gw,(gh-s)*.62,18*u);cover(ctx,imgs[1],gx,gy+(gh-s)*.62+s,(gw-s)/2,(gh-s)*.38,18*u);cover(ctx,imgs[2],gx+(gw+s)/2,gy+(gh-s)*.62+s,(gw-s)/2,(gh-s)*.38,18*u)}}
+    ctx.fillStyle=th.fg;ctx.fillRect(M,H-M-36*u,W-2*M,1*u);brand(ctx,c,th,W,H+10*u,u)}
+  else{/* minimal */
+    let tx=M,ty=M,tw=W-2*M;
+    if(imgs[0]){if(land){cover(ctx,imgs[0],M,M,W*.5-1.5*M,H-2*M,28*u);tx=W*.5;tw=W*.5-M;ty=H*.28}else{const ph=port?H*.52:H*.46;cover(ctx,imgs[0],M,M,W-2*M,ph,28*u);ty=M+ph+64*u}}
+    else ty=port?H*.34:H*.24;
+    textBlock(ctx,c,th,tx,ty,tw,u,"left",port?100:88);brand(ctx,c,th,W,H,u)}
+  imgs.forEach(b=>b.close&&b.close());return cv}
+const canvasBlob=(cv,type)=>new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("encode")),type,type==="image/jpeg"?.92:undefined));
+const cardName=(e,mc,ext)=>"vouz-"+(String(e.title||"memory").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"memory")+"-"+mc.fmt+"."+ext;
+
+/* ---- who must agree before a memory leaves its shared space ---- */
+function cardTarget(){const mc=ui.mc;return mc?(mc.a==="me"?S.exps.find(e=>e.id===mc.id):Soc.shared.find(e=>e.id===mc.id&&e.a===mc.a)):null}
+function cardSpace(e,a){return a==="me"?(e.space&&Soc.sp[e.space]&&Soc.sp[e.space].role!=="invited"?Soc.sp[e.space]:null):Soc.sp[e.sp]||null}
+/* Everyone else in the space must have said yes to this request. A "no", or a later change of mind, blocks it again. */
+function consentState(e,a){const x=cardSpace(e,a);if(!x)return a==="me"?{need:[],ok:true}:{need:[],ok:false,gone:true};
+  const author=a==="me"?Cloud.uid:a,req=(S.consent.req||[]).find(r=>r.expId===e.id&&r.author===author&&r.sp===x.id);
+  const need=Soc.people(x).concat(x.role==="joining"?[Cloud.uid]:[]).filter((u,i,arr)=>u!==Cloud.uid&&arr.indexOf(u)===i);
+  if(a!=="me"&&!need.includes(a))need.push(a);
+  const ans=req?(Soc.cans[req.id]||{}):{},per=need.map(u=>({u,v:ans[u]===true?"yes":ans[u]===false?"no":req?"wait":"none"}));
+  return{x,req,need,per,ok:!!req&&need.length>0&&per.every(p=>p.v==="yes"),no:per.some(p=>p.v==="no")}}
+
+function vCardEdit(){const mc=ui.mc,e=cardTarget();if(!mc||!e){ui.page=null;return vStory()+vTabs()}const mine=mc.a==="me",cs=consentState(e,mc.a),[W,H,ratio]=CARD_FMT[mc.fmt];
+  const chips=(act,obj,cur)=>Object.entries(obj).map(([k,v])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${cur===k}">${typeof v==="string"?v:v.n||v[2]}</button>`).join("");
+  const blocked=!cs.ok;
+  return hdr("Share as a card")+`<div class="scroll">
+   <div class="cprev" style="aspect-ratio:${W}/${H}"><img id="mc-img" alt="Preview of the card exactly as it will be saved" ${mc.url?`src="${mc.url}"`:""}><span class="sub small" id="mc-busy" ${mc.url?"hidden":""}>Drawing the card…</span></div>
+   <p class="tiny" id="mc-meta" style="text-align:center">${mc.meta||W+" × "+H+" · "+ratio}</p>
+   ${cs.x?`<div class="card ${cs.ok?"":"line"}"><div class="row between"><h3>Everyone in ${esc(cs.x.name)} agrees?</h3><span class="pill ${cs.ok?"ok":cs.no?"":"w"}">${cs.ok?"Yes":cs.no?"Not agreed":cs.req?"Waiting":"Not asked"}</span></div>
+     <p class="sub small">This memory is shared in ${esc(cs.x.name)}, so it's theirs too. Before it goes anywhere else, everyone in the space has to agree.</p>
+     ${cs.per.length?`<div>${cs.per.map(p=>`<div class="hist"><span class="grow">${esc(Soc.handle(p.u))}</span><span class="sub small">${{yes:"Agreed",no:"Didn't agree",wait:"Asked",none:"Not asked yet"}[p.v]}</span></div>`).join("")}</div>`:""}
+     ${cs.ok?"":`<button class="btn sm ${cs.req?"ghost":"primary"}" style="align-self:flex-start" data-act="mcAsk">${cs.req?"Ask again":"Ask to share"}</button>`}
+     <p class="tiny">They'd be asked about this memory's card: title, date, place and the caption you write. Never private notes.</p></div>`:cs.gone?`<div class="card line"><p class="sub small">The space this was shared in has ended, so it can't be shared outside it.</p></div>`:""}
+   <div class="col"><h3>Template</h3><div class="chips sm">${chips("mcTpl",CARD_TPL,mc.tpl)}</div></div>
+   <div class="col"><h3>Shape</h3><div class="chips sm">${Object.entries(CARD_FMT).map(([k,v])=>`<button class="chip" data-act="mcFmt" data-v="${k}" aria-pressed="${mc.fmt===k}">${{portrait:"Story 9:16",square:"Square 1:1",landscape:"Wide 16:9"}[k]}</button>`).join("")}</div></div>
+   <div class="col"><h3>Background</h3><div class="chips sm">${chips("mcBg",CARD_BG,mc.bg)}</div></div>
+   <label class="f" for="mc-cap">Caption <em>Optional, up to 160 characters</em><textarea id="mc-cap" data-bind="mc.caption" maxlength="160" placeholder="${esc(e.favorite?"e.g. "+e.favorite:"A line about it")}">${esc(mc.caption)}</textarea></label>
+   ${e.favorite&&mc.caption!==e.favorite?`<button class="link small" data-act="mcFav">Use your favorite moment</button>`:""}
+   ${mine&&(e.photos||[]).length?`<div class="col"><h3>Photos <span class="tiny" style="text-transform:none;letter-spacing:0">Up to 3</span></h3><div class="phs">${e.photos.map(id=>{const on=mc.photos.includes(id);return`<button class="ph pickph" data-act="mcPhoto" data-v="${esc(id)}" aria-pressed="${on}" aria-label="${on?"Remove":"Add"} this photo"><img data-photo="${esc(id)}" alt=""><span class="tick" aria-hidden="true">${on?mc.photos.indexOf(id)+1:"+"}</span></button>`}).join("")}</div></div>`:mine?"":`<p class="tiny">Photos stay on the device of the person who added them, so this card has none.</p>`}
+   <div class="card">${sw("mcDate",mc.showDate,"Show the date")}${e.location?sw("mcLoc",mc.showLoc,"Show the place",esc(e.location)):""}${sw("mcBrand",mc.showBrand,"Show VOUZ branding","A small wordmark in the corner.")}</div>
+   <p class="tiny">Never on a card: intimacy records, session details, private notes, mood or anything about who you're with. The saved image carries no location data from your photos, and making it doesn't change or share the memory itself.${mine&&!cs.x?" If someone else is in a photo, check with them first.":""}</p>
+   ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}
+   <button class="btn primary block" data-act="mcShare" ${blocked?"disabled":""}>${ic("share")} Share</button>
+   <div class="row"><button class="btn grow" data-act="mcSave" data-v="png" ${blocked?"disabled":""}>Save PNG</button><button class="btn grow" data-act="mcSave" data-v="jpg" ${blocked?"disabled":""}>Save JPEG</button></div>
+   ${navigator.clipboard&&window.ClipboardItem?`<button class="btn ghost block" data-act="mcCopy" ${blocked?"disabled":""}>Copy image</button>`:""}
+   <p class="tiny">Share opens your phone's share sheet where it's available: pick Instagram (then Story), WhatsApp, Messages or Save Image. Elsewhere the image is saved so you can share it from Photos or your files.</p></div>`}
+
+/* Redraw only when something that changes the picture has changed. */
+async function refreshCard(){const mc=ui.mc,e=cardTarget();if(!mc||!e||!$("#mc-img"))return;const key=JSON.stringify([mc.tpl,mc.fmt,mc.bg,mc.caption,mc.showDate,mc.showLoc,mc.showBrand,mc.photos,e.title,e.date,e.location]);
+  if(key===mc.key&&mc.url){const im=$("#mc-img");if(im&&!im.src)im.src=mc.url;return}if(mc.drawing===key)return;mc.drawing=key;
+  try{const cv=await renderCard(mc,e),b=await canvasBlob(cv,"image/png");if(ui.mc!==mc||mc.drawing!==key)return;if(mc.url)URL.revokeObjectURL(mc.url);
+    mc.url=URL.createObjectURL(b);mc.key=key;mc.drawing=null;mc.meta=cv.width+" × "+cv.height+" · "+CARD_FMT[mc.fmt][2]+" · "+(b.size/1048576).toFixed(1)+" MB as PNG";
+    const im=$("#mc-img");if(im)im.src=mc.url;const bz=$("#mc-busy");if(bz)bz.hidden=true;const mt=$("#mc-meta");if(mt)mt.textContent=mc.meta}
+  catch(x){mc.drawing=null;const bz=$("#mc-busy");if(bz){bz.hidden=false;bz.textContent="The card couldn't be drawn here."}}}
+let DL=null;
+async function cardFile(type){const mc=ui.mc,e=cardTarget();const cv=await renderCard(mc,e),b=await canvasBlob(cv,type);return{blob:b,name:cardName(e,mc,type==="image/png"?"png":"jpg")}}
+const blobB64=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(b)});
+/* Saving goes through the platform, which asks first; in the Claude iPhone app it opens the share sheet. */
+async function saveOut(blob,name){if(!DL){try{DL=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(x){DL=null}}
+  if(DL){try{await DL.save({filename:name,data:blob});return"saved"}catch(x){if(x&&x.code==="declined")return"declined";if(x&&x.code==="rate_limited")return"busy"}}
+  return"unavailable"}
+function guard(){const e=cardTarget();if(!e)return false;const cs=consentState(e,ui.mc.a);if(!cs.ok){toast(cs.gone?"This can't be shared outside its space.":"Everyone in the space needs to agree first.");return false}return true}
+Object.assign(A,{
+  mcOpen(e){const a=e.dataset.a||"me",x=findX(e.dataset.id,a);if(!x)return;ui.err="";if(ui.mc&&ui.mc.url)URL.revokeObjectURL(ui.mc.url);
+    ui.mc={id:x.id,a,tpl:"minimal",fmt:"portrait",bg:"wine",caption:"",showDate:true,showLoc:!!x.location,showBrand:true,photos:a==="me"?(x.photos||[]).slice(0,1):[],url:null,key:null};openPage({type:"cardEdit",from:ui.page})},
+  mcTpl(e){ui.mc.tpl=e.dataset.v;render()},mcFmt(e){ui.mc.fmt=e.dataset.v;ui.mc.url=null;render()},mcBg(e){ui.mc.bg=e.dataset.v;render()},
+  mcDate(){ui.mc.showDate=!ui.mc.showDate;render()},mcLoc(){ui.mc.showLoc=!ui.mc.showLoc;render()},mcBrand(){ui.mc.showBrand=!ui.mc.showBrand;render()},
+  mcFav(){const e=cardTarget();ui.mc.caption=String(e.favorite||"").slice(0,160);render()},
+  mcPhoto(e){const p=ui.mc.photos,v=e.dataset.v;ui.mc.photos=p.includes(v)?p.filter(x=>x!==v):p.length>=3?p:p.concat([v]);if(p.length>=3&&!p.includes(v))toast("Up to 3 photos.");render()},
+  async mcAsk(){const e=cardTarget(),cs=consentState(e,ui.mc.a);if(!cs.x)return;const author=ui.mc.a==="me"?Cloud.uid:ui.mc.a;
+    S.consent.req=(S.consent.req||[]).filter(r=>!(r.expId===e.id&&r.author===author&&r.sp===cs.x.id)).concat([{id:uid(),expId:e.id,author,sp:cs.x.id,title:String(e.title||"").slice(0,80),at:Date.now()}]);
+    save();Soc.sched();render();toast("Asked. Sharing unlocks once everyone agrees.")},
+  async mcShare(){if(!guard())return;let f;try{f=await cardFile("image/png")}catch(x){return toast("The card couldn't be drawn here.")}
+    const cap=window.Capacitor;
+    if(cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins&&cap.Plugins.Share&&cap.Plugins.Filesystem){   /* native app: PENDING DEVICE TEST */
+      try{const w=await cap.Plugins.Filesystem.writeFile({path:f.name,data:await blobB64(f.blob),directory:"CACHE"});await cap.Plugins.Share.share({title:"A VOUZ memory",files:[w.uri]});return}catch(x){if(/cancel/i.test(String(x&&x.message)))return}}
+    const file=typeof File==="function"?new File([f.blob],f.name,{type:"image/png"}):null;
+    if(file&&navigator.canShare&&navigator.share){let can=false;try{can=navigator.canShare({files:[file]})}catch(x){}
+      if(can){try{await navigator.share({files:[file],title:"A VOUZ memory"});return}catch(x){if(x&&x.name==="AbortError")return}}}
+    const r=await saveOut(f.blob,f.name);
+    toast(r==="saved"?"Ready: pick Instagram, WhatsApp, Messages or Save Image.":r==="declined"?"Not saved.":r==="busy"?"A save is already open. Try again in a moment.":"Sharing isn't available in this view. Open VOUZ in the Claude app or a browser that supports sharing.")},
+  async mcSave(e){if(!guard())return;const jpg=e.dataset.v==="jpg";let f;try{f=await cardFile(jpg?"image/jpeg":"image/png")}catch(x){return toast("The card couldn't be drawn here.")}
+    const r=await saveOut(f.blob,f.name);toast(r==="saved"?"Saved "+f.name+".":r==="declined"?"Not saved.":r==="busy"?"A save is already open. Try again in a moment.":"Saving isn't available in this view.")},
+  async mcCopy(){if(!guard())return;try{const f=await cardFile("image/png");await navigator.clipboard.write([new ClipboardItem({"image/png":f.blob})]);toast("Image copied.")}
+    catch(x){toast("Copying images isn't allowed here. Save or share it instead.")}},
+  consentAns(e){const id=e.dataset.v,ok=e.dataset.ok==="1";S.consent.ans={...(S.consent.ans||{}),[id]:ok};save();Soc.sched();render();toast(ok?"You agreed. You can change your mind under Shared spaces.":"Not agreed.")}
+});
+function consentCard(){if(!S.settings.social)return"";const open=Soc.creq.filter(r=>!(r.id in (S.consent.ans||{})));if(!open.length)return"";
+  return`<div class="card line" role="region" aria-label="Requests to share"><h3>Requests to share a memory</h3><div>${open.map(r=>`<div class="col" style="gap:8px;padding:8px 0"><span><b>${esc(Soc.handle(r.by))}</b> would like to share a card of <b>“${esc(r.title)}”</b> outside ${esc(Soc.spaceName(r.sp)||"your space")}.</span><div class="row"><button class="btn sm primary grow" data-act="consentAns" data-v="${esc(r.id)}" data-ok="1">Agree</button><button class="btn sm ghost grow" data-act="consentAns" data-v="${esc(r.id)}" data-ok="0">Don't agree</button></div></div>`).join("")}</div><p class="tiny">A card shows the title, date, place and a caption they write. Never private notes or intimacy records.</p></div>`}
+function consentGiven(){if(!S.settings.social)return"";const given=Soc.creq.filter(r=>S.consent.ans&&S.consent.ans[r.id]===true);if(!given.length)return"";
+  return`<div class="card"><h3>Sharing you've agreed to</h3><div>${given.map(r=>`<div class="hist"><span class="grow">“${esc(r.title)}” <span class="sub small">by ${esc(Soc.handle(r.by))}</span></span><button class="btn sm ghost" data-act="consentAns" data-v="${esc(r.id)}" data-ok="0">Withdraw</button></div>`).join("")}</div><p class="tiny">Withdrawing stops new cards. A card already shared can't be called back.</p></div>`}
+
+function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
-document.addEventListener("input",ev=>{bind(ev.target);if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
+document.addEventListener("input",ev=>{bind(ev.target);if(ev.target.id==="mc-cap"){clearTimeout(refreshCard.t);refreshCard.t=setTimeout(refreshCard,250)}if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
 document.addEventListener("change",ev=>{if(ev.target.dataset&&ev.target.dataset.live&&ev.target.type==="date"){bind(ev.target);render()}});
 document.addEventListener("keydown",ev=>{const t=ev.target;
   if(ev.key==="Escape"&&ui.sheet){ev.preventDefault();return A.closeSheet()}
@@ -1742,7 +1917,7 @@ window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.on
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 })();
-window.__vouz={buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R};
+window.__vouz={buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>

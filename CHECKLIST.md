@@ -38,7 +38,12 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 | Supabase as the backend | Schema and policies tested locally (96 checks); not deployed; app not switched over |
 | iOS/Android builds | Blocked: no Capacitor packages, Android SDK or Xcode here |
 
+| Shareable memory cards | Done in the web app. Native share plugin path written, untested; Instagram "Share to Stories" direct button needs the native app and a Meta app ID |
+
 ## Known limits
+
+- **Card sharing on real devices:** not tested on a phone. In the web app, share and copy depend on what the browser allows inside the artifact; where blocked, the app saves instead or says it isn't available. A direct "Instagram Stories" button needs the native iOS app (it uses a Meta app ID and Instagram's pasteboard API), so for now Instagram is reached through the share sheet.
+- **Card consent** is enforced in the app; someone could still screenshot a memory they can see. Once a card has been shared, withdrawing agreement can't recall it.
 
 - **Mutual Match privacy:** picks are blinded with a private set intersection, so no one (members, storage or VOUZ) can read them. With three or more people, a member who inspected the data could tell which of their own picks each other person shares, not just the full match. Matching completes as each member opens the app.
 - **Rewards in the web app** are computed on the device, so someone editing their own browser storage could give themselves points; that only affects their own virtual rewards. The Supabase migration moves awarding to the database.
