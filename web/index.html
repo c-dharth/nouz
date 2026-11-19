@@ -273,9 +273,8 @@ body.th-midnight{--bg:#0A0C13;--surface:#141826;--surface2:#1E2335;--line:#2D334
 body.th-champagne{--bg:#0E0C09;--surface:#1B1813;--surface2:#27221A;--line:#3A3326;--coral:#D8BE8E;--pink:#EADBC0;--wine:#7A5A2E;--burgundy:#3F2D14}
 
 /* ---- shareable cards ---- */
-.cprev{width:min(100%,340px);margin:0 auto;border-radius:18px;overflow:hidden;background:var(--surface2);display:grid;place-items:center;box-shadow:0 14px 40px rgba(0,0,0,.45)}
-.cprev img{width:100%;height:100%;display:block;object-fit:contain;grid-area:1/1}.cprev span{grid-area:1/1}
-.cprev:has(img[src]) span{display:none}
+.cprev{flex:none;width:min(100%,340px);margin:0 auto;border-radius:18px;overflow:hidden;background:var(--surface2);display:grid;place-items:center;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+.cprev .cv{width:100%;height:100%;display:block;grid-area:1/1}.cprev span{grid-area:1/1;padding:20px;text-align:center}
 .pickph{padding:0;border:0}.pickph .tick{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:rgba(14,11,12,.78);color:var(--text)}
 .pickph[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--coral)}.pickph[aria-pressed="true"] .tick{background:var(--wine)}
 .pickph:not([aria-pressed="true"]) img{opacity:.55}
@@ -1280,7 +1279,7 @@ const Photos={db:null,urls:new Map(),ok:typeof indexedDB!=="undefined",
 async function shrink(file){const bmp=await createImageBitmap(file),k=Math.min(1,1600/Math.max(bmp.width,bmp.height)),c=document.createElement("canvas");
   c.width=Math.max(1,Math.round(bmp.width*k));c.height=Math.max(1,Math.round(bmp.height*k));c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);if(bmp.close)bmp.close();
   return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error("encode")),"image/jpeg",.85))}
-function hydratePhotos(){document.querySelectorAll("img[data-photo]:not([src])").forEach(async im=>{const u=await Photos.url(im.dataset.photo).catch(()=>null);if(u)im.src=u;else{im.alt="Photo not on this device";im.closest(".ph")&&im.closest(".ph").classList.add("gone")}})}
+function hydratePhotos(){document.querySelectorAll("img[data-photo]:not([src])").forEach(async im=>{const u=await Photos.url(im.dataset.photo).catch(()=>null);if(u){im.onerror=async()=>{im.onerror=null;try{const b=await Photos.get(im.dataset.photo);im.src="data:image/jpeg;base64,"+await blobB64(b)}catch(x){}};im.src=u}else{im.alt="Photo not on this device";im.closest(".ph")&&im.closest(".ph").classList.add("gone")}})}
 
 /* ---- what one experience looks like to the other people in a space: never private notes or photos ---- */
 const shareX=e=>({id:e.id,kind:e.kind,title:e.title,date:e.date,cat:e.cat,location:e.location||"",sharedNote:e.sharedNote||"",mood:e.mood||"",favorite:e.favorite||"",idea:e.idea||null,anniv:!!e.anniv,updatedAt:e.updatedAt});
@@ -1770,7 +1769,7 @@ function brand(ctx,c,th,W,H,u,light){if(!c.brand)return;ctx.textAlign="right";ct
 async function loadBitmaps(ids){const out=[];for(const id of ids.slice(0,3)){try{const b=await Photos.get(id);if(b)out.push(await createImageBitmap(b))}catch(e){}}return out}
 async function renderCard(mc,e){const[W,H]=CARD_FMT[mc.fmt]||CARD_FMT.portrait,u=Math.min(W,H)/1080,th=CARD_BG[mc.bg]||CARD_BG.wine,c=cardContent(mc,e),port=H>W,land=W>H;
   const cv=document.createElement("canvas");cv.width=W;cv.height=H;const ctx=cv.getContext("2d");
-  try{await document.fonts.ready}catch(x){}
+  try{await Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))])}catch(x){}
   const g=ctx.createLinearGradient(0,0,W*.4,H);g.addColorStop(0,th.bg[0]);g.addColorStop(1,th.bg[1]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
   const imgs=await loadBitmaps(mc.photos||[]),M=88*u;
   if(mc.tpl==="cinematic"){
@@ -1826,7 +1825,7 @@ function vCardEdit(){const mc=ui.mc,e=cardTarget();if(!mc||!e){ui.page=null;retu
   const chips=(act,obj,cur)=>Object.entries(obj).map(([k,v])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${cur===k}">${typeof v==="string"?v:v.n||v[2]}</button>`).join("");
   const blocked=!cs.ok;
   return hdr("Share as a card")+`<div class="scroll">
-   <div class="cprev" style="aspect-ratio:${W}/${H}"><img id="mc-img" alt="Preview of the card exactly as it will be saved" ${mc.url?`src="${mc.url}"`:""}><span class="sub small" id="mc-busy" ${mc.url?"hidden":""}>Drawing the card…</span></div>
+   <div class="cprev" id="mc-prev" style="aspect-ratio:${W}/${H};width:min(100%,340px,calc(62vh * ${(W/H).toFixed(4)}))" role="img" aria-label="Preview of the card, exactly as it will be saved"><span class="sub small" id="mc-busy">Drawing the card…</span></div>
    <p class="tiny" id="mc-meta" style="text-align:center">${mc.meta||W+" × "+H+" · "+ratio}</p>
    ${cs.x?`<div class="card ${cs.ok?"":"line"}"><div class="row between"><h3>Everyone in ${esc(cs.x.name)} agrees?</h3><span class="pill ${cs.ok?"ok":cs.no?"":"w"}">${cs.ok?"Yes":cs.no?"Not agreed":cs.req?"Waiting":"Not asked"}</span></div>
      <p class="sub small">This memory is shared in ${esc(cs.x.name)}, so it's theirs too. Before it goes anywhere else, everyone in the space has to agree.</p>
@@ -1847,13 +1846,15 @@ function vCardEdit(){const mc=ui.mc,e=cardTarget();if(!mc||!e){ui.page=null;retu
    ${navigator.clipboard&&window.ClipboardItem?`<button class="btn ghost block" data-act="mcCopy" ${blocked?"disabled":""}>Copy image</button>`:""}
    <p class="tiny">Share opens your phone's share sheet where it's available: pick Instagram (then Story), WhatsApp, Messages or Save Image. Elsewhere the image is saved so you can share it from Photos or your files.</p></div>`}
 
-/* Redraw only when something that changes the picture has changed. */
-async function refreshCard(){const mc=ui.mc,e=cardTarget();if(!mc||!e||!$("#mc-img"))return;const key=JSON.stringify([mc.tpl,mc.fmt,mc.bg,mc.caption,mc.showDate,mc.showLoc,mc.showBrand,mc.photos,e.title,e.date,e.location]);
-  if(key===mc.key&&mc.url){const im=$("#mc-img");if(im&&!im.src)im.src=mc.url;return}if(mc.drawing===key)return;mc.drawing=key;
-  try{const cv=await renderCard(mc,e),b=await canvasBlob(cv,"image/png");if(ui.mc!==mc||mc.drawing!==key)return;if(mc.url)URL.revokeObjectURL(mc.url);
-    mc.url=URL.createObjectURL(b);mc.key=key;mc.drawing=null;mc.meta=cv.width+" × "+cv.height+" · "+CARD_FMT[mc.fmt][2]+" · "+(b.size/1048576).toFixed(1)+" MB as PNG";
-    const im=$("#mc-img");if(im)im.src=mc.url;const bz=$("#mc-busy");if(bz)bz.hidden=true;const mt=$("#mc-meta");if(mt)mt.textContent=mc.meta}
-  catch(x){mc.drawing=null;const bz=$("#mc-busy");if(bz){bz.hidden=false;bz.textContent="The card couldn't be drawn here."}}}
+/* The preview is the card's own canvas, placed on the page: the same pixels that get saved, with no image address
+   for the viewer to block. Redrawn only when something that changes the picture has changed. */
+function showCanvas(cv){const box=$("#mc-prev");if(!box||!cv)return;if(cv.parentNode!==box){box.textContent="";box.appendChild(cv)}}
+async function refreshCard(){const mc=ui.mc,e=cardTarget();if(!mc||!e||!$("#mc-prev"))return;const key=JSON.stringify([mc.tpl,mc.fmt,mc.bg,mc.caption,mc.showDate,mc.showLoc,mc.showBrand,mc.photos,e.title,e.date,e.location]);
+  if(key===mc.key&&mc.canvas){showCanvas(mc.canvas);return}if(mc.drawing===key)return;mc.drawing=key;
+  try{const cv=await renderCard(mc,e);if(ui.mc!==mc||mc.drawing!==key)return;
+    cv.className="cv";mc.n=(mc.n||0)+1;cv.dataset.n=mc.n;mc.canvas=cv;mc.key=key;mc.drawing=null;mc.meta=cv.width+" × "+cv.height+" · "+CARD_FMT[mc.fmt][2];
+    showCanvas(cv);const mt=$("#mc-meta");if(mt)mt.textContent=mc.meta}
+  catch(x){mc.drawing=null;const bz=$("#mc-busy");if(bz)bz.textContent="The card couldn't be drawn in this view. Try reopening it, or update the Claude app."}}
 let DL=null;
 async function cardFile(type){const mc=ui.mc,e=cardTarget();const cv=await renderCard(mc,e),b=await canvasBlob(cv,type);return{blob:b,name:cardName(e,mc,type==="image/png"?"png":"jpg")}}
 const blobB64=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(b)});
@@ -1863,9 +1864,9 @@ async function saveOut(blob,name){if(!DL){try{DL=window.claude&&window.claude.us
   return"unavailable"}
 function guard(){const e=cardTarget();if(!e)return false;const cs=consentState(e,ui.mc.a);if(!cs.ok){toast(cs.gone?"This can't be shared outside its space.":"Everyone in the space needs to agree first.");return false}return true}
 Object.assign(A,{
-  mcOpen(e){const a=e.dataset.a||"me",x=findX(e.dataset.id,a);if(!x)return;ui.err="";if(ui.mc&&ui.mc.url)URL.revokeObjectURL(ui.mc.url);
-    ui.mc={id:x.id,a,tpl:"minimal",fmt:"portrait",bg:"wine",caption:"",showDate:true,showLoc:!!x.location,showBrand:true,photos:a==="me"?(x.photos||[]).slice(0,1):[],url:null,key:null};openPage({type:"cardEdit",from:ui.page})},
-  mcTpl(e){ui.mc.tpl=e.dataset.v;render()},mcFmt(e){ui.mc.fmt=e.dataset.v;ui.mc.url=null;render()},mcBg(e){ui.mc.bg=e.dataset.v;render()},
+  mcOpen(e){const a=e.dataset.a||"me",x=findX(e.dataset.id,a);if(!x)return;ui.err="";
+    ui.mc={id:x.id,a,tpl:"minimal",fmt:"portrait",bg:"wine",caption:"",showDate:true,showLoc:!!x.location,showBrand:true,photos:a==="me"?(x.photos||[]).slice(0,1):[],canvas:null,key:null};openPage({type:"cardEdit",from:ui.page})},
+  mcTpl(e){ui.mc.tpl=e.dataset.v;render()},mcFmt(e){ui.mc.fmt=e.dataset.v;render()},mcBg(e){ui.mc.bg=e.dataset.v;render()},
   mcDate(){ui.mc.showDate=!ui.mc.showDate;render()},mcLoc(){ui.mc.showLoc=!ui.mc.showLoc;render()},mcBrand(){ui.mc.showBrand=!ui.mc.showBrand;render()},
   mcFav(){const e=cardTarget();ui.mc.caption=String(e.favorite||"").slice(0,160);render()},
   mcPhoto(e){const p=ui.mc.photos,v=e.dataset.v;ui.mc.photos=p.includes(v)?p.filter(x=>x!==v):p.length>=3?p:p.concat([v]);if(p.length>=3&&!p.includes(v))toast("Up to 3 photos.");render()},
