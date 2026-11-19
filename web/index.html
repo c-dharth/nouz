@@ -162,6 +162,7 @@ textarea{min-height:84px;resize:vertical}
 .share .wm{font-family:var(--display);font-style:italic;font-size:20px;opacity:.8}
 .post{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px}
 .av{width:38px;height:38px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-weight:800;color:var(--pink);flex:none}
+.feedsec{display:flex;flex-direction:column;gap:12px;margin-top:10px;padding-top:16px;border-top:1px solid var(--line)}.feedhead h3{margin:0}
 .post2{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
 .post2 .ph2{gap:10px;align-items:center}.post2 .ph2 b{display:block}
 .av{overflow:hidden}img.av{object-fit:cover;padding:0}.av.lg{width:72px;height:72px;font-size:26px}
@@ -440,7 +441,7 @@ const Soc={profiles:{},prefs:{},couples:{},reportsAll:{},isOwner:false,posts:{},
   sched(){clearTimeout(this.t);this.t=setTimeout(async()=>{if(this.busy){this.again=true;return}this.busy=true;
     try{await this.recompute()}catch(e){}this.busy=false;if(this.status==="loading"||this.status==="slow")this.status="ready";
     const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.mres,this.creq.map(r=>r.id),this.cans]),moved=sig!==this.invSig;this.invSig=sig;
-    if((ui.tab==="feed"||ui.tab==="profile"||ui.tab==="discover"&&!ui.dsc.busy&&!ui.dsc.ibusy||ui.page&&["compose","social","user","couple","notifs","saved","mod"].includes(ui.page.type)||moved)&&!typing())render();
+    if((ui.tab==="home"&&!ui.page||ui.tab==="profile"||ui.tab==="discover"&&!ui.dsc.busy&&!ui.dsc.ibusy||ui.page&&["compose","social","user","couple","notifs","saved","mod"].includes(ui.page.type)||moved)&&!typing())render();
     if(this.again){this.again=false;this.sched()}},40)},
   write(coll,data){this[coll]=Object.assign({},this[coll]);if(data===null)delete this[coll][Cloud.uid];else this[coll][Cloud.uid]=data;
     const ref=Cloud.db.doc(coll+"/"+Cloud.uid);
@@ -578,13 +579,14 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
 /* ============ ui state ============ */
 const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
   ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
-const TABS=()=>[["home","Home","home"],["feed","Feed","feed"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
+const TABS=()=>[["home","Home","home"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
 function paintToast(){let t=$(".toast");if(!ui.toast){t&&t.remove();return}if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");$("#app").appendChild(t)}t.textContent=ui.toast}
 /* Older names still work: Track, History and Insights live inside Intimacy; the old Social page is Friends, under Feed. */
 function go(tab){if(["track","history","insights"].includes(tab)){ui.int.seg=tab;tab="intimacy"}
-  if(tab==="social"){ui.tab="feed";ui.page={type:"social"};ui.sheet=null;render(true);return}
+  if(tab==="feed")tab="home";
+  if(tab==="social"){ui.tab="home";ui.page={type:"social"};ui.sheet=null;render(true);return}
   ui.tab=tab;ui.page=null;ui.sheet=null;try{if(location.hash!=="#"+tab)location.hash=tab}catch(e){}render(true)}
 function openPage(page){ui.page=page;ui.sheet=null;ui.err="";render(true)}
 function sheet(s){ui.sheet=s;render()}
@@ -646,7 +648,7 @@ function render(resetScroll){
   else if(!S.onboarded)h=vOnboard();
   else{if(!ui.sheet&&legacySessions().length)ui.sheet={type:"legacy"}}
   if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Friends")+vSocial(),notifs:vNotifs,saved:vSaved,user:vUser,meEdit:vMeEdit,couple:vCouple,postNew:vPostNew,mod:vMod,spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
-  else h=({home:vHome,feed:vFeed,intimacy:vIntimacy,discover:vDiscover,story:vStory,profile:vProfile})[ui.tab]()+vTabs();
+  else h=({home:vHome,feed:vHome,intimacy:vIntimacy,discover:vDiscover,story:vStory,profile:vProfile})[ui.tab]()+vTabs();
   const sheetNew=ui.sheet&&ui.sheet!==lastSheet;lastSheet=ui.sheet;
   app.classList.toggle("enter",changed);
   app.innerHTML=h+(ui.sheet?vSheet(sheetNew):"");
@@ -1460,7 +1462,7 @@ function homeRow(e){const plan=e.kind==="plan",t=new Date(e.date||Date.now()),ti
   const sub=(plan?(e.date?fmtDate(e.date)+(timed?" · "+fmtTime(e.date):""):"Unscheduled"):(XCATS[e.cat]||"Other"))+(e.a!=="me"?" · from "+esc(whoX(e)):"");
   return`<button class="sess" data-act="expOpen" data-id="${esc(e.id)}" data-a="${esc(e.a)}">${lead}<span class="grow"><span class="t" style="display:block">${esc(e.title)}</span><span class="sub small">${sub}</span></span></button>`}
 function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning":h<18?"Afternoon":"Evening";
-  const head=`<div class="row between"><div class="mark">vouz<b>.</b></div><button class="ib" data-act="tab" data-tab="profile" aria-label="Privacy and settings">${ic("lock")}</button></div>`;
+  const head=`<div class="row between"><div class="mark">vouz<b>.</b></div><div class="row" style="gap:2px">${feedIcons()}<button class="ib" data-act="tab" data-tab="profile" aria-label="Privacy and settings">${ic("lock")}</button></div></div>`;
   const plans=allPlans().slice(0,2),mem=storyItems("all").slice(0,2),ws=startOfWeek(Date.now()),wk=S.sessions.filter(s=>s.start>=ws).length,sug=suggestion(),fresh=!S.sessions.length&&!S.exps.length;
   const live=S.active?`<button class="card rowcard" data-act="tab" data-tab="track" aria-label="Return to your running session"><span class="badge on" aria-hidden="true">${ic(running()?"pause":"play")}</span><span class="grow"><b>Session ${running()?"running":"paused"}</b><span class="sub small" style="display:block" id="miniclock">${fmtClock(elapsed(S.active))}</span></span>${ic("next")}</button>`
     :S.draft&&S.draft.fromTimer?`<button class="card rowcard" data-act="resumeDraft"><span class="badge on" aria-hidden="true">${ic("edit")}</span><span class="grow"><b>Finish saving your session</b></span>${ic("next")}</button>`:"";
@@ -1473,8 +1475,8 @@ function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning
    <div class="qa"><button data-act="quick">${ic("heart")}<span>Quick log</span></button><button data-act="expNew" data-kind="done">${ic("book")}<span>Memory</span></button><button data-act="tab" data-tab="discover">${ic("compass")}<span>Ideas</span></button></div>
    ${fresh?`<div class="card"><h2>Start your <em>story.</em></h2><p class="sub small">Everything stays private unless you choose to share it.</p><button class="link small" style="align-self:flex-start" data-act="loadDemo">See it with demo data</button></div>${idea}`
     :`${plans.length?sec("Coming up",`<button class="link small" data-act="discSeg" data-v="plans">All</button>`,"",`<div>${plans.map(homeRow).join("")}</div>`):idea}
-   ${mem.length?sec("Recent",`<button class="link small" data-act="tab" data-tab="story">All</button>`,"",`<div>${mem.map(homeRow).join("")}</div>`):""}
-   <button class="card rowcard" data-act="tab" data-tab="history" aria-label="Intimacy: ${wk} this week, private"><span class="badge" aria-hidden="true">${ic("heart")}</span><span class="grow"><b>Intimacy</b><span class="sub small" style="display:block">${wk?wk+" this week":"None this week"}</span></span>${ic("lock")}</button>`}</div>`}
+   <button class="card rowcard" data-act="tab" data-tab="history" aria-label="Intimacy: ${wk} this week, private"><span class="badge" aria-hidden="true">${ic("heart")}</span><span class="grow"><b>Intimacy</b><span class="sub small" style="display:block">${wk?wk+" this week":"None this week"}</span></span>${ic("lock")}</button>`}
+   <div class="feedsec">${vFeed()}</div></div>`}
 
 function storyRow(e){const t=new Date(e.date||0);return`<button class="sess" data-act="expOpen" data-id="${esc(e.id)}" data-a="${esc(e.a)}">${e.photos&&e.photos[0]?`<span class="ph sm"><img data-photo="${esc(e.photos[0])}" alt=""></span>`:`<span class="d"><b>${t.getDate()}</b><span>${MO[t.getMonth()]}</span></span>`}<span class="grow"><span class="t" style="display:block">${esc(e.title)}</span><span class="sub small">${XCATS[e.cat]||"Other"}${e.location?" · "+esc(e.location):""}${e.a!=="me"?" · from "+esc(whoX(e)):e.sp?" · "+esc(Soc.spaceName(e.sp)):" · private"}${e.demo?" · demo":""}</span></span></button>`}
 
@@ -2062,10 +2064,12 @@ const unread=()=>notifs().filter(n=>n.need||n.at>(S.notifSeen||0)).length;
 function jointPending(){const me=Cloud.uid,c=Soc.coupleMine;if(!c||c.waiting)return[];const p=c.members.find(u=>u!==me),ok=(Soc.couples[me]||{}).postOk||[];
   return Soc.items.filter(x=>x.a===p&&x.it.co===c.id&&!ok.includes(x.key)&&!(S.declinedJoint||[]).includes(x.key))}
 
+/* The feed lives on Home, under the day's essentials. */
+function feedIcons(){if(!Soc.ready())return"";const n=unread();return`<button class="ib" data-act="page" data-page="notifs" aria-label="Notifications${n?", "+n+" new":""}">${ic("bell")}${n?`<span class="dot">${n>9?"9+":n}</span>`:""}</button>`}
 function vFeed(){const f=ui.feed,ready=Soc.ready(),me=Cloud.uid;
-  const n=ready?unread():0,head=`<div class="row between"><div><h1>Feed</h1></div><div class="row" style="gap:6px">${ready?`<button class="ib" data-act="page" data-page="notifs" aria-label="Notifications${n?", "+n+" new":""}">${ic("bell")}${n?`<span class="dot">${n>9?"9+":n}</span>`:""}</button><button class="ib" data-act="page" data-page="social" aria-label="Friends">${ic("people")}</button><button class="ib" data-act="page" data-page="saved" aria-label="Saved posts">${ic("bookmark")}</button>`:""}</div></div>`;
-  if(!S.settings.social)return`<div class="scroll">${head}<div class="card"><h2>See what others are <em>up to.</em></h2><p class="sub">Explore shows public posts from people on VOUZ. Friends shows posts from people you've added. You choose who sees every post you make, and nothing is posted for you.</p><p class="sub small">Turn on Connections in Profile to start. It's off by default.</p><button class="btn sm primary" style="align-self:flex-start" data-act="tab" data-tab="profile">Profile</button></div></div>`;
-  if(!ready)return`<div class="scroll" aria-busy="true">${head}${Soc.status==="error"||Soc.status==="slow"?`<div class="card"><p class="sub">The feed can't be reached right now. Nothing of yours has been shared in the meantime.</p></div>`:`<div class="skel tall"></div><div class="skel tall"></div><span class="tiny" role="status">Loading the feed…</span>`}</div>`;
+  const n=ready?unread():0,head=`<div class="row between feedhead" id="feed"><h3>Feed</h3><div class="row" style="gap:2px">${ready?`<button class="ib bare" data-act="page" data-page="social" aria-label="Friends">${ic("people")}</button><button class="ib bare" data-act="page" data-page="saved" aria-label="Saved posts">${ic("bookmark")}</button>`:""}</div></div>`;
+  if(!S.settings.social)return`${head}<div class="card line"><p class="sub small">See public posts and what friends share. Turn on Connections in Profile; it's off by default and nothing is ever posted for you.</p><button class="link small" style="align-self:flex-start" data-act="tab" data-tab="profile">Profile</button></div>`;
+  if(!ready)return`<div aria-busy="true" class="col">${head}${Soc.status==="error"||Soc.status==="slow"?`<div class="card"><p class="sub">The feed can't be reached right now. Nothing of yours has been shared in the meantime.</p></div>`:`<div class="skel tall"></div><div class="skel tall"></div><span class="tiny" role="status">Loading the feed…</span>`}</div>`;
   const tabs=`<div class="seg3" role="group" aria-label="Feed">${[["explore","Explore"],["friends","Friends"]].map(([v,l])=>`<button data-act="feedSeg" data-v="${v}" aria-pressed="${f.seg===v}">${l}</button>`).join("")}</div>`;
   const compose=`<button class="card rowcard" data-act="postNew"><span class="av" aria-hidden="true">${esc(((Soc.me()||{}).handle||"?")[0].toUpperCase())}</span><span class="grow sub">Share a memory, a date, a photo…</span>${ic("plus")}</button>`;
   let list,body;
@@ -2077,7 +2081,7 @@ function vFeed(){const f=ui.feed,ready=Soc.ready(),me=Cloud.uid;
   else{list=friendsList().map(x=>({x}));
     body=list.length?list.slice(0,f.n).map(r=>postView(r.x,null)).join(""):`<div class="card"><h2>Nothing from friends yet.</h2><p class="sub">${Soc.conns().length?"When the people you've added share something with you, it shows up here, newest first.":"Add friends to see what they share. Friendships only happen when both of you agree."}</p><button class="btn sm" style="align-self:flex-start" data-act="page" data-page="social">${ic("people")} Find friends</button></div>`}
   const more=list.length>f.n?`<button class="btn ghost block" data-act="feedMore" id="feed-more">Show more</button>`:list.length?`<p class="tiny" style="text-align:center">You're all caught up.</p>`:"";
-  return`<div class="scroll">${head}${tabs}${compose}${body}${more}</div>`}
+  return`${head}${tabs}${compose}${body}${more}`}
 
 function vSaved(){const keys=S.saved||[],list=visiblePosts().filter(x=>keys.includes(x.key));
   return hdr("Saved")+`<div class="scroll">${list.length?list.map(x=>postView(x,null)).join(""):`<div class="card line"><p class="sub small">Nothing saved. Tap ${ic("bookmark").replace('class="i"','class="i" style="width:13px;height:13px;vertical-align:-2px"')} on a post to keep it here. Only you see this list.</p></div>`}${keys.length>list.length?`<p class="tiny">${keys.length-list.length} saved post${keys.length-list.length===1?" is":"s are"} no longer visible to you.</p>`:""}</div>`}
@@ -2158,7 +2162,7 @@ function vMod(){const reps=[];for(const u in (Soc.reportsAll||{}))for(const r of
     <div class="row">${r.kind==="post"&&x&&!x.sealed?`<button class="btn sm danger" data-act="modRemove" data-a="${esc(r.about)}" data-id="${esc(r.ref)}" data-r="${esc(r.id)}">Remove post</button>`:""}<button class="btn sm ghost" data-act="modDone" data-r="${esc(r.id)}">Dismiss</button></div></div>`}).join(""):`<div class="card line"><p class="sub small">No open reports.</p></div>`}</div>`}
 
 Object.assign(A,{
-  feedSeg(e){ui.feed.seg=e.dataset.v;ui.feed.n=10;render(true)},feedKind(e){ui.feed.kind=e.dataset.v;ui.feed.n=10;render()},
+  feedSeg(e){ui.feed.seg=e.dataset.v;ui.feed.n=10;render()},feedKind(e){ui.feed.kind=e.dataset.v;ui.feed.n=10;render()},
   feedMode(){ui.feed.mode=ui.feed.mode==="latest"?"ranked":"latest";render()},feedMore(){ui.feed.n+=10;render()},
   why(e){ui.feed.why=ui.feed.why===e.dataset.k?null:e.dataset.k;render()},
   cmOpen(e){ui.feed.open=ui.feed.open===e.dataset.k?null:e.dataset.k;render()},
@@ -2197,7 +2201,7 @@ Object.assign(A,{
       if(c.co&&Soc.coupleMine&&!Soc.coupleMine.waiting)body.co=Soc.coupleMine.id;
       const at=Date.now(),id=uid(),item=seal?await Soc.seal(id,body,c.vis==="private"?c.picks.slice():"all",at):{id,vis:"everyone",postedAt:at,...body};
       const cur=myPosts();await Soc.write("posts",{items:[item].concat(cur.items||[]).slice(0,60),hidden:cur.hidden||[]});
-      ui.pc=null;ui.err="";ui.page=null;ui.tab="feed";ui.feed.seg=c.vis==="public"?"explore":"friends";toast(body.co?"Posted. Your partner approves it before anyone else sees it.":"Posted.")}
+      ui.pc=null;ui.err="";ui.page=null;ui.tab="home";ui.feed.seg=c.vis==="public"?"explore":"friends";toast(body.co?"Posted. Your partner approves it before anyone else sees it.":"Posted.")}
     catch(z){c.prog="";ui.err=z&&z.code==="too_big"?"That video is over 10 MB.":z&&z.code==="too_long"?"That video is over 60 seconds.":z&&z.code==="quota_exceeded"?"VOUZ's storage here is full. Try fewer or smaller files.":"The post couldn't be uploaded. Nothing was posted."}})},
   editPost(e){const x=Soc.items.find(i=>i.a===Cloud.uid&&i.it.id===e.dataset.id);if(!x)return;sheet({type:"editPost",id:x.it.id,caption:x.it.caption||"",loc:x.it.loc||""})},
   editPostSave(){const s=ui.sheet,cap=(($("#ep-cap")||{}).value||"").trim().slice(0,500),loc=(($("#ep-loc")||{}).value||"").trim().slice(0,40);if(loc&&LOC_BAD.test(loc)){ui.err="Use a neighborhood or city.";return render()}

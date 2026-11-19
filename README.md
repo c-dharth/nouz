@@ -9,7 +9,7 @@ Working with an AI assistant? Start with [AGENTS.md](AGENTS.md): it holds the pr
 
 | Path | What it is | State |
 |---|---|---|
-| `web/index.html` | The working app (single file, no build step): Home, Feed, Intimacy, Discover, Our Story, Profile | Working, browser-tested |
+| `web/index.html` | The working app (single file, no build step): Home (with the feed), Intimacy, Discover, Our Story, Profile | Working, browser-tested |
 | `core/timer.js` | Session timer state machine over stored timestamps | Tested, not yet wired into the app |
 | `core/streaks.js` | Weekly streaks, Monday to Sunday | Tested, not yet wired into the app |
 | `core/storage.js` | Vault: migrations, backup, corruption recovery, export/import, optional encryption | Tested, not yet wired into the app |

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.1 — 2026-11-19
+
+Changed:
+- Home and Feed are one tab. Home keeps the greeting, progress, quick actions, what's coming up and the private Intimacy row, with the feed (Explore and Friends) below. Notifications moved to the Home header; Friends and Saved sit on the feed heading.
+- The "Recent" memories row left Home; they're in Our Story.
+- Five tabs again: Home, Intimacy, Discover, Our Story, Profile.
+
 ## 0.9.0 — 2026-11-19
 
 Discover now uses four connectors together (each called with the inputs its live tool declares, checked on 19 Nov 2026):
