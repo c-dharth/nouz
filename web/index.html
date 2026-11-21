@@ -188,6 +188,26 @@ input[type=search]{-webkit-appearance:none;appearance:none}
 .wx{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--surface)}.wx>span:first-child{font-weight:700}
 .gq{align-self:flex-end;max-width:85%;background:var(--surface2);padding:10px 12px;border-radius:14px 14px 4px 14px;overflow-wrap:anywhere}
 .ga{gap:8px}.gsum{white-space:pre-wrap;font-size:11px;color:var(--dim);max-height:240px;overflow:auto;margin:6px 0 0}
+.itabs{margin-top:4px}.fcwrap{display:flex;flex-direction:column;gap:16px}
+.fcard{--fg:#5A2230;position:relative;display:flex;flex-direction:column;gap:6px;padding:44px 22px 22px;border-radius:24px;overflow:hidden;min-height:340px;justify-content:flex-end;
+ background:radial-gradient(120% 80% at 80% 10%,color-mix(in srgb,var(--fg) 85%,transparent),transparent 70%),linear-gradient(180deg,#160D10,#0E0B0C);border:1px solid rgba(244,236,230,.06)}
+.fcard .fk{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--pink)}
+.fcard .fw{font-family:var(--serif,"Instrument Serif",Georgia,serif);font-size:clamp(52px,17vw,96px);line-height:.92;letter-spacing:-.01em;color:#F4ECE6;overflow-wrap:anywhere;animation:fcin .9s ease both}
+.fcard .fl{font-family:var(--serif,"Instrument Serif",Georgia,serif);font-style:italic;font-size:20px;line-height:1.3;color:#E8CBC6;max-width:30ch}
+.fcard .fd{font-size:12px;color:var(--dim);margin-top:10px}.fcard .fb{position:absolute;top:18px;left:22px;font-size:10px;font-weight:800;letter-spacing:.2em;color:rgba(244,236,230,.55)}
+.fload .fw{height:88px;border-radius:12px;width:70%}
+@keyframes fcin{from{opacity:0;transform:translateY(8px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+@media (prefers-reduced-motion:reduce){.fcard .fw{animation:none}}
+.fdims{display:flex;flex-direction:column;gap:12px}.fdim{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.fdots{display:inline-flex;gap:5px}.fdots i{width:8px;height:8px;border-radius:50%;background:rgba(244,236,230,.12)}.fdots i.on{background:var(--pink)}
+.fsec{display:flex;flex-direction:column;gap:6px;padding:14px 0;border-top:1px solid var(--line)}.fsec p{font-size:16px;line-height:1.5}
+.ftag{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:6px;border:1px solid var(--line);color:var(--dim)}.ftag.observed{color:var(--pink);border-color:rgba(201,147,155,.4)}
+.fmove{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:16px;border-radius:18px;background:var(--surface);text-align:left;position:relative}.fmove b{font-size:17px;padding-right:30px}.fmove svg{position:absolute;right:16px;top:50%;transform:translateY(-50%)}
+.fq{font-family:var(--serif,Georgia,serif);font-style:italic;font-size:18px;line-height:1.35;padding:6px 0}
+.pulse{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.pulse div{display:flex;flex-direction:column;gap:2px}.pulse b{font-size:14px;letter-spacing:.06em}
+.fcalg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}.fcal{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:46px;border-radius:10px;font-size:11px;color:var(--dim)}
+.fcal.on{--fg:#5A2230;background:color-mix(in srgb,var(--fg) 70%,transparent);color:#F4ECE6}.fcal b{font-size:8px;letter-spacing:.06em}.fcal i{font-style:normal}.fcal.now{outline:1px solid var(--line)}
+.fprev{align-self:center;flex:none;border-radius:14px;overflow:hidden;background:var(--surface)}.fprev.story{width:min(62vw,calc(56vh*.5625));aspect-ratio:9/16}.fprev.square{width:min(80vw,46vh);aspect-ratio:1}.fprev canvas{width:100%;height:100%;display:block}
 .rec{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
 .rec .rt{display:block;font-size:17px;line-height:1.25}.recph{position:relative;margin:-14px -14px 4px;border-radius:var(--r) var(--r) 0 0;overflow:hidden;aspect-ratio:16/9;background:var(--surface2)}
 .recph img{width:100%;height:100%;object-fit:cover;display:block}.recph .tiny{position:absolute;right:8px;bottom:6px;background:rgba(14,11,12,.7);padding:2px 6px;border-radius:6px}
@@ -396,7 +416,7 @@ const Cloud={db:null,user:null,uid:null,state:"checking",t:null,busy:false,dirty
   async readVault(){try{const s=await this.priv("vault").get();if(s.exists){const o=JSON.parse(s.data().json);if(o&&o.v===1)return o}}catch(e){}return null},
   async deleteAll(){if(this.state!=="ready")return;try{await Media.purge(false)}catch(e){}
     const ps=["vault","keys","stash"].map(n=>this.priv(n).delete());
-    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","reports","couples","prefs"])ps.push(this.db.doc(c+"/"+this.uid).delete());
+    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","reports","couples","prefs","fcheck","fcast"])ps.push(this.db.doc(c+"/"+this.uid).delete());
     await Promise.allSettled(ps)}
 };
 
@@ -429,8 +449,8 @@ const K={ok:!!(window.crypto&&crypto.subtle),priv:null,self:null,pairs:{},
    Shared storage holds: profiles (handle + public key), posts, reactions, comments, links.
    "Everyone" cards are stored readable. Connections-only cards are stored as ciphertext with one wrapped key per
    permitted recipient; reconcile() is the single place that decides who gets a key. No key, no card. */
-const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs"];
-const Soc={profiles:{},prefs:{},couples:{},reportsAll:{},isOwner:false,posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},consent:{},creq:[],cans:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
+const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs","fcheck","fcast"];
+const Soc={profiles:{},prefs:{},fcheck:{},fcast:{},couples:{},reportsAll:{},isOwner:false,posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},consent:{},creq:[],cans:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
   async ensureKeys(){if(!S.keys){const d=await Cloud.priv("keys").get();if(d.exists)S.keys=JSON.parse(d.data().json);else{S.keys=await K.gen();await Cloud.priv("keys").set({json:JSON.stringify(S.keys)})}saveLocal()}
     if(!K.priv)await K.load(S.keys)},
   async start(){if(this.subs.length||Cloud.state!=="ready"||!K.ok)return;this.status="loading";
@@ -443,6 +463,7 @@ const Soc={profiles:{},prefs:{},couples:{},reportsAll:{},isOwner:false,posts:{},
   sched(){clearTimeout(this.t);this.t=setTimeout(async()=>{if(this.busy){this.again=true;return}this.busy=true;
     try{await this.recompute()}catch(e){}this.busy=false;if(this.status==="loading"||this.status==="slow")this.status="ready";
     const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.mres,this.creq.map(r=>r.id),this.cans]),moved=sig!==this.invSig;this.invSig=sig;
+    if(S.fc&&S.fc.on&&S.fc.together&&ui.tab==="intimacy"&&ui.ins.tab==="forecast")fcEnsure();
     if((ui.tab==="home"&&!ui.page||ui.tab==="profile"||ui.tab==="discover"&&!ui.dsc.busy&&!ui.dsc.ibusy||ui.page&&["compose","social","user","couple","notifs","saved","mod"].includes(ui.page.type)||moved)&&!typing())render();
     if(this.again){this.again=false;this.sched()}},40)},
   write(coll,data){this[coll]=Object.assign({},this[coll]);if(data===null)delete this[coll][Cloud.uid];else this[coll][Cloud.uid]=data;
@@ -523,7 +544,7 @@ const Soc={profiles:{},prefs:{},couples:{},reportsAll:{},isOwner:false,posts:{},
     const perms=Object.assign({},this.perms);if(!on)delete perms[id];return this.saveLinks(out,perms)},
   setPerm(id,p){return this.saveLinks(Object.assign({},(this.links[Cloud.uid]||{}).out),Object.assign({},this.perms,{[id]:p}))},
   /* Social off without deleting: move my shared documents into my private space, so nothing of mine is left readable. */
-  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
+  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs","fcheck","fcast"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
   async unstash(){try{const s=await Cloud.priv("stash").get();if(!s.exists)return;const o=JSON.parse(s.data().json);for(const c in o)if(SHARED.includes(c))await Cloud.db.doc(c+"/"+Cloud.uid).set(o[c]);await Cloud.priv("stash").delete()}catch(e){}}
 };
 
@@ -580,7 +601,7 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
 
 /* ============ ui state ============ */
 const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
-  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},guide:{q:"",msgs:[],busy:false,err:null,off:false},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
+  ins:{range:"month",cat:"all",from:"",to:"",tab:"forecast"},fc:{view:null,busy:false,err:"",mode:null,started:false,moveOpen:false,ck:null,fix:false,month:null},fcs:null,guide:{q:"",msgs:[],busy:false,err:null,off:false},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
 const TABS=()=>[["home","Home","home"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
@@ -649,12 +670,12 @@ function render(resetScroll){
   if(ui.locked)h=vLock();
   else if(!S.onboarded)h=vOnboard();
   else{if(!ui.sheet&&legacySessions().length)ui.sheet={type:"legacy"}}
-  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Friends")+vSocial(),notifs:vNotifs,saved:vSaved,user:vUser,meEdit:vMeEdit,couple:vCouple,postNew:vPostNew,mod:vMod,spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
+  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Friends")+vSocial(),fcShare:vFcShare,notifs:vNotifs,saved:vSaved,user:vUser,meEdit:vMeEdit,couple:vCouple,postNew:vPostNew,mod:vMod,spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
   else h=({home:vHome,feed:vHome,intimacy:vIntimacy,discover:vDiscover,story:vStory,profile:vProfile})[ui.tab]()+vTabs();
   const sheetNew=ui.sheet&&ui.sheet!==lastSheet;lastSheet=ui.sheet;
   app.classList.toggle("enter",changed);
   app.innerHTML=h+(ui.sheet?vSheet(sheetNew):"");
-  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();hydratePhotos();hydrateMedia();applyTheme();checkRewards();paintCel();if(ui.page&&ui.page.type==="cardEdit")refreshCard();
+  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();hydratePhotos();hydrateMedia();applyTheme();if(ui.page&&ui.page.type==="fcShare")fcPaint();checkRewards();paintCel();if(ui.page&&ui.page.type==="cardEdit")refreshCard();
   if(sheetNew){const f=$(".sheet input,.sheet textarea")||$(".sheet");f&&f.focus({preventScroll:true})}
   else if(changed&&!ui.sheet){if(ns){ns.setAttribute("tabindex","-1");if(!typing())ns.focus({preventScroll:true})}countUp()}
 }
@@ -806,7 +827,8 @@ function vInsights(){const r=ui.ins,inCat=s=>r.cat==="all"||s.category===r.cat,b
    <div class="chips" role="group" aria-label="Time range">${[["week","Week"],["month","Month"],["year","Year"],["custom","Custom"]].map(([v,l])=>`<button class="chip" data-act="insRange" data-v="${v}" aria-pressed="${r.range===v}">${l}</button>`).join("")}</div>
    ${r.range==="custom"?`<div class="row"><label class="f grow" for="i-from">From<input type="date" id="i-from" data-bind="ins.from" data-live="1" value="${esc(r.from)}"></label><label class="f grow" for="i-to">To<input type="date" id="i-to" data-bind="ins.to" data-live="1" value="${esc(r.to)}"></label></div>${rg?"":`<p class="sub small">Pick a start and end date.</p>`}`:""}
    <div class="chips" role="group" aria-label="Who was involved">${[["all","All"]].concat(CAT_PICK.map(v=>[v,CATS[v]])).map(([v,l])=>`<button class="chip" data-act="insCat" data-v="${v}" aria-pressed="${r.cat===v}">${l}</button>`).join("")}</div>`;
-  const tabs=`<div class="seg3" role="group" aria-label="Insights section">${[["overview","Overview"],["patterns","Patterns"],["mood","Mood"],["connection","Connection"]].map(([v,l])=>`<button data-act="insTab" data-v="${v}" aria-pressed="${r.tab===v}">${l}</button>`).join("")}</div>`;
+  const tabs=`<div class="chips scrollx itabs" role="group" aria-label="Insights section">${[["forecast","Forecast"],["overview","Overview"],["patterns","Patterns"],["mood","Mood"],["connection","Connection"]].map(([v,l])=>`<button class="chip" data-act="insTab" data-v="${v}" aria-pressed="${r.tab===v}">${l}</button>`).join("")}</div>`;
+  if(r.tab==="forecast")return`<div class="scroll">${tabs}<div class="fcwrap">${vForecast()}</div></div>`;
   if(r.tab==="connection")return`<div class="scroll"><div><h1>Your <em>connection.</em></h1><p class="sub small">A gentle read of your dates, memories and intimacy together. There's no right amount of anything.</p></div>${demoBanner()}${tabs}${vGuide()}</div>`;
   if(!S.sessions.length)return`<div class="scroll">${head}${tabs}<div class="card"><h2>Nothing to chart yet.</h2><p class="sub">Save a session and this page fills in from your own records.</p><button class="btn sm primary" data-act="iSeg" data-v="track" style="align-self:flex-start">Go to Track</button></div></div>`;
   const none=`<div class="card line"><p class="sub small">No sessions ${rl}${r.cat!=="all"?" in this category":""}. Try a wider range.</p></div>`;
@@ -2634,7 +2656,7 @@ function guideSummary(){const now=Date.now(),wk=12,from=now-wk*WEEK,prevFrom=fro
     datesAndHowTheyFelt:wD.length>=2&&wN.length>=2?{weeksWithADateOrMemory:grp(wD),weeksWithout:grp(wN)}:"not enough weeks to compare"}}
 const GUIDE_EX=["How are we doing lately?","What makes our best weeks?","What should we try next?","Have we been in a rut?","What do our dates say about us?"];
 const GUIDE_RISK=/\b(abus|hit me|hits me|hurt(s)? me|forc(e|ed|ing)|unsafe|scared of|threat|violen|assault|kill myself|suicid|self.?harm|want to die)/i;
-function guidePrompt(q,hist){const ideas=IDEAS.map(i=>i[0]+": "+i[1]).join("; ");
+function guidePrompt(q,hist){const ideas=IDEAS.map(i=>i.id+": "+i.t).join("; ");
   return["You are the connection guide inside VOUZ, a private app where adult couples and partners plan dates, keep memories and, privately, log intimacy.",
     "You talk with one partner about their relationship using only the summary below. Be warm, plain and brief: 2 to 5 short sentences, then up to 2 concrete suggestions.",
     "Rules you must follow:",
@@ -2683,6 +2705,275 @@ Object.assign(A,{
     finally{g.busy=false;g.ctl=null;render()}}
 });
 
+/* ============ Daily Forecast (Insights → Forecast) ============
+   A daily reflection, not a prediction. Rules (deterministic, testable) choose the word, the four energies and the
+   move from what the couple actually did and said; Claude, when allowed, only rewrites the three short paragraphs from
+   those facts. One forecast per day: generated once, stored, never re-rolled on refresh.
+   Together mode needs both partners to opt in. Then the forecast uses only what both have agreed to share (check-ins
+   and memories in a shared space), is seeded by the pair, and the first one made is sent, encrypted, to the other, so
+   both see the same words. Private intimacy records are never an input to a shared forecast or to any share card. */
+const FC_WORDS={MAGNETIC:{v:[.95,.5,.8,.5],l:"Something about your connection feels impossible to ignore."},TENDER:{v:[.5,.6,.95,.2],l:"Softness is doing more work than it gets credit for."},
+  RESTLESS:{v:[.5,.3,.3,.9],l:"Routine feels a size too small right now."},ALIGNED:{v:[.6,.9,.7,.5],l:"You're pointed the same way, even when you don't say it."},
+  ELECTRIC:{v:[.95,.4,.6,.8],l:"There's a charge in the room. Notice who flinches first."},PLAYFUL:{v:[.7,.6,.5,.75],l:"Not everything needs to mean something today."},
+  DISTANT:{v:[.25,.2,.2,.35],l:"Some space between you. Space isn't the same as distance unless you let it be."},INTIMATE:{v:[.8,.6,.95,.3],l:"Closer than usual, in the quiet ways that count."},
+  UNGUARDED:{v:[.6,.85,.85,.4],l:"Something you'd normally keep to yourself wants out."},SERENE:{v:[.4,.6,.7,.15],l:"Nothing to fix. Just room to be together."},
+  DEVOTED:{v:[.6,.7,.9,.3],l:"Small loyalties are adding up to something."},CURIOUS:{v:[.55,.75,.5,.85],l:"There's still more of each other to find."},
+  REFLECTIVE:{v:[.35,.8,.6,.2],l:"A good day to look back at what you've built."},BOLD:{v:[.75,.5,.5,.95],l:"Say yes before you talk yourselves out of it."},
+  STEADY:{v:[.45,.6,.6,.4],l:"Not dramatic. Dependable. That's its own kind of romance."},WARM:{v:[.6,.65,.75,.35],l:"Easy company, the kind that's hard to find."},
+  OPEN:{v:[.5,.8,.6,.6],l:"Less guarding, more asking."},WILD:{v:[.85,.35,.55,.95],l:"The plan is that there isn't one."},
+  QUIET:{v:[.3,.4,.6,.15],l:"Not every good day has to be loud."},GENTLE:{v:[.45,.6,.8,.2],l:"Go slow. It's working."},
+  MAGNIFIED:{v:[.8,.7,.7,.6],l:"Everything you feel today, you feel a little more."},UNHURRIED:{v:[.5,.55,.7,.25],l:"Time feels generous. Spend it on each other."},
+  SPARKED:{v:[.85,.55,.6,.7],l:"One small moment could set the tone for the week."},UNWRITTEN:{v:[.5,.5,.5,.6],l:"Your story here is just starting. Today's a blank page."}};
+const FC_NEW=["UNWRITTEN","CURIOUS","OPEN","WARM","PLAYFUL","SERENE"];
+const FC_DIMS=[["ch","Chemistry","Attraction and romantic energy"],["co","Communication","Room for meaningful conversation"],["in","Intimacy","Emotional and physical closeness"],["ad","Adventure","Openness to new things together"]];
+const FC_ENERGY={Playful:[.7,.6,.5,.75],Tender:[.5,.6,.95,.2],Restless:[.5,.3,.3,.9],Reflective:[.35,.8,.6,.2],Adventurous:[.6,.5,.4,.95],Close:[.75,.6,.95,.35],Tired:[.3,.4,.5,.1],Distant:[.25,.2,.2,.35],Curious:[.55,.75,.5,.85],Calm:[.4,.6,.7,.15]};
+const FC_WANTS={talk:["co",.9],adventure:["ad",.9],quiet:["in",.6],closeness:["in",.9],romance:["ch",.9],fun:["ad",.6]};
+const FC_WANT_L={talk:"A real talk",adventure:"Something new",quiet:"A quiet night",closeness:"Closeness",romance:"Romance",fun:"Fun"};
+const FC_CAT={romantic:{ch:.9,in:.7},dinner:{co:.8,ch:.5},adventure:{ad:.95},trip:{ad:.9,co:.6},celebration:{ch:.7,co:.6},milestone:{in:.8,co:.7},movie:{in:.5,co:.4},other:{co:.5}};
+const FC_MOOD={Playful:{ch:.7,ad:.7},Tender:{in:.9},Electric:{ch:.95},Relaxed:{in:.6,co:.6},Connected:{in:.85,co:.8},Curious:{ad:.8,co:.7}};
+const FC_EMBRACE={ch:["Flirt like it's early days. A look across the room still works.","Dress up for no reason and let the other one notice.","Say the compliment out loud instead of just thinking it."],
+  co:["Ask the question you've been saving. Then actually listen to the whole answer.","Trade one thing each that went well this week, and one that didn't.","Talk about something that isn't logistics. Dreams count."],
+  in:["Let the evening be slow. Closeness grows in unhurried time.","Phones in another room for an hour. See what fills the space.","Hold hands somewhere you usually wouldn't."],
+  ad:["Pick somewhere neither of you has been, even if it's just around the corner.","Say yes to the first idea either of you suggests.","Swap the usual plan for something slightly out of character."]};
+const FC_WATCH={ch:["Comfort can slide into autopilot. Notice your partner, on purpose, once today.","If attention has been elsewhere lately, a small gesture will land bigger than you think."],
+  co:["Watch for answering the question you expected instead of the one that was asked.","A short reply isn't always a cold one. Ask before assuming."],
+  in:["Busy weeks can make you roommates for a while. Ten undistracted minutes helps.","If one of you is reaching and the other isn't, that's information, not rejection."],
+  ad:["Routine is comfortable until it isn't. Is someone quietly bored?","Don't let 'we should do that sometime' quietly become never."],
+  mismatch:["You're not on the same frequency today. Neither pace is wrong. Ask, don't assume.","One of you wants more, the other less. Meet in the middle and say so out loud."]};
+const FC_MOVES={ch:["Give your partner an unexpected compliment.","Recreate a favorite shared memory.","Plan a spontaneous 30-minute date."],co:["Ask your partner something you've never asked before.","Take a walk with no destination and no phones.","Tell each other one thing you're looking forward to."],
+  in:["Spend an evening together without phones.","Cook something slowly, together.","Write each other a three-line note and swap."],ad:["Plan a spontaneous 30-minute date.","Try a place neither of you has been.","Let the other person choose tonight, no vetoes."]};
+const FC_QS=["What's something you've changed your mind about this year?","When did you last feel really proud of us?","What's a small thing I do that you love?","Where would you go tomorrow if money and time didn't matter?","What's something you want more of, from life in general?","What's a memory of us you replay?","What's one thing you wish I'd ask you about?","What made you laugh hardest this month?","What's a tradition we should start?","What's something you've never told me about your childhood?","What does a perfect lazy Sunday look like to you?","What's a risk you'd want to take together?"];
+const FC_CLOSE=["A slow evening: candles, music, no clock.","Take turns choosing the music and the pace.","A long bath or shower together, no agenda.","Massages, taking turns, unhurried."];
+const FC_TOGETHER=(a,b)=>{if(!a||!b)return null;const va=FC_ENERGY[a],vb=FC_ENERGY[b],d=Math.sqrt(va.reduce((s,x,i)=>s+(x-vb[i])**2,0));
+  return d<.35?{w:"IN SYNC",l:"You're arriving at the same place from different directions. Enjoy the ease."}:d<.7?{w:"BALANCE",l:"Different paces, but they fit. There's room for both."}:{w:"CONTRAST",l:"One of you wants excitement, the other a slower pace. Name it, then take turns."}};
+
+/* deterministic seeded randomness: the same seed gives the same choices on every device */
+function fcSeed(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}let a=h>>>0;
+  return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const fcPick=(rnd,arr)=>arr[Math.floor(rnd()*arr.length)%arr.length];
+
+/* Turn the day's evidence into four energies. A dimension with too little evidence stays unknown (null). */
+function fcDims(ev){const acc={ch:[0,0],co:[0,0],in:[0,0],ad:[0,0]},add=(k,v,w)=>{acc[k][0]+=v*w;acc[k][1]+=w};
+  for(const c of ev.checkins){const e=FC_ENERGY[c.energy];if(e)["ch","co","in","ad"].forEach((k,i)=>add(k,e[i],1.2));if(typeof c.close==="number"){add("in",(c.close-1)/4,1);add("co",(c.close-1)/4,.5)}
+    for(const w of (c.wants||[])){const m=FC_WANTS[w];if(m)add(m[0],m[1],.8)}}
+  for(const m of ev.memories){const c=FC_CAT[m.cat]||FC_CAT.other;for(const k in c)add(k,c[k],.6);const md=FC_MOOD[m.mood];if(md)for(const k in md)add(k,md[k],.5)}
+  for(const md of ev.moods||[]){const x=FC_MOOD[md];if(x)for(const k in x)add(k,x[k],.25)}
+  const out={};for(const k in acc)out[k]=acc[k][1]>=.9?+(acc[k][0]/acc[k][1]).toFixed(2):null;return out}
+function fcWord(dims,rnd,recent,rejected){const known=Object.keys(dims).filter(k=>dims[k]!=null),idx={ch:0,co:1,in:2,ad:3};
+  let pool=Object.keys(FC_WORDS);
+  if(!known.length){const opts=FC_NEW.filter(w=>!recent.includes(w));return fcPick(rnd,opts.length?opts:FC_NEW)}
+  const sc=pool.map(w=>{const v=FC_WORDS[w].v,dist=Math.sqrt(known.reduce((s,k)=>s+(v[idx[k]]-dims[k])**2,0)/known.length);
+    return{w,s:-dist+rnd()*.12-(recent.includes(w)?1:0)-(rejected.includes(w)?.35:0)-(w==="UNWRITTEN"?.3:0)}}).sort((a,b)=>b.s-a.s);
+  return sc[0].w}
+const fcLevel=v=>v==null?null:v<.35?"Quiet":v<.55?"Steady":v<.75?"Rising":"Strong";
+
+/* The forecast for one day. ev = {checkins, memories, moods, observed:[facts], mismatch}. */
+function fcBuild(seedStr,ev,recent,rejected,withIntimacy){const rnd=fcSeed(seedStr),dims=fcDims(ev),word=fcWord(dims,rnd,recent,rejected),known=Object.keys(dims).filter(k=>dims[k]!=null);
+  const hi=known.length?known.reduce((a,b)=>dims[a]>=dims[b]?a:b):fcPick(rnd,["ch","co","in","ad"]),lo=known.length>1?known.reduce((a,b)=>dims[a]<=dims[b]?a:b):fcPick(rnd,["co","in","ad"].filter(k=>k!==hi));
+  const conn=ev.observed.length?FC_WORDS[word].l+" "+fcPick(rnd,["That shows in what you've been sharing.","It's there in the small things lately.","You can see it in how you've been spending time."]):FC_WORDS[word].l+" With a few check-ins, this gets more personal.";
+  const ideas=IDEAS.filter(i=>i.g.some(g=>(DGROUPS_OF[hi]||[]).includes(g)));
+  const qs=[];const r2=fcSeed(seedStr+"|q");while(qs.length<3){const q=fcPick(r2,FC_QS);if(!qs.includes(q))qs.push(q)}
+  return{v:1,word,line:FC_WORDS[word].l,dims,hi,lo,
+    sections:{connection:{t:conn,basis:ev.observed.length?"observed":"reflection"},embrace:{t:fcPick(rnd,FC_EMBRACE[hi]),basis:"suggestion"},watch:{t:fcPick(rnd,ev.mismatch?FC_WATCH.mismatch:FC_WATCH[lo]),basis:"suggestion"}},
+    move:{t:fcPick(rnd,FC_MOVES[hi]),qs,ideas:ideas.length?[fcPick(rnd,ideas).id,fcPick(fcSeed(seedStr+"|i"),ideas).id].filter((x,i,a)=>a.indexOf(x)===i):[],close:withIntimacy?fcPick(rnd,FC_CLOSE):null},
+    observed:ev.observed.slice(0,4),src:"library",at:Date.now()}}
+const DGROUPS_OF={ch:["romance","food","music"],co:["food","culture","learning"],in:["home","wellness","romance"],ad:["adventure","outdoors"]};
+
+/* Claude may rewrite the three paragraphs, from the facts only. Anything that predicts, diagnoses or gets explicit is thrown away. */
+const FC_BAD=/\b(will (definitely|surely|certainly)|destined|guarantee|predict|diagnos|toxic|narcissis|red flag|break ?up|divorce|cheat|sex|orgasm|naked|nude|horoscope|zodiac|mercury|stars? (say|align))/i;
+function fcClean(o,base){const ok=s=>typeof s==="string"&&s.trim().length>=12&&s.length<=240&&!FC_BAD.test(s)&&!/https?:|www\./i.test(s);
+  if(!o||!ok(o.connection)||!ok(o.embrace)||!ok(o.watch))return null;
+  return{...base,sections:{connection:{...base.sections.connection,t:o.connection.trim()},embrace:{...base.sections.embrace,t:o.embrace.trim()},watch:{...base.sections.watch,t:o.watch.trim()}},src:"ai"}}
+async function fcAI(base){if(!SAMPLE||!S.fc.ai)return null;
+  const facts={word:base.word,energies:Object.fromEntries(FC_DIMS.map(([k,l])=>[l,fcLevel(base.dims[k])||"unknown"])),strongest:FC_DIMS.find(d=>d[0]===base.hi)[1],quietest:FC_DIMS.find(d=>d[0]===base.lo)[1],observed:base.observed,energiesDiffer:!!base.mismatch};
+  const prompt=["You write the daily forecast for VOUZ, a private app for adult couples. Tone: Co-Star-like, minimalist, observant, a little provocative, warm. Never judgmental, never manipulative.",
+    "This is a reflection, not a prediction. Never claim to know the future. Never present a guess as a fact; only the 'observed' list is fact. Not a horoscope: no stars, signs or planets.",
+    "No therapy-speak or diagnosis. Keep it tasteful and non-explicit. Never suggest more intimacy is better.",
+    "Write three parts, each one or two sentences, under 200 characters: connection (an observation that fits today's word and the observed facts), embrace (an opportunity to explore together), watch (a gentle possible misunderstanding to notice).",
+    'Reply with only JSON: {"connection":"…","embrace":"…","watch":"…"}',"Facts: "+JSON.stringify(facts)].join("\n");
+  try{const v=await Promise.race([SAMPLE.json(prompt,{cache:{staleTime:864e5}}),new Promise((_,j)=>setTimeout(()=>j({code:"timeout"}),12000))]);return fcClean(v,base)}catch(e){return null}}
+
+/* ---------- inputs ---------- */
+const fcToday=()=>dayKey(Date.now());
+function fcPartner(){if(!Soc.ready())return null;const c=Soc.coupleMine&&!Soc.coupleMine.waiting?Soc.coupleMine.members.find(u=>u!==Cloud.uid):null;
+  const id=c||(S.fc.with&&Soc.rel[S.fc.with]&&Soc.rel[S.fc.with].mutual?S.fc.with:null);return id&&Soc.rel[id]&&Soc.rel[id].mutual?id:null}
+async function fcTheirs(id){const r=Soc.rel[id],d=(Soc.fcheck||{})[id];if(!r||!d)return null;const it=(d.items||[]).find(x=>x&&x.k===r.in);if(!it)return null;
+  try{return Soc.cache["fc"+it.c]||(Soc.cache["fc"+it.c]=await K.decJ(r.key,it.c))}catch(e){return null}}
+async function fcTheirForecast(id){const r=Soc.rel[id],d=(Soc.fcast||{})[id];if(!r||!d)return null;const it=(d.items||[]).find(x=>x&&x.k===r.in);if(!it)return null;
+  try{return Soc.cache["ff"+it.c]||(Soc.cache["ff"+it.c]=await K.decJ(r.key,it.c))}catch(e){return null}}
+/* Together mode: both partners have opted in (each can read the other's encrypted check-in sharing). */
+async function fcMode(){const p=fcPartner();if(!p||!S.fc.together)return{solo:true};const t=await fcTheirs(p);return t&&t.together?{solo:false,p,t}:{solo:true,waiting:p}}
+function fcEvidence(mode,day){const from=Date.now()-21*DAY,mine=S.fc.checkins[day];
+  if(mode.solo){const mem=S.exps.filter(e=>!e.demo&&e.kind==="done"&&e.date>=from);const moods=S.sessions.filter(s=>!s.demo&&s.start>=Date.now()-14*DAY&&MC[s.mood]).map(s=>s.mood);
+    const obs=[];if(mem.length)obs.push(mem.length+" memor"+(mem.length===1?"y":"ies")+" in the last three weeks"+(mem.length>1?", mostly "+(XCATS[mode0(mem.map(m=>m.cat))]||"").toLowerCase():""));if(mine)obs.push("You checked in feeling "+mine.energy.toLowerCase());
+    return{checkins:mine?[mine]:[],memories:mem.map(m=>({cat:m.cat,mood:m.mood})),moods,observed:obs,mismatch:false}}
+  const theirs=mode.t&&mode.t.days&&mode.t.days[day],shared=S.exps.filter(e=>!e.demo&&e.kind==="done"&&e.date>=from&&e.space&&Soc.sp[e.space]&&Soc.sp[e.space].members&&Soc.sp[e.space].members.includes(mode.p));
+  const obs=[];if(shared.length)obs.push(shared.length+" shared memor"+(shared.length===1?"y":"ies")+" in the last three weeks");if(mine&&theirs)obs.push("You both checked in today");else if(mine||theirs)obs.push("One of you checked in today");
+  const tg=mine&&theirs?FC_TOGETHER(mine.energy,theirs.energy):null;
+  return{checkins:[mine,theirs].filter(Boolean),memories:shared.map(m=>({cat:m.cat,mood:m.mood})),moods:[],observed:obs,mismatch:!!(tg&&tg.w==="CONTRAST")}}
+const mode0=a=>{const c={};a.forEach(x=>c[x]=(c[x]||0)+1);return Object.keys(c).sort((x,y)=>c[y]-c[x])[0]};
+
+/* ---------- make (or adopt) today's forecast; stored, never re-rolled ---------- */
+async function fcEnsure(force){const day=fcToday(),f=S.fc;if(ui.fc.busy)return;const mode=await fcMode(),slot=mode.solo?"solo":"together";
+  const have=(f.hist[day]||{})[slot];
+  if(!mode.solo){const theirs=await fcTheirForecast(mode.p),tf=theirs&&theirs.days&&theirs.days[day];
+    if(tf&&tf.word&&FC_WORDS[tf.word]&&(!have||(mode.p<Cloud.uid&&have.at!==tf.at))){   // if both made one, the lower id's wins, so both end up the same
+      f.hist[day]=Object.assign({},f.hist[day],{together:Object.assign(fcSafe(tf),{adopted:true,made:"partner"})});save();ui.fc.mode=mode;return render()}}
+  if(have&&!force){ui.fc.mode=mode;return}
+  ui.fc.busy=true;ui.fc.mode=mode;render();
+  try{const recent=Object.keys(f.hist).filter(d=>d<day).sort().slice(-10).map(d=>(f.hist[d].together||f.hist[d].solo||{}).word).filter(Boolean),rejected=Object.values(f.hist).map(h=>(h.solo||{}).rejected||(h.together||{}).rejected).filter(Boolean);
+    const seedStr=mode.solo?"solo|"+(Cloud.uid||S.user.id||"me")+"|"+day:"pair|"+[Soc.rel[mode.p].out,Soc.rel[mode.p].in].sort().join("|")+"|"+day;
+    const ev=fcEvidence(mode,day);let fc=fcBuild(seedStr,ev,recent,rejected,!!f.closeIdeas&&mode.solo);fc.mismatch=ev.mismatch;fc.made="me";fc.checkinAt=S.fc.checkins[day]?S.fc.checkins[day].at:null;
+    const ai=await fcAI(fc);if(ai)fc=ai;
+    f.hist[day]=Object.assign({},f.hist[day],{[slot]:fc});
+    const keep=Object.keys(f.hist).sort().slice(-120);f.hist=Object.fromEntries(keep.map(k=>[k,f.hist[k]]));save();
+    if(!mode.solo)await fcPublish(mode.p)}
+  catch(e){ui.fc.err="Today's forecast couldn't be made. Try again."}
+  finally{ui.fc.busy=false;render()}}
+/* Only these fields are ever accepted from a partner's forecast. */
+function fcSafe(x){const s=t=>String(t||"").slice(0,240),sec=k=>({t:s(x.sections&&x.sections[k]&&x.sections[k].t),basis:["observed","reflection","suggestion"].includes(x.sections&&x.sections[k]&&x.sections[k].basis)?x.sections[k].basis:"suggestion"});
+  const dims={};for(const[k] of FC_DIMS)dims[k]=typeof(x.dims||{})[k]==="number"?Math.max(0,Math.min(1,x.dims[k])):null;
+  return{v:1,word:FC_WORDS[x.word]?x.word:"UNWRITTEN",line:FC_WORDS[x.word]?FC_WORDS[x.word].l:"",dims,hi:["ch","co","in","ad"].includes(x.hi)?x.hi:"co",lo:["ch","co","in","ad"].includes(x.lo)?x.lo:"ad",
+    sections:{connection:sec("connection"),embrace:sec("embrace"),watch:sec("watch")},move:{t:s(x.move&&x.move.t),qs:((x.move&&x.move.qs)||[]).filter(q=>FC_QS.includes(q)).slice(0,3),ideas:((x.move&&x.move.ideas)||[]).filter(i=>IDEA[i]).slice(0,2),close:null},
+    observed:(x.observed||[]).map(s).slice(0,4),mismatch:!!x.mismatch,src:x.src==="ai"?"ai":"library",at:num(x.at)||Date.now()}}
+async function fcPublish(p){const r=Soc.rel[p];if(!r)return;const days={};for(const d of Object.keys(S.fc.hist).sort().slice(-30)){const t=S.fc.hist[d].together;if(t)days[d]=fcSafe(t)}
+  await Soc.write("fcast",{items:[{k:r.out,c:await K.encJ(r.key,{days})}]})}
+async function fcShareCheckins(){const p=fcPartner();if(!p||!S.fc.together){await Soc.write("fcheck",null);return}const r=Soc.rel[p],days={};
+  for(const d of Object.keys(S.fc.checkins).sort().slice(-14)){const c=S.fc.checkins[d];days[d]={energy:c.energy,close:c.close,wants:c.wants}}
+  await Soc.write("fcheck",{items:[{k:r.out,c:await K.encJ(r.key,{together:true,showEnergy:!!S.fc.showEnergy,days})}]})}
+
+/* ---------- forecast screens ---------- */
+const fcDots=v=>`<span class="fdots" aria-hidden="true">${[0,1,2,3,4].map(i=>`<i class="${v!=null&&v>=i*.2+.05?"on":""}"></i>`).join("")}</span>`;
+const fcDate=d=>new Date(d+"T12:00").toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"});
+const BASIS={observed:"Observed",reflection:"Reflection",suggestion:"Suggestion"};
+function vForecast(){const f=S.fc,day=ui.fc.view||fcToday(),isToday=day===fcToday(),h=f.hist[day]||{},mode=ui.fc.mode||{solo:true};
+  if(!f.on)return`<div class="card"><h2>Forecast is off.</h2><p class="sub">Turn it back on to get a daily reflection on your connection.</p><button class="btn sm primary" style="align-self:flex-start" data-act="fcOn">Turn on</button></div>`;
+  if(isToday&&!ui.fc.started){ui.fc.started=true;setTimeout(()=>fcEnsure(),0)}
+  const fc=mode.solo?(h.solo||h.together):(h.together||h.solo);
+  if(!fc)return ui.fc.busy||isToday?`<div class="fcard fload" aria-busy="true"><span class="fk">Today, you are</span><span class="fw shimmer">&nbsp;</span><span class="sub small" role="status">Writing today's forecast…</span></div>`:`<div class="card line"><p class="sub small">No forecast for ${esc(fcDate(day))}.</p><button class="link small" data-act="fcView" data-v="">Back to today</button></div>`;
+  const ck=f.checkins[fcToday()],tg=!mode.solo&&mode.t&&mode.t.days?mode.t.days[fcToday()]:null,pulse=isToday&&!mode.solo&&ck&&tg?FC_TOGETHER(ck.energy,tg.energy):null;
+  return`${ui.fc.err?`<p class="err" role="alert">${esc(ui.fc.err)}</p>`:""}
+   ${!isToday?`<button class="link small" data-act="fcView" data-v="">${ic("back")} Back to today</button>`:""}
+   <div class="fcard" style="--fg:${fcHue(fc.word)}"><span class="fk">${isToday?"Today, you are":esc(fcDate(day))+", you were"}</span><span class="fw" aria-label="${esc(fc.word)}">${esc(fc.word)}</span><p class="fl">${esc(fc.line)}</p>
+    <span class="fd">${esc(fcDate(day))} · ${mode.solo?"Just you":"Together"}</span><span class="fb">VOUZ / DAILY FORECAST</span></div>
+   ${fc.rejected?`<p class="tiny">You said this one didn't fit${fc.corrected?`; you'd call it <b>${esc(fc.corrected)}</b>`:""}. VOUZ will lean away from it.</p>`:""}
+   <div class="sec"><h3>Relationship energy</h3><div class="fdims">${FC_DIMS.map(([k,l,d])=>`<div class="fdim"><span><b>${l}</b><span class="tiny" style="display:block">${d}</span></span>${fc.dims[k]==null?`<span class="tiny">Not enough to go on</span>`:`<span class="row" style="gap:8px">${fcDots(fc.dims[k])}<span class="tiny">${fcLevel(fc.dims[k])}</span></span>`}</div>`).join("")}</div>
+    <p class="tiny">${fc.observed.length?"Shaped by "+esc(fc.observed.join("; ").toLowerCase())+".":"Nothing to go on yet, so this is a starting point, not a reading."} A reflection, not a measurement.</p></div>
+   ${[["connection","Your connection"],["embrace","What to embrace"],["watch","What to watch"]].map(([k,l])=>`<div class="fsec"><div class="row between"><h3>${l}</h3><span class="ftag ${fc.sections[k].basis}">${BASIS[fc.sections[k].basis]}</span></div><p>${esc(fc.sections[k].t)}</p></div>`).join("")}
+   ${fc.src==="ai"?`<p class="tiny">Written by Claude from the energies above${fc.observed.length?" and what's listed there":""}; the word and energies come from VOUZ's own rules.</p>`:""}
+   ${isToday?`<button class="fmove" data-act="fcMove" aria-expanded="${!!ui.fc.moveOpen}"><span class="tiny">Today's move</span><b>${esc(fc.move.t)}</b>${ic("next")}</button>
+   ${ui.fc.moveOpen?`<div class="card"><h3>Ask each other</h3>${fc.move.qs.map(q=>`<p class="fq">${esc(q)}</p>`).join("")}
+     ${fc.move.ideas.length?`<h3>Or try</h3>${fc.move.ideas.map(id=>`<div class="ideal"><span class="grow"><b>${esc(IDEA[id].t)}</b></span><button class="ib" data-act="ideaSave" data-v="${id}" aria-label="Save ${esc(IDEA[id].t)} to plans">${ic("plus")}</button></div>`).join("")}`:""}
+     <button class="btn sm" style="align-self:flex-start" data-act="fcNearby">${ic("pin")} Find something nearby</button>
+     ${fc.move.close?`<h3>Just for you two</h3><p class="sub small">${esc(fc.move.close)}</p>`:""}</div>`:""}`:""}
+   ${isToday?fcCheckinCard(ck,mode,pulse,tg):""}
+   ${isToday?`<div class="row wrap"><span class="tiny grow">Does this fit?</span><button class="btn sm ${fc.fit===true?"":"ghost"}" data-act="fcFit" data-v="1" aria-pressed="${fc.fit===true}">It fits</button><button class="btn sm ${fc.rejected?"":"ghost"}" data-act="fcFit" data-v="0" aria-pressed="${!!fc.rejected}">Not quite</button></div>
+   ${ui.fc.fix?`<div class="card line"><p class="sub small">Which word fits better? Your answer stays on this device and steers future forecasts.</p><div class="chips sm">${fcAlternatives(fc).map(w=>`<button class="chip" data-act="fcFix" data-v="${w}">${w}</button>`).join("")}<button class="chip" data-act="fcFix" data-v="">None of these</button></div></div>`:""}
+   <button class="btn block" data-act="fcShareOpen">${ic("share")} Share today's word</button>`:""}
+   ${fcHistory()}
+   <div class="card line"><h3>Forecast settings</h3>
+    ${sw("fcAi",!!f.ai,"Let Claude write the paragraphs","It gets today's word, the four energies and the facts listed above. Never your notes or intimacy records.")}
+    ${sw("fcClose",!!f.closeIdeas,"Include ideas for closeness","Optional, tasteful, and only in your own forecast, never a shared one.")}
+    ${Soc.ready()?fcTogetherCtl(mode):`<p class="tiny">Turn on Connections in Profile to share a forecast with your partner.</p>`}
+    <button class="link small" data-act="fcOff">Turn off the forecast</button></div>`}
+function fcHue(w){const v=FC_WORDS[w]?FC_WORDS[w].v:[.5,.5,.5,.5];return`hsl(${Math.round(345-v[3]*40+v[2]*10)} ${Math.round(40+v[0]*30)}% ${Math.round(28+v[2]*10)}%)`}
+function fcAlternatives(fc){const idx={ch:0,co:1,in:2,ad:3},known=Object.keys(fc.dims).filter(k=>fc.dims[k]!=null);
+  return Object.keys(FC_WORDS).filter(w=>w!==fc.word&&w!=="UNWRITTEN").map(w=>({w,d:known.reduce((s,k)=>s+(FC_WORDS[w].v[idx[k]]-fc.dims[k])**2,0)})).sort((a,b)=>a.d-b.d).slice(0,5).map(x=>x.w)}
+function fcCheckinCard(ck,mode,pulse,tg){const d=ui.fc.ck;
+  if(ck&&!d)return`<div class="card line"><div class="row between"><span><span class="tiny">Your check-in</span><b style="display:block">${esc(ck.energy)}${ck.wants.length?" · wants "+esc(ck.wants.map(w=>FC_WANT_L[w].toLowerCase()).join(", ")):""}</b></span><button class="link small" data-act="fcCk">Edit</button></span></div>
+    ${pulse?`<div class="pulse"><div><span class="tiny">Your energy</span><b>${esc(ck.energy.toUpperCase())}</b></div><div><span class="tiny">Their energy</span><b>${mode.t.showEnergy?esc(tg.energy.toUpperCase()):"PRIVATE"}</b></div><div><span class="tiny">Together</span><b>${pulse.w}</b></div></div><p class="sub small">${esc(pulse.l)}</p>${mode.t.showEnergy?"":`<p class="tiny">Your partner shares their check-in with the forecast but keeps their energy word private.</p>`}`:!mode.solo?`<p class="tiny">${tg?"":"Your partner hasn't checked in today."}</p>`:""}
+    ${mode.solo&&ck&&S.fc.hist[fcToday()]&&S.fc.hist[fcToday()].solo&&!S.fc.hist[fcToday()].solo.checkinAt&&!S.fc.hist[fcToday()].solo.updated?`<button class="btn sm" style="align-self:flex-start" data-act="fcUpdate">Update today's forecast with this</button>`:""}</div>`;
+  const c=d||{energy:null,close:null,wants:[]};
+  return`<div class="card"><h3>Check in</h3><p class="sub small">Ten seconds, optional. It shapes your forecast${mode.solo?"":" and, because you both opted in, the shared one"}.</p>
+   <span class="tiny">Your energy today</span><div class="chips sm">${Object.keys(FC_ENERGY).map(e=>`<button class="chip" data-act="fcE" data-v="${e}" aria-pressed="${c.energy===e}">${e}</button>`).join("")}</div>
+   <span class="tiny">How connected do you feel?</span><div class="chips sm">${[[1,"Far"],[2,"A bit far"],[3,"Okay"],[4,"Close"],[5,"Very close"]].map(([v,l])=>`<button class="chip" data-act="fcC" data-v="${v}" aria-pressed="${c.close===v}">${l}</button>`).join("")}</div>
+   <span class="tiny">What would feel good today?</span><div class="chips sm">${Object.entries(FC_WANT_L).map(([k,l])=>`<button class="chip" data-act="fcW" data-v="${k}" aria-pressed="${c.wants.includes(k)}">${l}</button>`).join("")}</div>
+   <div class="row"><button class="btn primary grow" data-act="fcCkSave" ${c.energy?"":"disabled"}>Save check-in</button>${d?`<button class="btn ghost" data-act="fcCkCancel">Cancel</button>`:""}</div></div>`}
+function fcTogetherCtl(mode){const p=fcPartner(),conns=Soc.conns();
+  return`<div class="col" style="gap:6px"><span class="tiny">Forecast together</span>
+   ${Soc.coupleMine&&!Soc.coupleMine.waiting?`<p class="sub small">With ${esc(Soc.handle(p))}, from your couple profile.</p>`:conns.length?`<div class="chips sm">${conns.map(id=>`<button class="chip" data-act="fcWith" data-v="${esc(id)}" aria-pressed="${S.fc.with===id}">${esc(Soc.handle(id))}</button>`).join("")}</div>`:`<p class="sub small">Add your partner as a friend first.</p>`}
+   ${p?sw("fcTogether",!!S.fc.together,"Share check-ins and the forecast with "+Soc.handle(p),"Encrypted for them alone. When you've both turned this on, you see the same forecast each day."):""}
+   ${p&&S.fc.together?sw("fcShowE",!!S.fc.showEnergy,"Let them see my energy word","Off: it shapes the shared forecast, but they only see the combined result."):""}
+   ${mode.waiting?`<p class="tiny">Waiting for ${esc(Soc.handle(mode.waiting))} to turn this on. Until then, your forecast is just yours.</p>`:""}
+   <p class="tiny">Two people only, for now. Never your intimacy records.</p></div>`}
+function fcHistory(){const m=ui.fc.month||fcToday().slice(0,7),[y,mo]=m.split("-").map(Number),first=new Date(y,mo-1,1),days=new Date(y,mo,0).getDate(),lead=(first.getDay()+6)%7,today=fcToday();
+  const cells=[];for(let i=0;i<lead;i++)cells.push(`<span></span>`);
+  const words=[];for(let d=1;d<=days;d++){const k=m+"-"+String(d).padStart(2,"0"),h=S.fc.hist[k],w=h&&(h.together||h.solo);if(w)words.push(w.word);
+    cells.push(w?`<button class="fcal on" data-act="fcView" data-v="${k}" style="--fg:${fcHue(w.word)}" aria-label="${esc(fcDate(k))}: ${esc(w.word)}"><i>${d}</i><b>${esc(w.word.slice(0,5))}</b></button>`:`<span class="fcal${k===today?" now":""}"><i>${d}</i></span>`)}
+  const cnt={};words.forEach(w=>cnt[w]=(cnt[w]||0)+1);const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,3);
+  const ck=Object.keys(S.fc.checkins).filter(k=>k.startsWith(m)).length,prev=new Date(y,mo-2,1),next=new Date(y,mo,1);
+  return`<div class="sec"><div class="row between"><h3>Your words</h3><span class="row" style="gap:2px"><button class="ib bare" data-act="fcMonth" data-v="${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,"0")}" aria-label="Previous month">${ic("back")}</button><span class="small">${MO[mo-1]} ${y}</span><button class="ib bare" data-act="fcMonth" data-v="${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,"0")}" aria-label="Next month" ${m>=today.slice(0,7)?"disabled":""}>${ic("next")}</button></span></div>
+   <div class="fcalg">${["M","T","W","T","F","S","S"].map(x=>`<span class="tiny">${x}</span>`).join("")}${cells.join("")}</div>
+   ${words.length?`<p class="sub small">${words.length} forecast${words.length===1?"":"s"} this month${top.length?", most often "+top.map(w=>w.toLowerCase()+(cnt[w]>1?" ("+cnt[w]+")":"")).join(", "):""}. ${ck} check-in${ck===1?"":"s"}. Reflections, not a measure of how you're doing.</p>`:`<p class="sub small">Your daily words collect here.</p>`}</div>`}
+
+/* ---------- share cards: previewed, then shared only on tap ---------- */
+const FC_FMT={story:[1080,1920],square:[1080,1080]};
+async function fcCard(o,fc,day){const[W,H]=FC_FMT[o.fmt],c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d"),u=W/1080;
+  try{await Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))])}catch(e){}
+  const word=fc.word,date=fcDate(day).toUpperCase(),D=CARD_FONT.d,B=CARD_FONT.b,sp=t=>t.split("").join(String.fromCharCode(8202));
+  const fit=(t,max,start,font)=>{let s=start;do{x.font=font(s);if(x.measureText(t).width<=max)break;s-=4}while(s>40);return s};
+  if(o.tpl==="minimal"){x.fillStyle="#F4ECE6";x.fillRect(0,0,W,H);x.fillStyle="#7A2E3B";x.textAlign="center";
+    x.font=`600 ${26*u}px ${B}`;x.fillText(sp("TODAY, YOU ARE"),W/2,H*.38);const s=fit(word,W-140*u,250*u,z=>`400 ${z}px ${D}`);x.font=`400 ${s}px ${D}`;x.fillText(word,W/2,H*.38+s*.95);
+    x.fillStyle="#3A2A2D";x.font=`italic 400 ${42*u}px ${D}`;let yy=H*.38+s*.95+90*u;for(const l of wrapLines(x,fc.line,W-220*u,3)){x.fillText(l,W/2,yy);yy+=54*u}
+    x.font=`600 ${24*u}px ${B}`;x.fillStyle="#7A2E3B";x.fillText(sp(date),W/2,H-150*u);x.font=`italic 400 ${44*u}px ${D}`;x.fillText("vouz.",W/2,H-80*u)}
+  else{const g=x.createLinearGradient(0,0,0,H);if(o.tpl==="couple"){g.addColorStop(0,"#4A1B26");g.addColorStop(1,"#1A0D11")}else{g.addColorStop(0,"#0E0B0C");g.addColorStop(1,"#120A0C")}
+    x.fillStyle=g;x.fillRect(0,0,W,H);const rg=x.createRadialGradient(W*.7,H*.3,10,W*.7,H*.3,W*.9);rg.addColorStop(0,o.tpl==="couple"?"rgba(201,147,155,.25)":"rgba(122,46,59,.45)");rg.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=rg;x.fillRect(0,0,W,H);
+    const M=90*u;x.textAlign="left";x.fillStyle="#C9939B";x.font=`700 ${24*u}px ${B}`;
+    x.fillText(sp(o.tpl==="couple"&&o.names?o.names.toUpperCase():"VOUZ / DAILY FORECAST"),M,M+30*u);
+    x.fillStyle="#F4ECE6";x.font=`600 ${28*u}px ${B}`;const top=H*(o.fmt==="story"?.36:.30);x.fillText(sp("TODAY, YOU ARE"),M,top);
+    const s=fit(word,W-2*M,(o.fmt==="story"?260:220)*u,z=>`400 ${z}px ${D}`);x.font=`400 ${s}px ${D}`;x.fillText(word,M-6*u,top+s*.95);
+    const text=o.tpl==="editorial"?fc.sections.embrace.t:o.tpl==="couple"?fc.line:fc.line;let yy=top+s*.95+80*u;x.font=`italic 400 ${(o.fmt==="story"?48:42)*u}px ${D}`;x.fillStyle="#E8CBC6";
+    for(const l of wrapLines(x,text,W-2*M,o.fmt==="story"?5:3)){x.fillText(l,M,yy);yy+=(o.fmt==="story"?60:52)*u}
+    if(o.tpl==="couple"&&o.viz){yy+=40*u;const L={ch:"Chemistry",co:"Communication",in:"Closeness",ad:"Adventure"};for(const[k] of FC_DIMS){if(fc.dims[k]==null)continue;x.fillStyle="#C9939B";x.font=`600 ${22*u}px ${B}`;x.fillText(sp(L[k].toUpperCase()),M,yy);
+      x.fillStyle="rgba(244,236,230,.15)";x.fillRect(M+320*u,yy-14*u,W-2*M-320*u,6*u);x.fillStyle="#E8CBC6";x.fillRect(M+320*u,yy-14*u,(W-2*M-320*u)*fc.dims[k],6*u);yy+=50*u}}
+    x.fillStyle="#C9939B";x.font=`600 ${24*u}px ${B}`;x.fillText(sp(date),M,H-M);x.textAlign="right";x.fillStyle="#F4ECE6";x.globalAlpha=.8;x.font=`italic 400 ${46*u}px ${D}`;x.fillText("vouz.",W-M,H-M+4*u);x.globalAlpha=1}
+  return c}
+function fcInitials(){const me=(Soc.me()||{}).handle||S.user.name||"",p=fcPartner(),them=p?Soc.handle(p):"";if(!me||!them)return"";return o2(me)+" & "+o2(them)}
+const o2=s=>String(s).trim().split(/\s+/).map(w=>w[0]||"").join("").slice(0,2).toUpperCase();
+function vFcShare(){const o=ui.fcs,day=fcToday(),h=S.fc.hist[day]||{},fc=(ui.fc.mode&&!ui.fc.mode.solo?h.together:h.solo)||h.together||h.solo;if(!fc){ui.page=null;return vIntimacy()+vTabs()}
+  return hdr("Share today's word")+`<div class="scroll">
+   <div class="chips sm" role="group" aria-label="Card style">${[["minimal","Minimal"],["couple","Couple"],["editorial","Editorial"]].map(([v,l])=>`<button class="chip" data-act="fcsT" data-v="${v}" aria-pressed="${o.tpl===v}">${l}</button>`).join("")}</div>
+   <div class="chips sm" role="group" aria-label="Size">${[["story","Story 9:16"],["square","Square 1:1"]].map(([v,l])=>`<button class="chip" data-act="fcsF" data-v="${v}" aria-pressed="${o.fmt===v}">${l}</button>`).join("")}</div>
+   ${o.tpl==="couple"?`${fcInitials()?sw("fcsN",!!o.names,"Show your initials ("+fcInitials()+")","Off: the card says VOUZ instead."):""}${sw("fcsV",!!o.viz,"Show the energy lines","Chemistry, communication, closeness and adventure, as lines with no numbers.")}`:""}
+   <div class="fprev ${o.fmt}" id="fc-prev" aria-label="Card preview"></div>
+   <p class="tiny">Check the card first. It shows the word, one line and the date${o.tpl==="couple"&&o.names?", and your initials":""}. Never your check-ins, records or anything private. Nothing leaves VOUZ until you tap Share or Save.</p>
+   <div class="row"><button class="btn primary grow" data-act="fcsShare">${ic("share")} Share</button><button class="btn grow" data-act="fcsSave">Save image</button></div></div>`}
+async function fcPaint(){const el=document.getElementById("fc-prev");if(!el||!ui.fcs)return;const day=fcToday(),h=S.fc.hist[day]||{},fc=(ui.fc.mode&&!ui.fc.mode.solo?h.together:h.solo)||h.together||h.solo;if(!fc)return;
+  const o={...ui.fcs,names:ui.fcs.names?fcInitials():""},n=(fcPaint.n=(fcPaint.n||0)+1),c=await fcCard(o,fc,day);if(n!==fcPaint.n)return;c.setAttribute("role","img");c.setAttribute("aria-label",fc.word+" forecast card");el.innerHTML="";el.appendChild(c);el.dataset.n=n}
+async function fcShareBlob(png){const day=fcToday(),h=S.fc.hist[day]||{},fc=(ui.fc.mode&&!ui.fc.mode.solo?h.together:h.solo)||h.together||h.solo,o={...ui.fcs,names:ui.fcs.names?fcInitials():""};
+  return{blob:await canvasBlob(await fcCard(o,fc,day),png?"image/png":"image/jpeg"),name:"vouz-"+fc.word.toLowerCase()+"-"+day+(png?".png":".jpg")}}
+
+Object.assign(A,{
+  fcOn(){S.fc.on=true;save();render()},fcOff(){S.fc.on=false;save();render()},
+  fcView(e){ui.fc.view=e.dataset.v||null;ui.fc.moveOpen=false;render(true)},fcMonth(e){ui.fc.month=e.dataset.v;render()},
+  fcMove(){ui.fc.moveOpen=!ui.fc.moveOpen;render()},
+  fcNearby(){const day=fcToday(),h=S.fc.hist[day]||{},fc=h.together||h.solo;ui.dsc.q={ch:"Find something romantic nearby",co:"Somewhere quiet to talk, nearby",in:"Something relaxing nearby",ad:"Find something adventurous nearby"}[fc&&fc.hi]||"What can we do nearby?";ui.disc.seg="foryou";go("discover")},
+  fcCk(){const c=S.fc.checkins[fcToday()];ui.fc.ck=c?{energy:c.energy,close:c.close,wants:c.wants.slice()}:{energy:null,close:null,wants:[]};render()},
+  fcCkCancel(){ui.fc.ck=null;render()},
+  fcE(e){(ui.fc.ck=ui.fc.ck||{energy:null,close:null,wants:[]}).energy=e.dataset.v;render()},
+  fcC(e){(ui.fc.ck=ui.fc.ck||{energy:null,close:null,wants:[]}).close=+e.dataset.v;render()},
+  fcW(e){const c=ui.fc.ck=ui.fc.ck||{energy:null,close:null,wants:[]},v=e.dataset.v;c.wants=c.wants.includes(v)?c.wants.filter(x=>x!==v):c.wants.concat([v]).slice(0,3);render()},
+  async fcCkSave(){const c=ui.fc.ck;if(!c||!FC_ENERGY[c.energy])return;S.fc.checkins[fcToday()]={energy:c.energy,close:c.close,wants:c.wants.filter(w=>FC_WANT_L[w]),at:Date.now()};
+    const keep=Object.keys(S.fc.checkins).sort().slice(-60);S.fc.checkins=Object.fromEntries(keep.map(k=>[k,S.fc.checkins[k]]));ui.fc.ck=null;save();render();
+    if(Soc.ready()&&S.fc.together)try{await fcShareCheckins()}catch(x){}toast("Checked in.")},
+  fcUpdate(){const h=S.fc.hist[fcToday()];if(!h||!h.solo)return;fcEnsure(true).then(()=>{const n=S.fc.hist[fcToday()];if(n&&n.solo){n.solo.updated=true;save();render()}})},
+  fcFit(e){const h=S.fc.hist[fcToday()]||{},slot=ui.fc.mode&&!ui.fc.mode.solo?"together":"solo",fc=h[slot]||h.together||h.solo;if(!fc)return;
+    if(e.dataset.v==="1"){fc.fit=true;fc.rejected=null;ui.fc.fix=false}else{fc.fit=false;fc.rejected=fc.word;ui.fc.fix=true}save();render()},
+  fcFix(e){const h=S.fc.hist[fcToday()]||{},fc=h.together||h.solo;if(fc){fc.corrected=FC_WORDS[e.dataset.v]?e.dataset.v:null;save()}ui.fc.fix=false;render();toast("Thanks. VOUZ will take that into account.")},
+  fcAi(){S.fc.ai=!S.fc.ai;save();render()},fcClose(){S.fc.closeIdeas=!S.fc.closeIdeas;save();render()},
+  async fcWith(e){S.fc.with=e.dataset.v;save();render();if(S.fc.together)try{await fcShareCheckins()}catch(x){}},
+  async fcTogether(){S.fc.together=!S.fc.together;if(!S.fc.together)S.fc.showEnergy=false;save();render();try{await fcShareCheckins();if(!S.fc.together)await Soc.write("fcast",null)}catch(x){toast("That couldn't be saved.")}
+    ui.fc.started=false;ui.fc.mode=null;render()},
+  async fcShowE(){S.fc.showEnergy=!S.fc.showEnergy;save();render();try{await fcShareCheckins()}catch(x){}},
+  fcShareOpen(){ui.fcs={tpl:"editorial",fmt:"story",names:false,viz:false};openPage({type:"fcShare",from:ui.page})},
+  fcsT(e){ui.fcs.tpl=e.dataset.v;render()},fcsF(e){ui.fcs.fmt=e.dataset.v;render()},fcsN(){ui.fcs.names=!ui.fcs.names;render()},fcsV(){ui.fcs.viz=!ui.fcs.viz;render()},
+  async fcsShare(){let f;try{f=await fcShareBlob(true)}catch(x){return toast("The card couldn't be drawn here.")}
+    const file=typeof File==="function"?new File([f.blob],f.name,{type:"image/png"}):null;
+    if(file&&navigator.canShare&&navigator.share){let can=false;try{can=navigator.canShare({files:[file]})}catch(x){}if(can){try{await navigator.share({files:[file],title:"VOUZ Daily Forecast"});return}catch(x){if(x&&x.name==="AbortError")return}}}
+    const r=await saveOut(f.blob,f.name);toast(r==="saved"?"Ready: pick Instagram, Snapchat, Messages or Save Image.":r==="declined"?"Not saved.":"Sharing isn't available in this view. Open VOUZ in the Claude app or a browser that supports sharing.")},
+  async fcsSave(){let f;try{f=await fcShareBlob(false)}catch(x){return toast("The card couldn't be drawn here.")}const r=await saveOut(f.blob,f.name);toast(r==="saved"?"Saved.":r==="declined"?"Not saved.":"Saving isn't available in this view.")}
+});
+
 function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={guide:ui.guide,dsc:ui.dsc,feed:ui.feed,pc:ui.pc,me:ui.me,cp:ui.cp,soc:ui.soc,ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
 document.addEventListener("input",ev=>{bind(ev.target);const sid=ev.target.id;if(sid==="f-q"||sid==="s-q"||sid==="pc-loc"){clearTimeout(bind.t);bind.t=setTimeout(()=>{ui.feed.n=10;render();const el=document.getElementById(sid);if(el){el.focus();const n=el.value.length;try{el.setSelectionRange(n,n)}catch(x){}}},250)}if(ev.target.id==="mc-cap"){clearTimeout(refreshCard.t);refreshCard.t=setTimeout(refreshCard,250)}if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
@@ -2698,7 +2989,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&S.onboarde
 window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.onboarded&&!ui.locked&&TABS().some(x=>x[0]===t)&&(t!==ui.tab||ui.page)&&!legacySessions().length){ui.tab=t;ui.page=null;ui.sheet=null;render(true)}});
 
 /* ============ boot ============ */
-(function boot(){normCats();S.disc=Object.assign({loc:null,saved:[],fb:{},kinds:{},hist:[],learn:true,ai:true,travel:"any",maxKm:8,budget:null,shareWith:[]},S.disc||{});
+(function boot(){normCats();S.fc=Object.assign({on:true,checkins:{},hist:{},ai:false,closeIdeas:false,together:false,showEnergy:false,with:null},S.fc||{});S.disc=Object.assign({loc:null,saved:[],fb:{},kinds:{},hist:[],learn:true,ai:true,travel:"any",maxKm:8,budget:null,shareWith:[]},S.disc||{});
   try{if(window.claude&&window.claude.use)window.claude.use("sample").then(f=>{SAMPLE=f||null;if(ui.tab==="discover"&&!typing())render()}).catch(()=>{})}catch(e){}const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
   if(S.onboarded&&S.settings.pinHash)ui.locked=true;
   if(S.active){ui.tab="intimacy";ui.int.seg="track"}
@@ -2708,7 +2999,7 @@ window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.on
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 })();
-window.__vouz={Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+window.__vouz={fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>

@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.11.0 — 2026-11-21
+
+Added: Daily Forecast, the first tab in Intimacy → Insights.
+- One word a day ("Today, you are MAGNETIC") with a line, the date and VOUZ / DAILY FORECAST, in large editorial type over a gradient tinted by the word.
+- Four energies (Chemistry, Communication, Intimacy, Adventure) as dots and words, never numbers. An energy with too little evidence says so.
+- Three short sections (Your connection, What to embrace, What to watch), each tagged Observed, Reflection or Suggestion.
+- Today's move, which opens into three questions to ask each other, date ideas, a nearby search, and optional closeness ideas (off by default, own forecast only).
+- A 10-second check-in (energy, how connected, what would feel good). A solo forecast can be updated once with it.
+- One forecast per day, stored and never re-rolled. Words aren't repeated within 10 days; "Not quite" records a better word and steers future picks.
+- Together mode, for two people who both opt in. It uses only what both agreed to share: check-ins and memories in a shared space. Both see the same forecast: it's seeded by the pair, and the first one made is sent encrypted to the other. Pulse shows each energy only if that person allows it.
+- History calendar of past words, with a monthly line labelled as reflections, not a measure.
+- Share cards (Minimal, Couple, Editorial) in Story 9:16 or Square 1:1, previewed before anything leaves VOUZ. Couple card initials and energy lines are off by default; cards never include check-ins or records.
+- Claude can rewrite the three paragraphs from the word, the energies and the observed facts. Off by default. Anything that predicts, diagnoses, gets explicit or links out is discarded for the built-in library.
+- Supabase migration 0007: private check-ins, opt-in sharing, one forecast per pair per day.
+
+Fixed: the connection guide was sending blank idea names to Claude.
+
 ## 0.10.0 — 2026-11-19
 
 Added:

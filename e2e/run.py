@@ -15,7 +15,7 @@ def can_write(u,p):
     s=p.split('/')
     if p.startswith('data/users/'): return s[2]==u
     if u=='dave' and s[0]=='posts': return True   # the owner can moderate
-    return s[0] in('profiles','posts','reactions','comments','links','invites','spaces','exps','match','consent','reports','couples','media') and s[1]==u
+    return s[0] in('profiles','posts','reactions','comments','links','invites','spaces','exps','match','consent','reports','couples','media','prefs','fcheck','fcast') and s[1]==u
 def db_get(src,u,p): return STORE.get(p) if can_read(u,p) else None
 def db_set(src,u,p,d):
     if not can_write(u,p): raise Exception('invalid_argument')
@@ -144,7 +144,7 @@ with sync_playwright() as pw:
     act(p,"editSession",id=sid); p.fill("#d-min","10"); p.fill("#d-sec","0"); act(p,"saveSession"); p.wait_for_timeout(200)
     e=[x for x in S(p)["sessions"] if x["id"]==sid][0]
     ok("J2 edit updates record, keeps private fields",e["durationSec"]==600 and e["notes"]=="SECRETNOTE" and e["reflection"]=="REFLECTTEXT")
-    act(p,"back"); nav(p,"insights"); act(p,"insRange",v="year")
+    act(p,"back"); nav(p,"insights"); act(p,"insTab",v="overview"); act(p,"insRange",v="year")
     tl=[t.inner_text() for t in p.locator(".tile b").all()]
     ok("J4 analytics reflect edit",tl[0]=="2" and tl[1]=="50m" and tl[3].startswith("40m"),str(tl[:4]))
     act(p,"insCat",v="poly"); ok("filter: Couple or Poly",p.locator(".tile b").first.inner_text()=="1")
@@ -388,6 +388,18 @@ with sync_playwright() as pw:
     act(d,"page",page="mod"); d.wait_for_timeout(300); act(d,"modRemove",id=pid); d.wait_for_timeout(700)
     ok("moderation: owner removes a reported public post",not any(i.get("id")==pid for i in STORE["posts/alice"]["items"]))
     cd.close()
+    # Forecast together: both opt in, same words, partner's answers stay theirs
+    nav(a,"insights"); a.wait_for_selector(".fcard .fw:not(.shimmer)"); act(a,"fcTogether"); a.wait_for_timeout(600)
+    act(a,"fcE",v="Playful"); act(a,"fcCkSave"); a.wait_for_timeout(600)
+    nav(bb,"insights"); bb.wait_for_selector(".fcard .fw:not(.shimmer)"); act(bb,"fcTogether"); bb.wait_for_timeout(600); act(bb,"fcShowE"); act(bb,"fcE",v="Reflective"); act(bb,"fcCkSave"); bb.wait_for_timeout(1500)
+    nav(bb,"home"); nav(bb,"insights"); bb.wait_for_timeout(1200); a.wait_for_timeout(600); nav(a,"home"); nav(a,"insights"); a.wait_for_timeout(1500)
+    wa=a.inner_text(".fcard .fw"); wb=bb.inner_text(".fcard .fw")
+    ok("together: both partners see the same forecast",wa==wb and "Together" in a.inner_text(".fcard") and a.inner_text(".fsec")==bb.inner_text(".fsec"),wa+" / "+wb)
+    raw=json.dumps({k:STORE[k] for k in STORE if k.startswith("fcheck/") or k.startswith("fcast/")})
+    ok("together: check-ins and forecasts are stored encrypted",("fcheck/alice" in STORE and "fcast/" in raw) and not any(x in raw for x in ["Playful","Reflective",wa]))
+    ok("pulse: shows their energy only because they allowed it","REFLECTIVE" in a.inner_text(".pulse") and "PRIVATE" in bb.inner_text(".pulse"))
+    ok("together: the forecast never draws on intimacy records","Just for you two" not in a.inner_text(".scroll"))
+    act(a,"fcTogether"); a.wait_for_timeout(600); ok("together: turning it off removes what was shared",STORE.get("fcheck/alice") in (None,{}) and STORE.get("fcast/alice") in (None,{}))
     # J8 social off (keep) -> nothing left in shared storage, stashed privately; back on -> restored
     nav(a,"profile"); act(a,"toggleSocial"); act(a,"socialOffYes"); a.wait_for_timeout(900)
     ok("J8 Social off: nothing of mine left in shared storage, tracking intact",not any(k.endswith("/alice") and not k.startswith("data/") for k in STORE) and "data/users/alice/stash" in STORE and a.locator('[data-page="spaces"]').count()==0 and len(S(a)["sessions"])==1,str([k for k in STORE if "alice" in k]))
@@ -456,7 +468,7 @@ with sync_playwright() as pw:
     ok("quick log: open, pick a length, save; stored as an estimate",len(S(p)["sessions"])==n0+1 and q["durationSec"]==1800 and q["segments"] is None and q["category"]=="couple")
     act(p,"quick"); act(p,"qDur",v="30"); act(p,"qSave"); p.wait_for_timeout(150); ok("quick log: an accidental second save is caught",len(S(p)["sessions"])==n0+1)
     # insights
-    nav(p,"insights"); act(p,"insRange",v="year"); cnt={}
+    nav(p,"insights"); act(p,"insTab",v="overview"); act(p,"insRange",v="year"); cnt={}
     for cat in ("all","couple","poly"): act(p,"insCat",v=cat); cnt[cat]=p.locator(".tile b").first.inner_text()
     ok("insights: counts for All, Couple and Poly",cnt=={"all":"9","couple":"4","poly":"4"},str(cnt))
     act(p,"insCat",v="all"); t=p.inner_text(".scroll"); ok("insights: timed and estimated are kept apart","1 timed with VOUZ, 8 entered by hand" in t,t[t.find("timed")-40:t.find("timed")+60])
@@ -493,6 +505,29 @@ with sync_playwright() as pw:
     ok("memory: deleting removes its photos from the device",p.evaluate("id=>window.__vouz.Photos.get(id).then(b=>b===undefined)",ph) and m["id"] in S(p)["deleted"])
     nav(p,"match"); ok("Mutual Match: explains it needs Connections when they're off","needs Connections" in p.inner_text(".scroll"))
     ctx.close()
+    # ---------- Daily Forecast (Insights → Forecast) ----------
+    ctx,p=newctx(b); p.goto(URL); p.wait_for_timeout(300); onboard(p); nav(p,"insights"); p.wait_for_selector(".fcard .fw:not(.shimmer)")
+    w0=p.inner_text(".fcard .fw"); t=p.inner_text(".scroll")
+    ok("forecast: first tab in Insights, a word for a new couple, honest about having nothing to go on",p.locator('.itabs [data-v="forecast"][aria-pressed="true"]').count()==1 and w0 in ["UNWRITTEN","CURIOUS","OPEN","WARM","PLAYFUL","SERENE"] and t.count("Not enough to go on")==4)
+    ok("forecast: three sections, each labelled observed, reflection or suggestion",all(x in t.lower() for x in ["your connection","what to embrace","what to watch"]) and p.locator(".ftag").count()==3)
+    ok("forecast: no numbers on the energies","%" not in p.inner_text(".fdims") and not re.search(r"\d",p.inner_text(".fdims")))
+    p.reload(); p.wait_for_timeout(400); nav(p,"insights"); p.wait_for_selector(".fcard .fw:not(.shimmer)"); ok("forecast: same forecast after reopening (no re-roll)",p.inner_text(".fcard .fw")==w0 and len(S(p)["fc"]["hist"])==1)
+    act(p,"fcE",v="Tender"); act(p,"fcC",v="5"); act(p,"fcW",v="closeness"); act(p,"fcCkSave"); p.wait_for_timeout(200)
+    ok("check-in: saved on this device",S(p)["fc"]["checkins"][list(S(p)["fc"]["checkins"])[0]]["energy"]=="Tender")
+    act(p,"fcUpdate"); p.wait_for_timeout(500); fc=[v for v in S(p)["fc"]["hist"].values()][0]["solo"]
+    ok("check-in: one update to today's forecast, now shaped by it",fc.get("updated") and fc["dims"]["in"] is not None and "Not enough to go on" not in p.inner_text(".fdims").split("Intimacy")[1][:40] and p.locator('[data-act="fcUpdate"]').count()==0)
+    act(p,"fcMove"); ok("today's move opens into questions and ideas",p.locator(".fq").count()==3 and p.locator('.ideal [data-act="ideaSave"]').count()>=1)
+    ok("closeness ideas are off by default","Just for you two" not in p.inner_text(".scroll"))
+    act(p,"fcFit",v="0"); alt=p.locator('[data-act="fcFix"]').first.get_attribute("data-v"); act(p,"fcFix",v=alt); fc=[v for v in S(p)["fc"]["hist"].values()][0]["solo"]
+    ok("not quite: recorded with the better word, kept on the device",fc["rejected"]==fc["word"] and fc["corrected"]==alt)
+    ok("history: today's word on the calendar",p.locator(".fcal.on").count()==1)
+    act(p,"fcShareOpen"); p.wait_for_selector("#fc-prev canvas"); cv=p.evaluate("()=>{const c=document.querySelector('#fc-prev canvas');return [c.width,c.height,document.querySelector('#fc-prev').getBoundingClientRect().height]}")
+    ok("share: previewed first, 9:16 story by default",cv[0]==1080 and cv[1]==1920 and cv[2]>200 and "Nothing leaves VOUZ until you tap" in p.inner_text(".scroll"))
+    act(p,"fcsF",v="square"); p.wait_for_timeout(300); act(p,"fcsT",v="minimal"); p.wait_for_timeout(300)
+    ok("share: square and minimal",p.evaluate("document.querySelector('#fc-prev canvas').height")==1080)
+    act(p,"fcsT",v="couple"); ok("share: couple card hides names and energy lines unless chosen",p.locator('[data-act="fcsV"][aria-checked="false"], [data-act="fcsV"][aria-pressed="false"]').count()+p.locator('[data-act="fcsV"]').count()>=1)
+    act(p,"fcsSave"); p.wait_for_selector(".toast"); ok("share: only on tap, with an honest message when saving isn't available",p.locator(".toast").count()==1)
+    p.screenshot(path=SH+"fc-share.png"); act(p,"back"); nav(p,"insights"); p.screenshot(path=SH+"forecast.png"); ctx.close()
     # ---------- AI planner (Claude mocked: records exactly what would be sent) ----------
     PMOCK="""window.__prompts=[];window.__planFail=null;(()=>{const f=async()=>({text:''});f.json=async(input,opts)=>{window.__prompts.push({input,opts:Object.keys(opts||{})});if(String(input).includes('connection guide')&&!window.__planFail)return{answer:'You two tend to enjoy outdoor dates. https://evil.example/x',ideas:['hike','nope']};if(window.__planFail)throw {code:window.__planFail};
       return {suggestions:[{title:'<img src=x onerror="window.__xss=1">Sunset walk',why:'Easy and free',cost:'Free',time:'1 hour',setting:'Outdoors',steps:['Pick a spot','Bring a blanket']},{title:'Cook a new recipe',cost:'$',steps:[]},{bogus:1}]}};
@@ -720,7 +755,7 @@ with sync_playwright() as pw:
     ok("count-up settles on the true value",p.locator(".trio b").first.inner_text()=="12")
     nav(p,"story"); p.screenshot(path=SH+"story.png"); nav(p,"ideas"); p.screenshot(path=SH+"ideas.png")
     sid=S(p)["sessions"][0]["id"]; nav(p,"history"); act(p,"openReplay",id=sid); p.wait_for_timeout(1500); p.screenshot(path=SH+"replay.png"); p.locator(".scroll").evaluate("e=>e.scrollTop=560"); p.wait_for_timeout(200); p.screenshot(path=SH+"replay2.png")
-    nav(p,"insights"); act(p,"insRange",v="year"); act(p,"insTab",v="patterns"); p.wait_for_timeout(3400); p.screenshot(path=SH+"patterns.png"); act(p,"insTab",v="mood"); p.screenshot(path=SH+"mood.png")
+    nav(p,"insights"); act(p,"insTab",v="overview"); act(p,"insRange",v="year"); act(p,"insTab",v="patterns"); p.wait_for_timeout(3400); p.screenshot(path=SH+"patterns.png"); act(p,"insTab",v="mood"); p.screenshot(path=SH+"mood.png")
     ok("no page overflow sideways",p.evaluate("document.documentElement.scrollWidth<=window.innerWidth"))
     ctx.close(); b.close()
     ok("no uncaught page errors",not errs,str(errs[:5]))

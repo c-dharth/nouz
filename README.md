@@ -18,16 +18,16 @@ Working with an AI assistant? Start with [AGENTS.md](AGENTS.md): it holds the pr
 | `supabase/migrations/` | Database schema and row-level security | Tested on local Postgres, not deployed |
 | `supabase/functions/` | Account deletion, purchase verification | Written, never run |
 | `watch/` | Apple Watch app source and iPhone bridge | Written, never compiled |
-| `e2e/run.py` | Browser tests for the app, including simulated users and connector stand-ins | 292 checks |
+| `e2e/run.py` | Browser tests for the app, including simulated users and connector stand-ins | 311 checks |
 
 The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in this repository. See CHECKLIST.md.
 
 ## Running the tests
 
 ```
-npm test            # 96 unit tests (incl. private matching, rewards, feed and discover helpers, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
-npm run test:db     # 176 policy tests on a throwaway local Postgres (needs initdb and psql)
-npm run test:ui     # 292 browser checks (needs Python, Playwright and Chrome)
+npm test            # 105 unit tests (incl. private matching, rewards, feed and discover helpers, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
+npm run test:db     # 186 policy tests on a throwaway local Postgres (needs initdb and psql)
+npm run test:ui     # 311 browser checks (needs Python, Playwright and Chrome)
 ```
 
 No packages are installed by any of these. There are no runtime dependencies.

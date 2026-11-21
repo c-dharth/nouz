@@ -25,6 +25,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 
 | Feature | State |
 |---|---|
+| Daily Forecast | Done in the web app: Insights → Forecast, check-ins, together mode, history, share cards. Server tables in migration 0007, tested locally |
 | Connection guide (AI) | Done in the web app: Insights → Connection. Opt-in, aggregated totals only, tested with Claude mocked |
 | AI experience planner | Done. Discover → Planner. Sends only the request, budget, time, a typed area and (optional) memory titles |
 | Personalized recommendations | Done in the web app: Discover For You / Nearby / Saved with Yelp, Ask VOUZ day plans, learning from saves, plans, ratings and feedback. Server tables in migration 0006, tested locally |
@@ -63,6 +64,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 - **Public transit** times are estimates; Mapbox gives walking and driving only.
 - **Precise location** in the artifact depends on the browser allowing it; typing an area always works.
 - **Merchant rewards:** none. VOUZ has no merchant partners and doesn't reward claimed visits.
+- **Forecast together** works for two people; Poly groups get individual forecasts. If both partners open VOUZ at the same moment before syncing, the one with the earlier account id wins and the other's view switches to it.
 - **Photos** are on one device only. Clearing browser data deletes them.
 - **Poly matching** requires every member to pick before anything is revealed.
 - Confirmation invites aren't updated if the session is edited after sending.
