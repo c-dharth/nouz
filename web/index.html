@@ -229,6 +229,14 @@ input[type=search]{-webkit-appearance:none;appearance:none}
 .shmini b{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:22px;color:#F4ECE6;line-height:1;overflow-wrap:anywhere}.shl{font-weight:700;font-size:14px;margin-top:4px}
 .shctl{display:flex;flex-direction:column;gap:14px}.shctl>div{display:flex;flex-direction:column;gap:6px}
 .swatches{display:flex;gap:10px}.swc{width:40px;height:40px;border-radius:50%;border:2px solid transparent}.swc[aria-pressed="true"]{border-color:#F4ECE6;box-shadow:0 0 0 2px var(--bg)}
+.dob{display:grid;grid-template-columns:1.5fr 1fr 1.2fr;gap:8px}.dob select{width:100%}
+.agechk{font-weight:700;min-height:1.4em}.agechk.ok{color:var(--pink)}.agechk.no{color:var(--warn)}
+.creveal{align-items:flex-start}.creveal .fk{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--pink)}
+.creveal .fw{font-family:var(--serif,"Instrument Serif",Georgia,serif);font-size:clamp(52px,16vw,92px);line-height:.95;color:#F4ECE6;animation:fcin 1.1s ease both}
+.creveal .fl{font-family:var(--serif,Georgia,serif);font-style:italic;font-size:22px;color:#E8CBC6}
+.fbasis{font-size:11px;letter-spacing:.04em;color:rgba(244,236,230,.6)}
+.cosl{font-family:var(--serif,Georgia,serif);font-size:19px;line-height:1.35}
+.cpair{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.cpair span{font-family:var(--serif,Georgia,serif);font-size:22px}.cpair b{font-size:12px;letter-spacing:.2em;color:var(--pink)}
 .rec{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
 .rec .rt{display:block;font-size:17px;line-height:1.25}.recph{position:relative;margin:-14px -14px 4px;border-radius:var(--r) var(--r) 0 0;overflow:hidden;aspect-ratio:16/9;background:var(--surface2)}
 .recph img{width:100%;height:100%;object-fit:cover;display:block}.recph .tiny{position:absolute;right:8px;bottom:6px;background:rgba(14,11,12,.7);padding:2px 6px;border-radius:6px}
@@ -395,6 +403,8 @@ const ic=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</sv
 
 /* ============ private store (this device, not encrypted by VOUZ) ============ */
 const LS="vouz.v1"; let storageOK=true;
+function normState(){S.shareDefaults=Object.assign({theme:"editorial",type:"serif",bg:"wine",fmt:"story",brand:"full"},S.shareDefaults||{});S.fc=Object.assign({on:true,checkins:{},hist:{},ai:false,closeIdeas:false,together:false,showEnergy:false,with:null},S.fc||{});S.disc=Object.assign({loc:null,saved:[],fb:{},kinds:{},hist:[],learn:true,ai:true,travel:"any",maxKm:8,budget:null,shareWith:[]},S.disc||{});
+  if(S.age&&!S.astro)S.astro={on:true,time:null,unknownTime:false,place:null,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,share:{},cards:{}}}
 const fresh=()=>({v:1,onboarded:false,stamp:0,lastSync:0,syncBase:0,user:{name:"",mode:"local",createdAt:Date.now()},settings:{social:false,privateProfile:true,defaultVis:"connections",regular:null,pinHash:null,pinSalt:null,pinAlg:null,pinFails:0,pinUntil:0,games:true,celebrate:true,goal:null,chPrefs:{budget:null,interests:[],lowEnergy:false,shortTime:false}},rewards:{spent:[],unlocked:[],cards:[],ch:{},theme:null,frame:null,seen:null,seenB:[],seenL:1},sessions:[],exps:[],picks:{},psi:{},consent:{req:[],ans:{}},deleted:{},active:null,draft:null,blocks:[],ignored:[],keys:null});
 function load(){try{const r=localStorage.getItem(LS);if(r){const o=JSON.parse(r);if(o&&o.v===1)return Object.assign(fresh(),o,{settings:Object.assign(fresh().settings,o.settings)})}}catch(e){storageOK=false}return fresh()}
 let S=load();
@@ -402,7 +412,9 @@ function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){sto
 function save(){S.stamp=Date.now();saveLocal();Cloud.queueVault()}
 /* What sync and export carry: never demo rows, never social keys. */
 /* Photos are not in here: they stay on the device. */
-const vaultPayload=()=>({v:1,stamp:S.stamp,user:S.user,settings:S.settings,sessions:S.sessions.filter(s=>!s.demo),exps:S.exps.filter(e=>!e.demo).map(e=>({...e,photos:[]})),picks:S.picks,psi:S.psi,rewards:S.rewards,consent:S.consent,deleted:S.deleted,blocks:S.blocks,ignored:S.ignored});
+const vaultPayload=()=>({v:1,stamp:S.stamp,user:S.user,settings:S.settings,sessions:S.sessions.filter(s=>!s.demo),exps:S.exps.filter(e=>!e.demo).map(e=>({...e,photos:[]})),picks:S.picks,psi:S.psi,rewards:S.rewards,consent:S.consent,deleted:S.deleted,blocks:S.blocks,ignored:S.ignored,
+  age:S.age||null,astro:S.astro||null,fc:S.fc?{...S.fc,hist:Object.fromEntries(Object.keys(S.fc.hist||{}).sort().slice(-30).map(k=>[k,S.fc.hist[k]]))}:null,
+  disc:S.disc?{...S.disc,hist:[]}:null,saved:S.saved||[],shareDefaults:S.shareDefaults||null});
 /* Two devices: keep the newer copy of each session, honour deletions from either side. */
 function mergeVault(v){const del=Object.assign({},v.deleted||{});for(const k in S.deleted)del[k]=Math.max(del[k]||0,S.deleted[k]);
   const m={};for(const s of (v.sessions||[]).concat(S.sessions)){const c=m[s.id];if(!c||(s.updatedAt||0)>(c.updatedAt||0))m[s.id]=s}
@@ -412,6 +424,8 @@ function mergeVault(v){const del=Object.assign({},v.deleted||{});for(const k in 
   const local=Object.fromEntries((S.exps||[]).map(e=>[e.id,e]));S.exps=Object.values(mx).filter(e=>!(del[e.id]>=(e.updatedAt||0))).map(e=>local[e.id]&&local[e.id].photos&&local[e.id].photos.length?{...e,photos:local[e.id].photos}:e);
   if((v.stamp||0)>S.stamp&&v.picks){S.picks=v.picks;S.psi=v.psi||{}}
   if(v.rewards)S.rewards=mergeRewards(S.rewards,v.rewards);
+  const newer=(v.stamp||0)>S.stamp;if(v.age&&(!S.age||newer))S.age=v.age;for(const k of ["astro","disc","shareDefaults"])if(v[k]&&(!S[k]||newer))S[k]=Object.assign({},S[k]||{},v[k]);if(v.saved&&newer)S.saved=v.saved;
+  if(v.fc){S.fc=S.fc||{};S.fc.checkins=Object.assign({},v.fc.checkins||{},S.fc.checkins||{});S.fc.hist=Object.assign({},v.fc.hist||{},S.fc.hist||{});if(newer)for(const k of ["on","ai","closeIdeas","together","showEnergy","with"])if(k in v.fc)S.fc[k]=v.fc[k]}
   if(v.consent){const by={};for(const r of (v.consent.req||[]).concat((S.consent||{}).req||[]))by[r.id]=r;S.consent={req:Object.values(by),ans:{...(v.consent.ans||{}),...((S.consent||{}).ans||{})}}}
   normCats();
   if((v.stamp||0)>S.stamp){S.settings=Object.assign(fresh().settings,v.settings);S.blocks=v.blocks||[];S.ignored=v.ignored||[];S.user=Object.assign({},v.user,{mode:"account"})}}
@@ -437,7 +451,7 @@ const Cloud={db:null,user:null,uid:null,state:"checking",t:null,busy:false,dirty
   async readVault(){try{const s=await this.priv("vault").get();if(s.exists){const o=JSON.parse(s.data().json);if(o&&o.v===1)return o}}catch(e){}return null},
   async deleteAll(){if(this.state!=="ready")return;try{await Media.purge(false)}catch(e){}
     const ps=["vault","keys","stash"].map(n=>this.priv(n).delete());
-    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","reports","couples","prefs","fcheck","fcast"])ps.push(this.db.doc(c+"/"+this.uid).delete());
+    for(const c of ["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","reports","couples","prefs","fcheck","fcast","astro"])ps.push(this.db.doc(c+"/"+this.uid).delete());
     await Promise.allSettled(ps)}
 };
 
@@ -470,8 +484,8 @@ const K={ok:!!(window.crypto&&crypto.subtle),priv:null,self:null,pairs:{},
    Shared storage holds: profiles (handle + public key), posts, reactions, comments, links.
    "Everyone" cards are stored readable. Connections-only cards are stored as ciphertext with one wrapped key per
    permitted recipient; reconcile() is the single place that decides who gets a key. No key, no card. */
-const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs","fcheck","fcast"];
-const Soc={profiles:{},prefs:{},fcheck:{},fcast:{},couples:{},reportsAll:{},isOwner:false,posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},consent:{},creq:[],cans:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
+const SHARED=["profiles","posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs","fcheck","fcast","astro"];
+const Soc={profiles:{},prefs:{},fcheck:{},fcast:{},astro:{},couples:{},reportsAll:{},isOwner:false,posts:{},reactions:{},comments:{},links:{},invites:{},spaces:{},exps:{},match:{},consent:{},creq:[],cans:{},inbox:[],inv:{},invSig:"",rel:{},items:[],cm:{},perms:{},cache:{},au:{},subs:[],status:"off",wq:{},t:null,busy:false,again:false,
   async ensureKeys(){if(!S.keys){const d=await Cloud.priv("keys").get();if(d.exists)S.keys=JSON.parse(d.data().json);else{S.keys=await K.gen();await Cloud.priv("keys").set({json:JSON.stringify(S.keys)})}saveLocal()}
     if(!K.priv)await K.load(S.keys)},
   async start(){if(this.subs.length||Cloud.state!=="ready"||!K.ok)return;this.status="loading";
@@ -565,7 +579,7 @@ const Soc={profiles:{},prefs:{},fcheck:{},fcast:{},couples:{},reportsAll:{},isOw
     const perms=Object.assign({},this.perms);if(!on)delete perms[id];return this.saveLinks(out,perms)},
   setPerm(id,p){return this.saveLinks(Object.assign({},(this.links[Cloud.uid]||{}).out),Object.assign({},this.perms,{[id]:p}))},
   /* Social off without deleting: move my shared documents into my private space, so nothing of mine is left readable. */
-  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs","fcheck","fcast"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
+  async stash(){const o={};for(const c of ["posts","reactions","comments","links","invites","spaces","exps","match","consent","couples","prefs","fcheck","fcast","astro"])if(this[c][Cloud.uid])o[c]=this[c][Cloud.uid];await Cloud.priv("stash").set({json:JSON.stringify(o)})},
   async unstash(){try{const s=await Cloud.priv("stash").get();if(!s.exists)return;const o=JSON.parse(s.data().json);for(const c in o)if(SHARED.includes(c))await Cloud.db.doc(c+"/"+Cloud.uid).set(o[c]);await Cloud.priv("stash").delete()}catch(e){}}
 };
 
@@ -621,7 +635,7 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
   const m=Math.round(s.durationSec/60);return (m<1?"Under a minute":m+" minute"+(m===1?"":"s"))+" on a "+WDL[d.getDay()]+" "+part+"."}
 
 /* ============ ui state ============ */
-const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
+const ui={tab:"home",page:null,sheet:null,toast:null,gate:null,dobFix:null,astroF:null,cos:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null,m:"",d:"",y:""},
   ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},she:null,fc:{view:null,busy:false,err:"",mode:null,started:false,moveOpen:false,ck:null,fix:false,month:null},fcs:null,guide:{q:"",msgs:[],busy:false,err:null,off:false},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
 const TABS=()=>[["home","Home","home"],["intimacy","Sessions","heart"],["insights","Insights","spark"],["share","Share","share"],["profile","Profile","user"]];
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
@@ -685,17 +699,19 @@ const MC={Playful:"#C9939B",Tender:"#E8CBC6",Electric:"#E2BA7C",Relaxed:"#93C9AA
 /* ============ render ============ */
 let lastKey="",lastSheet=null;
 function render(resetScroll){
-  const app=$("#app"),sc=$(".scroll"),key=(ui.locked?"lock":S.onboarded?ui.tab+(ui.tab==="intimacy"?ui.int.seg:""):"ob"+ui.ob.step)+"|"+(ui.page?ui.page.type+(ui.page.id||""):"");
+  const app=$("#app"),sc=$(".scroll"),key=(ui.locked?"lock":!S.age&&S.onboarded?"gate":S.onboarded?ui.tab+(ui.tab==="intimacy"?ui.int.seg:""):"ob"+ui.ob.step)+"|"+(ui.page?ui.page.type+(ui.page.id||""):"");
   const changed=key!==lastKey,keep=sc&&!resetScroll&&!changed?sc.scrollTop:0;lastKey=key;
   let h;
   if(ui.locked)h=vLock();
   else if(!S.onboarded)h=vOnboard();
+  else if(!S.age){ui.gate=ui.gate||{m:"",d:"",y:""};h=S.ageBlock?vBlocked():`<div class="ob">${vDob(ui.gate,(l,dis)=>`<button class="btn primary block" data-act="gateNext" ${dis?"disabled":""}>Continue</button>`,"gate")}</div>`}
   else{if(!ui.sheet&&legacySessions().length)ui.sheet={type:"legacy"}}
-  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Friends")+vSocial(),fcShare:vFcShare,
+  if(ui.locked||!S.onboarded||!S.age);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Friends")+vSocial(),fcShare:vFcShare,
       forecast:()=>hdr(ui.fc.view&&ui.fc.view!==fcToday()?"Past forecast":"Today's forecast")+`<div class="scroll"><div class="fcwrap">${vForecast()}</div></div>`,
       fcCal:()=>hdr("Your words")+`<div class="scroll">${fcHistory()}</div>`,analytics:()=>hdr("Session analytics")+vAnalytics(),
       guide:()=>hdr("Connection guide")+`<div class="scroll"><p class="sub small">A gentle read of your dates, memories and intimacy together. There's no right amount of anything.</p>${vGuide()}</div>`,
-      shareEdit:vShareEdit,shareMem:vShareMem,notifs:vNotifs,saved:vSaved,user:vUser,meEdit:vMeEdit,couple:vCouple,postNew:vPostNew,mod:vMod,spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
+      shareEdit:vShareEdit,shareMem:vShareMem,astro:vAstro,cosmic:vCosmic,
+      dobFix:()=>hdr("Correct your birthday")+`<div class="scroll">${vDob(ui.dobFix,(l,dis)=>`<button class="btn primary block" data-act="dobFixSave" ${dobFrom(ui.dobFix)?"":"disabled"}>Save</button>${ui.dobFix.err?`<p class="err" role="alert">${esc(ui.dobFix.err)}</p>`:""}`,"dobFix")}</div>`,notifs:vNotifs,saved:vSaved,user:vUser,meEdit:vMeEdit,couple:vCouple,postNew:vPostNew,mod:vMod,spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
   else{const back=`<button class="link small backhome" data-act="tab" data-tab="home">${ic("back")} Home</button>`;
     h=({home:vHome,feed:vHome,intimacy:vIntimacy,insights:vInsightsHome,share:vShare,discover:()=>vDiscover().replace('<div class="scroll">','<div class="scroll">'+back),story:()=>vStory().replace('<div class="scroll">','<div class="scroll">'+back),profile:vProfile})[ui.tab]()+vTabs()}
   const sheetNew=ui.sheet&&ui.sheet!==lastSheet;lastSheet=ui.sheet;
@@ -716,11 +732,13 @@ const sessRow=s=>{const d=new Date(s.start);return`<button class="sess" data-act
 const demoBanner=()=>hasDemo()?`<div class="banner"><span>Showing demo data</span><button class="link" data-act="removeDemo">Remove</button></div>`:"";
 
 /* ---- onboarding: three steps ---- */
-function vOnboard(){const o=ui.ob,n=3,i=o.step;
+function vOnboard(){const o=ui.ob,n=5,i=o.step;if(S.ageBlock)return vBlocked();
   const nav=(label="Continue",dis=false)=>`<div class="row">${i>0?`<button class="btn ghost" data-act="obBack" aria-label="Back">${ic("back")}</button>`:""}<button class="btn primary grow" data-act="obNext" ${dis?"disabled":""}>${label}</button></div>`;
   const pages=[
    ()=>`<div class="mid"><div class="mark" style="font-size:84px">vouz<b>.</b></div><h1>Less scrolling. <em>More together.</em></h1><p class="sub">A private place for the time you spend together: intimacy you track for yourselves, experiences you plan, and the memories you keep.</p><ul class="plain"><li>${ic("check")}<span><b style="color:var(--text)">Private by default.</b> No ads, no location tracking, no analytics on what you log.</span></li><li>${ic("check")}<span><b style="color:var(--text)">Together on your terms.</b> Partners confirm and share only what they choose.</span></li><li>${ic("check")}<span><b style="color:var(--text)">No scores.</b> No rankings, and no number that says how a relationship is doing.</span></li></ul></div>${nav("Get started")}`,
-   ()=>`<div class="mid"><h3>Before you come in</h3><h1>Adults only, and <em>private by default.</em></h1><p class="sub">VOUZ is for people aged 18 and over. Your sessions, notes and moods are yours: you can edit, export or permanently delete them whenever you like.</p><div class="card">${sw("obAdult",o.adult,"I confirm I'm 18 or older")}</div><p class="tiny">If you're under 18, VOUZ isn't for you, and you can close this page.</p></div>${nav("Continue",!o.adult)}`,
+   ()=>vDob(o,nav,"ob"),
+   ()=>vCosmicReveal(nav),
+   ()=>vGoDeeper(o,nav),
    ()=>`<div class="mid"><h3>Set it up your way</h3><h1>Your moments, <em>your rules.</em></h1>
      <div class="col"><button class="opt" data-act="obMode" data-mode="local" aria-pressed="${o.mode==="local"}"><span class="grow"><b>Keep it on this device</b><span class="sub small">Stored in this browser only. Export a backup when you like.</span></span></button>
      <button class="opt" data-act="obMode" data-mode="account" aria-pressed="${o.mode==="account"}" ${Cloud.state!=="ready"?"disabled":""}><span class="grow"><b>Private account sync</b><span class="sub small">${Cloud.state==="ready"?"Also kept in a private space tied to your signed-in Claude account, so it follows you between devices. Other VOUZ users can't read it.":Cloud.state==="checking"?"Checking whether sync is available…":"Not available in this view. It needs a signed-in account with contributor access."}</span></span></button></div>
@@ -952,6 +970,7 @@ function vProfile(){const s=S.settings,p=Soc.me();
      <p class="tiny">The passcode is a screen lock. It keeps the app closed to someone holding your unlocked phone; it does not encrypt what's stored in this browser, and a 4-digit code is not strong protection against someone with technical access to the device. Face ID and fingerprint unlock aren't available to a web page here.</p></div>
    <div class="card"><h3>Your data</h3><div class="row wrap"><button class="btn sm" data-act="exportData">Export</button><button class="btn sm" data-act="sheet" data-s="import">Import</button>${hasDemo()?`<button class="btn sm ghost" data-act="removeDemo">Remove demo data</button>`:`<button class="btn sm ghost" data-act="loadDemo">Load demo data</button>`}</div><p class="tiny">${S.sessions.filter(x=>!x.demo).length} sessions and ${S.exps.filter(x=>!x.demo).length} memories and plans of your own. Export gives you all of it as one JSON file; photos stay on this device and aren't included.</p></div>
    ${s.social?`<div class="card"><h3>Connections</h3><div>${[["spaces","Shared spaces"],["social","Friends and people"],["couple","Couple profile"]].concat(Soc.me()?[["user","Your public profile"]]:[]).concat(Soc.isOwner?[["mod","Moderation"]]:[]).map(([pg,l])=>`<button class="sess" data-act="page" data-page="${pg}"><span class="grow t">${l}</span>${ic("next")}</button>`).join("")}</div></div>`:""}
+   ${S.age?`<button class="card rowcard" data-act="page" data-page="astro"><span class="badge" aria-hidden="true">${ic("spark")}</span><span class="grow"><b>Astrology</b><span class="sub small" style="display:block">${S.astro&&S.astro.on&&mySun()?esc(mySun())+" · for fun, private, yours to turn off":"Off"}</span></span>${ic("next")}</button>`:""}
    <button class="card rowcard" data-act="page" data-page="rewards">${S.settings.games?badgeArt({id:"pf",g:"spark"},true,44):`<span class="badge" aria-hidden="true">${ic("spark")}</span>`}<span class="grow"><b>Rewards and achievements</b><span class="sub small" style="display:block">${S.settings.games?(r=>`Level ${r.level.n} · ${r.level.name} · ${r.balance} VP · ${r.badges.filter(b=>b.earnedAt).length} badges`)(R()):"Off"}</span></span>${ic("next")}</button>
    <div class="card"><h3>More</h3><div>${[["achievements","Private achievements"],["wearables","Wearables and Apple Watch"],["plus","VOUZ Plus"],["policy","Privacy, and what's built vs planned"]].map(([pg,l])=>`<button class="sess" data-act="page" data-page="${pg}"><span class="grow t">${l}</span>${ic("next")}</button>`).join("")}</div></div>
    <button class="btn danger block" data-act="sheet" data-s="deleteAccount">${ic("trash")} Delete account and all data</button>
@@ -1036,15 +1055,16 @@ const A={
     S.sessions=S.sessions.filter(x=>!ids.has(x.id));ids.forEach(id=>S.deleted[id]=now);ui.sheet=null;save();render(true);toast(L.length+" session"+(L.length===1?"":"s")+" removed.")},
   confirmYes(){const f=ui.sheet.fn;ui.sheet=null;f()},
   /* onboarding */
-  obNext(){const o=ui.ob;if(o.step===1&&!o.adult)return;
-    if(o.step<2){o.step++;render(true);return}
+  obNext(){const o=ui.ob;if(o.step===1){const r=ageDecide(o);if(r==="none")return;render(true);if(r==="blocked")return;o.step=astroOn()?2:4;render(true);return}
+    if(o.step<4){o.step++;render(true);return}
     S.onboarded=true;S.user.name=o.name.trim();S.user.mode=o.mode==="account"&&Cloud.state==="ready"?"account":"local";S.user.createdAt=Date.now();save();ui.tab="home";render(true);
     try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(e){}
     if(o.social&&Cloud.state==="ready"&&K.ok){ui.err="";sheet({type:"socialOn",priv:true})}},
   obBack(){ui.ob.step=Math.max(0,ui.ob.step-1);render(true)},
   obAdult(){ui.ob.adult=!ui.ob.adult;render()},
   async obMode(e){ui.ob.mode=e.dataset.mode;ui.ob.restore=null;render();if(e.dataset.mode==="account"){const v=await Cloud.readVault();if(v&&ui.ob.mode==="account"&&!S.onboarded){ui.ob.restore=v;render()}}},
-  obRestore(){const v=ui.ob.restore;S=Object.assign(fresh(),{onboarded:true,stamp:v.stamp||0,user:Object.assign({},v.user,{mode:"account"}),settings:Object.assign(fresh().settings,v.settings),sessions:v.sessions||[],deleted:v.deleted||{},blocks:v.blocks||[],ignored:v.ignored||[]});saveLocal();ui.tab="home";if(S.settings.social)Soc.start();render(true);toast("Restored from your account.")},
+  obRestore(){const v=ui.ob.restore;S=Object.assign(fresh(),{onboarded:true,stamp:v.stamp||0,user:Object.assign({},v.user,{mode:"account"}),settings:Object.assign(fresh().settings,v.settings),sessions:v.sessions||[],deleted:v.deleted||{},blocks:v.blocks||[],ignored:v.ignored||[],exps:v.exps||[],picks:v.picks||{},psi:v.psi||{},rewards:v.rewards||fresh().rewards,consent:v.consent||fresh().consent||{req:[],ans:{}},
+    age:v.age||null,astro:v.astro||null,fc:v.fc||null,disc:v.disc||null,saved:v.saved||[],shareDefaults:v.shareDefaults||null});normState();saveLocal();ui.tab="home";if(S.settings.social)Soc.start();render(true);toast("Restored from your account.")},
   obSocial(){ui.ob.social=!ui.ob.social;render()},
   /* home + replay interactions */
   pickDay(e){ui.homeDay=+e.dataset.i;buzz(8);render();const g=document.querySelector(`.stage g[data-i="${e.dataset.i}"]`);g&&g.focus({preventScroll:true})},
@@ -1179,7 +1199,7 @@ const A={
       save();ui.sheet=null;ui.err="";render();toast(n+" session"+(n===1?"":"s")+" imported."+(skipped?" "+skipped+" Solo or Partnered left out.":""))}catch(e){ui.err="That file isn't a VOUZ export.";render()}},
   deleteAccountYes(){if(($("#del-in").value||"").trim()!=="DELETE"){ui.err="Type DELETE in capitals to confirm.";return render()}
     return busy(async()=>{clearTimeout(Cloud.t);Soc.stop();await Cloud.deleteAll();try{localStorage.removeItem(LS)}catch(e){}await Photos.clear();
-      S=fresh();K.reset();ui.sheet=null;ui.page=null;ui.tab="home";ui.err="";ui.homeDay=null;ui.ob={step:0,adult:false,mode:"local",name:"",social:false,restore:null};ui.busy=false;render(true);toast("Everything is erased.")})}
+      S=fresh();K.reset();ui.sheet=null;ui.page=null;ui.tab="home";ui.err="";ui.homeDay=null;ui.ob={step:0,adult:false,mode:"local",name:"",social:false,restore:null,m:"",d:"",y:""};ui.busy=false;render(true);toast("Everything is erased.")})}
 };
 document.addEventListener("click",ev=>{const e=ev.target.closest("[data-act]");if(!e||e.disabled||e.hasAttribute("disabled"))return;const f=A[e.dataset.act];if(f)f(e,ev)});
 /* REWARDS-START — VOUZ Points, badges, levels and weekly challenges.
@@ -2786,8 +2806,10 @@ function fcDims(ev){const acc={ch:[0,0],co:[0,0],in:[0,0],ad:[0,0]},add=(k,v,w)=
   for(const m of ev.memories){const c=FC_CAT[m.cat]||FC_CAT.other;for(const k in c)add(k,c[k],.6);const md=FC_MOOD[m.mood];if(md)for(const k in md)add(k,md[k],.5)}
   for(const md of ev.moods||[]){const x=FC_MOOD[md];if(x)for(const k in x)add(k,x[k],.25)}
   const out={};for(const k in acc)out[k]=acc[k][1]>=.9?+(acc[k][0]/acc[k][1]).toFixed(2):null;return out}
-function fcWord(dims,rnd,recent,rejected){const known=Object.keys(dims).filter(k=>dims[k]!=null),idx={ch:0,co:1,in:2,ad:3};
+const FC_COSMIC={fire:["ELECTRIC","BOLD","SPARKED"],earth:["STEADY","DEVOTED","UNHURRIED"],air:["CURIOUS","PLAYFUL","OPEN"],water:["TENDER","INTIMATE","MAGNETIC"]};
+function fcWord(dims,rnd,recent,rejected,cosmic){const known=Object.keys(dims).filter(k=>dims[k]!=null),idx={ch:0,co:1,in:2,ad:3};
   let pool=Object.keys(FC_WORDS);
+  if(!known.length&&cosmic&&FC_COSMIC[cosmic]){const opts=FC_COSMIC[cosmic].filter(w=>!recent.includes(w));return fcPick(rnd,opts.length?opts:FC_COSMIC[cosmic])}
   if(!known.length){const opts=FC_NEW.filter(w=>!recent.includes(w));return fcPick(rnd,opts.length?opts:FC_NEW)}
   const sc=pool.map(w=>{const v=FC_WORDS[w].v,dist=Math.sqrt(known.reduce((s,k)=>s+(v[idx[k]]-dims[k])**2,0)/known.length);
     return{w,s:-dist+rnd()*.12-(recent.includes(w)?1:0)-(rejected.includes(w)?.35:0)-(w==="UNWRITTEN"?.3:0)}}).sort((a,b)=>b.s-a.s);
@@ -2795,12 +2817,12 @@ function fcWord(dims,rnd,recent,rejected){const known=Object.keys(dims).filter(k
 const fcLevel=v=>v==null?null:v<.35?"Quiet":v<.55?"Steady":v<.75?"Rising":"Strong";
 
 /* The forecast for one day. ev = {checkins, memories, moods, observed:[facts], mismatch}. */
-function fcBuild(seedStr,ev,recent,rejected,withIntimacy){const rnd=fcSeed(seedStr),dims=fcDims(ev),word=fcWord(dims,rnd,recent,rejected),known=Object.keys(dims).filter(k=>dims[k]!=null);
+function fcBuild(seedStr,ev,recent,rejected,withIntimacy){const rnd=fcSeed(seedStr),dims=fcDims(ev),known=Object.keys(dims).filter(k=>dims[k]!=null),word=fcWord(dims,rnd,recent,rejected,ev.cosmic),basis=known.length?"connection":ev.cosmic?"cosmic":"opening";
   const hi=known.length?known.reduce((a,b)=>dims[a]>=dims[b]?a:b):fcPick(rnd,["ch","co","in","ad"]),lo=known.length>1?known.reduce((a,b)=>dims[a]<=dims[b]?a:b):fcPick(rnd,["co","in","ad"].filter(k=>k!==hi));
   const conn=ev.observed.length?FC_WORDS[word].l+" "+fcPick(rnd,["That shows in what you've been sharing.","It's there in the small things lately.","You can see it in how you've been spending time."]):FC_WORDS[word].l+" With a few check-ins, this gets more personal.";
   const ideas=IDEAS.filter(i=>i.g.some(g=>(DGROUPS_OF[hi]||[]).includes(g)));
   const qs=[];const r2=fcSeed(seedStr+"|q");while(qs.length<3){const q=fcPick(r2,FC_QS);if(!qs.includes(q))qs.push(q)}
-  return{v:1,word,line:FC_WORDS[word].l,dims,hi,lo,
+  return{v:1,word,basis,cosmic:basis==="cosmic"?{moon:ev.cosmicMoon||null}:null,line:FC_WORDS[word].l,dims,hi,lo,
     sections:{connection:{t:conn,basis:ev.observed.length?"observed":"reflection"},embrace:{t:fcPick(rnd,FC_EMBRACE[hi]),basis:"suggestion"},watch:{t:fcPick(rnd,ev.mismatch?FC_WATCH.mismatch:FC_WATCH[lo]),basis:"suggestion"}},
     move:{t:fcPick(rnd,FC_MOVES[hi]),qs,ideas:ideas.length?[fcPick(rnd,ideas).id,fcPick(fcSeed(seedStr+"|i"),ideas).id].filter((x,i,a)=>a.indexOf(x)===i):[],close:withIntimacy?fcPick(rnd,FC_CLOSE):null},
     observed:ev.observed.slice(0,4),src:"library",at:Date.now()}}
@@ -2830,7 +2852,8 @@ async function fcTheirForecast(id){const r=Soc.rel[id],d=(Soc.fcast||{})[id];if(
   try{return Soc.cache["ff"+it.c]||(Soc.cache["ff"+it.c]=await K.decJ(r.key,it.c))}catch(e){return null}}
 /* Together mode: both partners have opted in (each can read the other's encrypted check-in sharing). */
 async function fcMode(){const p=fcPartner();if(!p||!S.fc.together)return{solo:true};const t=await fcTheirs(p);return t&&t.together?{solo:false,p,t}:{solo:true,waiting:p}}
-function fcEvidence(mode,day){const from=Date.now()-21*DAY,mine=S.fc.checkins[day];
+function fcEvidence(mode,day){const ev=fcEvidence0(mode,day),sky=astroOn()?todaySky():null;if(sky){ev.cosmic=ELEM[sky.moon];ev.cosmicMoon=sky.moon}return ev}
+function fcEvidence0(mode,day){const from=Date.now()-21*DAY,mine=S.fc.checkins[day];
   if(mode.solo){const mem=S.exps.filter(e=>!e.demo&&e.kind==="done"&&e.date>=from);const moods=S.sessions.filter(s=>!s.demo&&s.start>=Date.now()-14*DAY&&MC[s.mood]).map(s=>s.mood);
     const obs=[];if(mem.length)obs.push(mem.length+" memor"+(mem.length===1?"y":"ies")+" in the last three weeks"+(mem.length>1?", mostly "+(XCATS[mode0(mem.map(m=>m.cat))]||"").toLowerCase():""));if(mine)obs.push("You checked in feeling "+mine.energy.toLowerCase());
     return{checkins:mine?[mine]:[],memories:mem.map(m=>({cat:m.cat,mood:m.mood})),moods,observed:obs,mismatch:false}}
@@ -2862,7 +2885,8 @@ function fcSafe(x){const s=t=>String(t||"").slice(0,240),sec=k=>({t:s(x.sections
   const dims={};for(const[k] of FC_DIMS)dims[k]=typeof(x.dims||{})[k]==="number"?Math.max(0,Math.min(1,x.dims[k])):null;
   return{v:1,word:FC_WORDS[x.word]?x.word:"UNWRITTEN",line:FC_WORDS[x.word]?FC_WORDS[x.word].l:"",dims,hi:["ch","co","in","ad"].includes(x.hi)?x.hi:"co",lo:["ch","co","in","ad"].includes(x.lo)?x.lo:"ad",
     sections:{connection:sec("connection"),embrace:sec("embrace"),watch:sec("watch")},move:{t:s(x.move&&x.move.t),qs:((x.move&&x.move.qs)||[]).filter(q=>FC_QS.includes(q)).slice(0,3),ideas:((x.move&&x.move.ideas)||[]).filter(i=>IDEA[i]).slice(0,2),close:null},
-    observed:(x.observed||[]).map(s).slice(0,4),mismatch:!!x.mismatch,src:x.src==="ai"?"ai":"library",at:num(x.at)||Date.now()}}
+    observed:(x.observed||[]).map(s).slice(0,4),mismatch:!!x.mismatch,src:x.src==="ai"?"ai":"library",at:num(x.at)||Date.now(),
+    basis:["connection","cosmic","opening"].includes(x.basis)?x.basis:"opening",cosmic:x.cosmic&&Astro.SIGNS.includes(x.cosmic.moon)?{moon:x.cosmic.moon}:null}}
 async function fcPublish(p){const r=Soc.rel[p];if(!r)return;const days={};for(const d of Object.keys(S.fc.hist).sort().slice(-30)){const t=S.fc.hist[d].together;if(t)days[d]=fcSafe(t)}
   await Soc.write("fcast",{items:[{k:r.out,c:await K.encJ(r.key,{days})}]})}
 async function fcShareCheckins(){const p=fcPartner();if(!p||!S.fc.together){await Soc.write("fcheck",null);return}const r=Soc.rel[p],days={};
@@ -2883,6 +2907,7 @@ function vForecast(){const f=S.fc,day=ui.fc.view||fcToday(),isToday=day===fcToda
    ${!isToday?`<button class="link small" data-act="fcView" data-v="">${ic("back")} Back to today</button>`:""}
    <div class="fcard" style="--fg:${fcHue(fc.word)}"><span class="fk">${isToday?"Today, you are":esc(fcDate(day))+", you were"}</span><span class="fw" aria-label="${esc(fc.word)}">${esc(fc.word)}</span><p class="fl">${esc(fc.line)}</p>
     <span class="fd">${esc(fcDate(day))} · ${mode.solo?"Just you":"Together"}</span><span class="fb">VOUZ / DAILY FORECAST</span></div>
+   <p class="tiny">${fcBasisTxt(fc)}</p>${isToday?cosmicSection():""}
    ${fc.rejected?`<p class="tiny">You said this one didn't fit${fc.corrected?`; you'd call it <b>${esc(fc.corrected)}</b>`:""}. VOUZ will lean away from it.</p>`:""}
    <div class="sec"><h3>Relationship energy</h3><div class="fdims">${FC_DIMS.map(([k,l,d])=>`<div class="fdim"><span><b>${l}</b><span class="tiny" style="display:block">${d}</span></span>${fc.dims[k]==null?`<span class="tiny">Not enough to go on</span>`:`<span class="row" style="gap:8px">${fcDots(fc.dims[k])}<span class="tiny">${fcLevel(fc.dims[k])}</span></span>`}</div>`).join("")}</div>
     <p class="tiny">${fc.observed.length?"Shaped by "+esc(fc.observed.join("; ").toLowerCase())+".":"Nothing to go on yet, so this is a starting point, not a reading."} A reflection, not a measurement.</p></div>
@@ -3013,17 +3038,20 @@ function insPatterns(){const out=[],now=Date.now(),cks=Object.entries(S.fc.check
   const done=S.exps.filter(e=>!e.demo&&e.planned&&e.doneAt&&e.doneAt>=now-60*DAY).length;if(done)out.push(["Plans kept",`${done} plan${done===1?"":"s"} made and followed through in two months.`]);
   const ses=S.sessions.filter(s=>!s.demo&&s.start>=now-60*DAY);if(ses.length>=5){const p=[0,0,0,0];ses.forEach(s=>p[partOf(new Date(s.start).getHours())]++);const i=p.indexOf(Math.max(...p));out.push([PARTS[i],"When your sessions most often happen. Private to you."])}
   return out.slice(0,4)}
+const fcBasisTxt=fc=>fc.basis==="cosmic"?"Word from the stars"+(fc.cosmic&&fc.cosmic.moon?" · Moon in "+esc(fc.cosmic.moon):"")+" · astrology, for fun":fc.basis==="connection"?"Word from your check-ins and shared memories":"An opening word: check in to make it yours";
 function vInsightsHome(){const f=S.fc;
   if(!f.on)return`<div class="scroll ins"><h1>Insights</h1><p class="sub">The daily forecast is off.</p><button class="btn sm primary" style="align-self:flex-start" data-act="fcOn">Turn it on</button>${insMore()}</div>`;
   if(!ui.fc.started){ui.fc.started=true;setTimeout(()=>fcEnsure(),0)}
   const fc=fcCurrent(),mode=ui.fc.mode||{solo:true},pats=insPatterns(),d=new Date();
   const hero=fc?`<button class="ihero" data-act="page" data-page="forecast" style="--fg:${fcHue(fc.word)}" aria-label="Today's energy: ${esc(fc.word)}. Read the full forecast">
       <span class="fk">Today's energy</span><span class="fw">${esc(fc.word)}</span><span class="fl">${esc(fc.line)}</span>
+      <span class="fbasis">${fcBasisTxt(fc)}</span>
       <span class="ifoot"><span>${esc(d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}))}${mode.solo?"":" · Together"}</span><span class="iread">Read the forecast ${ic("next")}</span></span></button>`
     :`<div class="ihero" aria-busy="true"><span class="fk">Today's energy</span><span class="fw shimmer" style="height:80px;width:70%">&nbsp;</span><span class="sub small" role="status">${ui.fc.err?esc(ui.fc.err):"Writing today's forecast…"}</span></div>`;
   const recent=Object.keys(f.hist).sort().slice(-7).map(k=>[k,(f.hist[k].together||f.hist[k].solo||{}).word]).filter(x=>x[1]);
   return`<div class="scroll ins">${demoBanner()}${hero}
-   ${fc?`<section class="isec" aria-labelledby="h-pulse"><h3 id="h-pulse">Relationship pulse</h3><div class="ipulse">${FC_DIMS.map(([k,l])=>`<div><span>${l}</span>${fc.dims[k]==null?`<span class="tiny">Not enough yet</span>`:`<span class="row" style="gap:8px">${fcDots(fc.dims[k])}<span class="tiny">${fcLevel(fc.dims[k])}</span></span>`}</div>`).join("")}</div>
+   ${cosmicSection()}
+   ${fc?`<section class="isec" aria-labelledby="h-pulse"><div class="row between"><h3 id="h-pulse">Relationship pulse</h3><span class="ftag observed">Real connection</span></div><div class="ipulse">${FC_DIMS.map(([k,l])=>`<div><span>${l}</span>${fc.dims[k]==null?`<span class="tiny">Not enough yet</span>`:`<span class="row" style="gap:8px">${fcDots(fc.dims[k])}<span class="tiny">${fcLevel(fc.dims[k])}</span></span>`}</div>`).join("")}</div>
      ${S.fc.checkins[fcToday()]?"":`<button class="link small" data-act="page" data-page="forecast">Check in to sharpen this</button>`}</section>
    <section class="isec" aria-labelledby="h-move"><h3 id="h-move">Today's move</h3><button class="imove" data-act="page" data-page="forecast">${esc(fc.move.t)}${ic("next")}</button></section>`:""}
    <section class="isec" aria-labelledby="h-pat"><h3 id="h-pat">Patterns</h3>${pats.length?`<dl class="ipat">${pats.map(([a,b])=>`<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("")}</dl>`:`<p class="sub small">Patterns show up after a few check-ins and shared memories. Nothing here is guessed.</p>`}</section>
@@ -3036,7 +3064,9 @@ function insMore(){return`<section class="isec"><h3>More</h3><div class="ilinks"
    <p class="tiny">Reflections and descriptions, not scores or predictions. Everything here stays private.</p></section>`}
 
 /* ============ Share: a studio, not a feed ============ */
-const SH_KINDS={daily:"Daily Energy",couple:"Couple Forecast",weekly:"Weekly Reflection",monthly:"Monthly Recap",milestone:"Milestone",memory:"Shared Memories"};
+const SH_KINDS={daily:"Daily Word",zodiac:"Daily Zodiac Energy",couple:"Couple Forecast",couplehoro:"Couple Horoscope",compat:"Cosmic Compatibility",weekly:"Weekly Reflection",weeklycos:"Weekly Cosmic Recap",monthly:"Monthly Recap",milestone:"Milestone",memory:"Shared Memories"};
+/* A partner's sign goes on a card only if they turned on "Let them put my sign on share cards". */
+function shPartner(){const l=ui.shAstro;if(!l&&Soc.ready()&&!shPartner.busy){shPartner.busy=true;(async()=>{const out=[];for(const id of Soc.conns()){const t=await theirAstro(id);if(t&&t.cards)out.push({id,t})}ui.shAstro=out;shPartner.busy=false;if(ui.tab==="share")render()})()}return(l||[])[0]||null}
 const SH_THEMES={minimal:"Minimal",dark:"Dark",gradient:"Gradient",editorial:"Editorial"};
 const SH_BG={wine:["#7A2E3B","#C9939B"],ink:["#1B1F2E","#8C93B8"],blush:["#C9939B","#F4ECE6"],moss:["#2F3B2C","#B9C4A6"]};
 const MO_UP=d=>d.toLocaleDateString(undefined,{month:"short",day:"numeric"}).toUpperCase();
@@ -3052,10 +3082,16 @@ function shData(kind,ref){const now=new Date(),fc=fcCurrent(),h=S.fc.hist;
   if(kind==="monthly"){const m=dayKey(Date.now()).slice(0,7),ws=Object.keys(h).filter(k=>k.startsWith(m)).map(k=>(h[k].together||h[k].solo||{}).word).filter(Boolean),mem=S.exps.filter(e=>!e.demo&&e.kind==="done"&&e.date&&dayKey(e.date).startsWith(m)).length;
     if(ws.length>=5||mem>=2){const c={};ws.forEach(w=>c[w]=(c[w]||0)+1);const top=Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||"TOGETHER";
       return{kicker:now.toLocaleDateString(undefined,{month:"long"}),big:top,line:[mem?mem+" memor"+(mem===1?"y":"ies")+" made":null,ws.length?ws.length+" daily words":null].filter(Boolean).join(" · ")+".",foot:"VOUZ — "+now.getFullYear()}}}
+  if(["zodiac","couplehoro","compat","weeklycos"].includes(kind)&&astroOn()){const sun=mySun(),co=cosmicOutlook();if(!sun||!co)return null;
+    if(kind==="zodiac")return{kicker:"Today, "+sun,big:sun,line:co.head.replace(/^The Moon in \w+ /,"The Moon ").split(". ")[0]+".",foot:"VOUZ — "+MO_UP(now),cosmic:true};
+    if(kind==="weeklycos")return{kicker:"This week in the stars",big:sun,line:SIGN_TAG[sun],list:weekSky().map(([k,m])=>[new Date(k+"T12:00").toLocaleDateString(undefined,{weekday:"short"}).toUpperCase().slice(0,3),m.slice(0,3).toUpperCase()]),foot:"VOUZ — MOON SIGNS",cosmic:true};
+    const p=shPartner();if(!p)return null;const c=myChart(),cc=coupleCosmos({sun,moon:c.moon.sign,venus:c.venus.sign,mars:c.mars.sign},p.t);
+    if(kind==="couplehoro")return{kicker:"Couple horoscope",big:sun+" & "+p.t.sun,line:cc.daily,foot:"VOUZ — "+MO_UP(now),cosmic:true,title:true};
+    return{kicker:"Cosmic compatibility",big:cc.P.w,line:sun+" & "+p.t.sun+". "+cc.P.l,foot:"VOUZ",cosmic:true}}
   if(kind==="milestone"){const e=S.exps.find(x=>x.id===ref)||shMilestones()[0];if(e)return{kicker:e.anniv?"Anniversary":"Milestone",big:String(e.title).slice(0,40),line:fmtDate(e.date),foot:"VOUZ",title:true}}
   return null}
 const shMilestones=()=>S.exps.filter(e=>!e.demo&&e.kind==="done"&&e.date&&(e.anniv||e.cat==="milestone")).sort((a,b)=>b.date-a.date);
-function shAvailable(){const k=[];for(const x of ["daily","couple","weekly","monthly"])if(shData(x))k.push(x);if(shMilestones().length)k.push("milestone");if(S.exps.some(e=>!e.demo&&e.kind==="done"))k.push("memory");return k}
+function shAvailable(){const k=[];for(const x of ["daily","zodiac","couple","couplehoro","compat","weekly","weeklycos","monthly"])if(shData(x))k.push(x);if(shMilestones().length)k.push("milestone");if(S.exps.some(e=>!e.demo&&e.kind==="done"))k.push("memory");return k}
 async function shRender(kind,o,ref){const d=shData(kind,ref);if(!d)throw{code:"no_data"};const[W,H]=FC_FMT[o.fmt],c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d"),u=W/1080;
   try{await Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))])}catch(e){}
   const D=o.type==="sans"?CARD_FONT.b:CARD_FONT.d,B=CARD_FONT.b,big=d.title?d.big:d.big.toUpperCase(),bg=SH_BG[o.bg]||SH_BG.wine,sp=t=>String(t).toUpperCase().split("").join(String.fromCharCode(8202));
@@ -3064,6 +3100,8 @@ async function shRender(kind,o,ref){const d=shData(kind,ref);if(!d)throw{code:"n
   else if(T==="dark"){x.fillStyle="#0E0B0C";x.fillRect(0,0,W,H)}
   else if(T==="gradient"){const g=x.createLinearGradient(0,0,W*.4,H);g.addColorStop(0,bg[0]);g.addColorStop(1,"#120A0C");x.fillStyle=g;x.fillRect(0,0,W,H);const r=x.createRadialGradient(W*.85,H*.15,10,W*.85,H*.15,W);r.addColorStop(0,bg[1]+"55");r.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=r;x.fillRect(0,0,W,H)}
   else{x.fillStyle="#0B0809";x.fillRect(0,0,W,H);const r=x.createRadialGradient(W*.75,H*.28,10,W*.75,H*.28,W*.95);r.addColorStop(0,bg[0]+"AA");r.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=r;x.fillRect(0,0,W,H)}
+  if(d.cosmic){const r=fcSeed(d.big+kind);x.save();x.fillStyle=light?"rgba(122,46,59,.35)":"rgba(244,236,230,.55)";for(let i=0;i<46;i++){const sx=r()*W,sy=r()*H*.55,sz=(r()<.1?2.6:1.2)*u;x.globalAlpha=.25+r()*.6;x.beginPath();x.arc(sx,sy,sz,0,Math.PI*2);x.fill()}
+    x.globalAlpha=light?.25:.18;x.strokeStyle=light?"#7A2E3B":"#F4ECE6";x.lineWidth=1.5*u;x.beginPath();x.ellipse(W*.62,H*.22,W*.55,H*.09,-.18,0,Math.PI*2);x.stroke();x.restore()}
   const M=96*u,center=T==="minimal"||T==="dark";x.textAlign=center?"center":"left";const X=center?W/2:M;
   const fit=(t,max,start,font)=>{let s=start;do{x.font=font(s);if(x.measureText(t).width<=max)break;s-=4}while(s>36);return s};
   const who=d.couple||o.names?shCoupleLabel(o):"";
@@ -3087,8 +3125,8 @@ function vShare(){const av=shAvailable(),o=S.shareDefaults;
      return`<button class="shtile${on?"":" off"}" ${on?`data-act="${k==="memory"?"shMemories":"shEdit"}" data-k="${k}"`:"disabled"} aria-label="${SH_KINDS[k]}${on?"":", not available yet"}">
        <span class="shmini ${o.theme}" style="--fg:${d&&FC_WORDS[d.big]?fcHue(d.big):"#5A2230"}"><b>${d?esc(d.title?d.big.slice(0,14):d.big):k==="memory"?"Memories":"—"}</b></span><span class="shl">${SH_KINDS[k]}</span><span class="tiny">${on?shHint(k):shWhy(k)}</span></button>`}).join("")}</div></section>
    <p class="tiny">Cards never include session details, check-ins, notes or anything from your partner. Names or initials need a couple profile you've both approved.</p></div>`}
-const shHint=k=>({daily:"Today's word",couple:"The forecast you share",weekly:"Your last seven words",monthly:"This month so far",milestone:shMilestones().length+" to choose from",memory:"Pick a memory"})[k];
-const shWhy=k=>({daily:"After today's forecast",couple:"Turn on forecast together",weekly:"After three daily words this week",monthly:"After five daily words or two memories this month",milestone:"Mark a memory as a milestone or anniversary",memory:"After your first memory"})[k];
+const shHint=k=>({zodiac:"Your sign, today's sky",couplehoro:"Your signs, today",compat:"Your pairing",weeklycos:"The week's Moon signs",daily:"Today's word",couple:"The forecast you share",weekly:"Your last seven words",monthly:"This month so far",milestone:shMilestones().length+" to choose from",memory:"Pick a memory"})[k];
+const shWhy=k=>({zodiac:"Turn on astrology in Profile",couplehoro:"When a partner lets you share their sign",compat:"When a partner lets you share their sign",weeklycos:"Turn on astrology in Profile",daily:"After today's forecast",couple:"Turn on forecast together",weekly:"After three daily words this week",monthly:"After five daily words or two memories this month",milestone:"Mark a memory as a milestone or anniversary",memory:"After your first memory"})[k];
 function vShareEdit(){const o=ui.she;if(!o||!shData(o.kind,o.ref)){ui.page=null;return vShare()+vTabs()}const ms=o.kind==="milestone"?shMilestones():[],ok=shCoupleOk();
   return hdr(SH_KINDS[o.kind])+`<div class="scroll ins">
    <div class="fprev ${o.fmt}" id="sh-prev" aria-label="Card preview"></div>
@@ -3123,6 +3161,184 @@ function vShareMem(){const list=S.exps.filter(e=>!e.demo&&e.kind==="done").sort(
   return hdr("Shared memories")+`<div class="scroll ins"><p class="sub small">Pick a memory to turn into a card. Memories shared in a space need everyone in it to agree first.</p>
    <div>${list.map(e=>`<button class="hist" data-act="mcOpen" data-id="${esc(e.id)}" data-a="me" style="width:100%;text-align:left"><span class="grow"><b>${esc(e.title)}</b><span class="sub small" style="display:block">${fmtDate(e.date)} · ${esc(XCATS[e.cat]||"")}</span></span>${ic("next")}</button>`).join("")}</div></div>`}
 
+/* ASTRO-START
+   Astronomy for the astrology features. No library could be installed here, so these are the standard published
+   methods, tested against textbook values (test/astro.test.js):
+   Sun: Meeus, Astronomical Algorithms ch. 25 (about 0.01°). Moon: Meeus ch. 47, main periodic terms (well under 0.1°).
+   Mercury, Venus, Mars: JPL/Standish "Approximate Positions of the Planets", Table 1 (1800–2050), precessed to date.
+   Ascendant: from local sidereal time and obliquity. All longitudes are tropical, ecliptic of date. */
+const Astro=(()=>{const R=Math.PI/180,n360=x=>((x%360)+360)%360,sin=d=>Math.sin(d*R),cos=d=>Math.cos(d*R);
+  const jd=ms=>ms/864e5+2440587.5,cent=JD=>(JD-2451545)/36525;
+  const SIGNS=["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+  const sign=lon=>SIGNS[Math.floor(n360(lon)/30)];
+  /* ΔT (TT − UT), Espenak & Meeus polynomial approximations, good to a few seconds 1950–2050 and fine for signs elsewhere. */
+  function deltaT(y){if(y>=2005&&y<2050){const t=y-2000;return 62.92+0.32217*t+0.005589*t*t}if(y>=1986){const t=y-2000;return 63.86+0.3345*t-0.060374*t*t+0.0017275*t**3+0.000651814*t**4+0.00002373599*t**5}
+    if(y>=1961){const t=y-1975;return 45.45+1.067*t-t*t/260-t**3/718}if(y>=1941){const t=y-1950;return 29.07+0.407*t-t*t/233+t**3/2547}if(y>=1920){const t=y-1920;return 21.20+0.84493*t-0.076100*t*t+0.0020936*t**3}
+    if(y>=2050){const u=(y-1820)/100;return -20+32*u*u-0.5628*(2150-y)}return 0}
+  const jde=ms=>{const y=new Date(ms).getUTCFullYear()+new Date(ms).getUTCMonth()/12;return jd(ms)+deltaT(y)/86400};
+  function nutLon(T){const om=125.04452-1934.136261*T,Ls=280.4665+36000.7698*T,Lm=218.3165+481267.8813*T;return(-17.20*sin(om)-1.32*sin(2*Ls)-0.23*sin(2*Lm)+0.21*sin(2*om))/3600}
+  function sunLon(JDE){const T=cent(JDE),L0=280.46646+36000.76983*T+0.0003032*T*T,M=357.52911+35999.05029*T-0.0001537*T*T,
+    C=(1.914602-0.004817*T-0.000014*T*T)*sin(M)+(0.019993-0.000101*T)*sin(2*M)+0.000289*sin(3*M),om=125.04-1934.136*T;return n360(L0+C-0.00569-0.00478*sin(om))}
+  const ML=[[0,0,1,0,6288774],[2,0,-1,0,1274027],[2,0,0,0,658314],[0,0,2,0,213618],[0,1,0,0,-185116],[0,0,0,2,-114332],[2,0,-2,0,58793],[2,-1,-1,0,57066],[2,0,1,0,53322],[2,-1,0,0,45758],[0,1,-1,0,-40923],[1,0,0,0,-34720],[0,1,1,0,-30383],[2,0,0,-2,15327],[0,0,1,2,-12528],[0,0,1,-2,10980],[4,0,-1,0,10675],[0,0,3,0,10034],[4,0,-2,0,8548],[2,1,-1,0,-7888],[2,1,0,0,-6766],[1,0,-1,0,-5163],[1,1,0,0,4987],[2,-1,1,0,4036],[2,0,2,0,3994],[4,0,0,0,3861],[2,0,-3,0,3665],[0,1,-2,0,-2689],[2,0,-1,2,-2602],[2,-1,-2,0,2390],[1,0,1,0,-2348],[2,-2,0,0,2236],[0,1,2,0,-2120],[0,2,0,0,-2069]];
+  function moonLon(JDE){const T=cent(JDE),Lp=218.3164477+481267.88123421*T-0.0015786*T*T+T**3/538841-T**4/65194000,D=297.8501921+445267.1114034*T-0.0018819*T*T+T**3/545868-T**4/113065000,
+    M=357.5291092+35999.0502909*T-0.0001536*T*T+T**3/24490000,Mp=134.9633964+477198.8675055*T+0.0087414*T*T+T**3/69699-T**4/14712000,F=93.2720950+483202.0175233*T-0.0036539*T*T-T**3/3526000+T**4/863310000,
+    A1=119.75+131.849*T,A2=53.09+479264.290*T,E=1-0.002516*T-0.0000074*T*T;
+    let l=0;for(const[d,m,mp,f,c] of ML){const e=Math.abs(m)===1?E:Math.abs(m)===2?E*E:1;l+=c*e*sin(d*D+m*M+mp*Mp+f*F)}
+    l+=3958*sin(A1)+1962*sin(Lp-F)+318*sin(A2);return n360(Lp+l/1e6+nutLon(T))}
+  /* [a, e, I, L, perihelion longitude, node] and rates per century, J2000 ecliptic */
+  const EL={mercury:[[0.38709927,0.20563593,7.00497902,252.25032350,77.45779628,48.33076593],[0.00000037,0.00001906,-0.00594749,149472.67411175,0.16047689,-0.12534081]],
+    venus:[[0.72333566,0.00677672,3.39467605,181.97909950,131.60246718,76.67984255],[0.00000390,-0.00004107,-0.00078890,58517.81538729,0.00268329,-0.27769418]],
+    earth:[[1.00000261,0.01671123,-0.00001531,100.46457166,102.93768193,0],[0.00000562,-0.00004392,-0.01294668,35999.37244981,0.32327364,0]],
+    mars:[[1.52371034,0.09339410,1.84969142,-4.55343205,-23.94362959,49.55953891],[0.00001847,0.00007882,-0.00813131,19140.30268499,0.44441088,-0.29257343]]};
+  function helio(p,T){const[e0,r]=EL[p],[a,e,I,L,w,O]=e0.map((v,i)=>v+r[i]*T),om=w-O;let M=n360(L-w);if(M>180)M-=360;
+    let E=M+57.29578*e*sin(M);for(let i=0;i<8;i++){const dM=M-(E-57.29578*e*sin(E));E+=dM/(1-e*cos(E))}
+    const xp=a*(cos(E)-e),yp=a*Math.sqrt(1-e*e)*sin(E);
+    return[(cos(om)*cos(O)-sin(om)*sin(O)*cos(I))*xp+(-sin(om)*cos(O)-cos(om)*sin(O)*cos(I))*yp,(cos(om)*sin(O)+sin(om)*cos(O)*cos(I))*xp+(-sin(om)*sin(O)+cos(om)*cos(O)*cos(I))*yp,sin(om)*sin(I)*xp+cos(om)*sin(I)*yp]}
+  function planetLon(p,JDE){let T=cent(JDE);const e=helio("earth",T);let g=helio(p,T),dx=g[0]-e[0],dy=g[1]-e[1],dz=g[2]-e[2];
+    const tau=Math.sqrt(dx*dx+dy*dy+dz*dz)*0.0057755183;g=helio(p,T-tau/36525);dx=g[0]-e[0];dy=g[1]-e[1];   // light time
+    return n360(Math.atan2(dy,dx)/R+1.3969713*T+nutLon(T)-20.4898/3600)}   // precession to date, nutation, aberration
+  function ascendant(ms,lat,lon){const JD=jd(ms),T=cent(JD),gmst=n360(280.46061837+360.98564736629*(JD-2451545)+0.000387933*T*T-T**3/38710000),th=n360(gmst+lon),eps=23.4392911-0.0130042*T;
+    return n360(Math.atan2(cos(th),-(sin(th)*cos(eps)+Math.tan(lat*R)*sin(eps)))/R)}
+  const BODY={sun:sunLon,moon:moonLon,mercury:j=>planetLon("mercury",j),venus:j=>planetLon("venus",j),mars:j=>planetLon("mars",j)};
+  /* Local wall-clock time in an IANA zone → UTC milliseconds, using the browser's own historical time-zone rules. */
+  function tzOffset(zone,ms){const f=new Intl.DateTimeFormat("en-US",{timeZone:zone,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    const p={};for(const x of f.formatToParts(new Date(ms)))p[x.type]=x.value;return(Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute,+p.second)-ms)/6e4}
+  function localToUTC(y,mo,d,h,mi,zone){const guess=Date.UTC(y,mo-1,d,h,mi);let ms=guess-tzOffset(zone,guess)*6e4;ms=guess-tzOffset(zone,ms)*6e4;return ms}
+  /* A natal chart. Without a birth time, a body that changes sign during that day is reported as both possibilities. */
+  function chart(b){const[y,mo,d]=b.dob.split("-").map(Number),zone=b.tz||"UTC",out={};
+    const at=(h,mi)=>localToUTC(y,mo,d,h,mi,zone),known=!!(b.time&&!b.unknownTime);
+    const[hh,mm]=known?b.time.split(":").map(Number):[12,0],t=at(hh,mm),t0=at(0,0),t1=at(23,59);
+    for(const k in BODY){const s=sign(BODY[k](jde(t)));if(known)out[k]={sign:s};else{const a=sign(BODY[k](jde(t0))),z=sign(BODY[k](jde(t1)));out[k]=a===z?{sign:a}:{sign:null,either:[a,z]}}}
+    if(known&&b.place&&typeof b.place.lat==="number")out.rising={sign:sign(ascendant(t,b.place.lat,b.place.lon))};
+    return out}
+  /* The sky now (for daily outlooks): signs of the transiting Sun, Moon, Mercury, Venus and Mars at local noon of a day. */
+  function sky(dayKey,zone){const[y,mo,d]=dayKey.split("-").map(Number),t=localToUTC(y,mo,d,12,0,zone||"UTC"),o={};for(const k in BODY)o[k]=sign(BODY[k](jde(t)));
+    const m1=planetLon("mercury",jde(t)),m0=planetLon("mercury",jde(t-864e5));let dm=m1-m0;if(dm>180)dm-=360;if(dm<-180)dm+=360;o.mercuryRetro=dm<0;return o}
+  function age(dob,today){const[y,m,d]=dob.split("-").map(Number),[ty,tm,td]=today.split("-").map(Number);let a=ty-y;if(tm<m||(tm===m&&td<d))a--;return a}
+  return{SIGNS,sign,sunLon,moonLon,planetLon,ascendant,jd,jde,tzOffset,localToUTC,chart,sky,age,deltaT}})();
+/* ASTRO-END */
+
+/* ============ 18+ gate and astrology ============
+   The birthday is an age gate, not proof of age. On this device it can only be checked here; the server version
+   (migration 0008) re-checks it with the server's own date and refuses a profile without it. An under-18 birthday is
+   never stored: only the fact that this device was turned away. Astrology lives apart from the age record, is for fun,
+   and can be turned off or deleted. A partner only ever sees the signs you choose to share, never your birthday,
+   birth time or birthplace. */
+const SIGN_TAG={Aries:"Direct. Daring. First through the door.",Taurus:"Steady. Sensual. Unhurried on purpose.",Gemini:"Curious. Quick. Never just one thing.",Cancer:"Protective. Tender. Remembers everything.",
+  Leo:"Warm. Bold. Meant to be seen.",Virgo:"Precise. Devoted. Love in the details.",Libra:"Graceful. Fair. Drawn to beauty.",Scorpio:"Intense. Magnetic. Unapologetically deep.",
+  Sagittarius:"Restless. Honest. Always one more horizon.",Capricorn:"Patient. Ambitious. Quietly all in.",Aquarius:"Original. Free. Close on its own terms.",Pisces:"Dreamy. Intuitive. Feels it all."};
+const ELEM={Aries:"fire",Leo:"fire",Sagittarius:"fire",Taurus:"earth",Virgo:"earth",Capricorn:"earth",Gemini:"air",Libra:"air",Aquarius:"air",Cancer:"water",Scorpio:"water",Pisces:"water"};
+const MOON_THEME={Aries:"The Moon in Aries makes everyone a little impatient. Good for starting things, not for long debates.",Taurus:"The Moon in Taurus slows the day down. Comfort, food and touch say more than words.",
+  Gemini:"The Moon in Gemini wants conversation. Ask, tease, follow tangents.",Cancer:"The Moon in Cancer turns attention home. Nostalgia is close to the surface.",
+  Leo:"The Moon in Leo wants a little theater. Make a gesture someone will notice.",Virgo:"The Moon in Virgo notices small things. A practical kindness lands well.",
+  Libra:"The Moon in Libra leans toward harmony and beauty. A good day for a proper date.",Scorpio:"The Moon in Scorpio deepens everything. Honesty feels intimate today.",
+  Sagittarius:"The Moon in Sagittarius wants out. Say yes to something unplanned.",Capricorn:"The Moon in Capricorn is serious and steady. Talk about what you're building.",
+  Aquarius:"The Moon in Aquarius likes space and strange ideas. Let each other be odd.",Pisces:"The Moon in Pisces blurs edges. Music, water and daydreams suit the mood."};
+const VENUS_THEME={Aries:"bold, first-move romance",Taurus:"slow, sensual romance",Gemini:"playful, talkative flirting",Cancer:"cozy, nostalgic affection",Leo:"generous, showy romance",Virgo:"thoughtful, attentive love",
+  Libra:"elegant, balanced romance",Scorpio:"deep, all-or-nothing attraction",Sagittarius:"adventurous, spontaneous romance",Capricorn:"loyal, grown-up devotion",Aquarius:"unconventional, friendly love",Pisces:"tender, dreamy romance"};
+const MERC_THEME={fire:"Talk is quick and direct; say it plainly and kindly.",earth:"Talk is practical; plans and promises land best.",air:"Talk flows easily; ideas and banter come naturally.",water:"Talk is feeling-led; listen for what's under the words."};
+const ELEM_REL=(a,b)=>a===b?"same":(a+b).match(/fireair|airfire|earthwater|waterearth/)?"complement":(a+b).match(/firewater|waterfire|earthair|airearth/)?"contrast":"mix";
+const PAIR={same:{w:"KINDRED",l:"Same element: you understand each other's pace without explaining it."},complement:{w:"MAGNETIC",l:"Complementary elements: what one has, the other is drawn to."},
+  contrast:{w:"ELECTRIC",l:"Contrasting elements: friction that can spark or frustrate. Curiosity helps."},mix:{w:"GROUNDED",l:"Neighbouring temperaments: different, but easy to balance."}};
+const astroOn=()=>!!(S.astro&&S.astro.on&&S.age&&S.age.dob);
+function myChart(){if(!astroOn())return null;const a=S.astro;try{return Astro.chart({dob:S.age.dob,time:a.time,unknownTime:a.unknownTime,tz:a.tz||Intl.DateTimeFormat().resolvedOptions().timeZone,place:a.place})}catch(e){return null}}
+const mySun=()=>{const c=myChart();return c&&c.sun.sign};
+const signTxt=b=>!b?"—":b.sign||(b.either?b.either.join(" or "):"—");
+function todaySky(){const z=Intl.DateTimeFormat().resolvedOptions().timeZone,k=fcToday();if(todaySky.k!==k){todaySky.k=k;try{todaySky.v=Astro.sky(k,z)}catch(e){todaySky.v=null}}return todaySky.v}
+function cosmicOutlook(){const sky=todaySky(),sun=mySun();if(!sky||!sun)return null;const rel=ELEM_REL(ELEM[sky.moon],ELEM[sun]);
+  const line={same:"The Moon is in your element today, so things feel easy and familiar.",complement:"The Moon sits in a friendly element for you; let it carry you a little.",contrast:"The Moon is in a contrasting element; small irritations may be louder than they are.",mix:"A neutral sky for you; your choices set the tone."}[rel];
+  return{sun,sky,rel,head:MOON_THEME[sky.moon],line,venus:"Venus in "+sky.venus+" favors "+VENUS_THEME[sky.venus]+".",merc:(sky.mercuryRetro?"Mercury is retrograde: double-check plans and be patient with misunderstandings. ":"Mercury in "+sky.mercury+". ")+MERC_THEME[ELEM[sky.mercury]]}}
+async function theirAstro(id){const r=Soc.rel[id],d=(Soc.astro||{})[id];if(!r||!d)return null;const it=(d.items||[]).find(x=>x&&x.k===r.in);if(!it)return null;
+  try{const v=Soc.cache["as"+it.c]||(Soc.cache["as"+it.c]=await K.decJ(r.key,it.c));return v&&Astro.SIGNS.includes(v.sun)?{sun:v.sun,moon:Astro.SIGNS.includes(v.moon)?v.moon:null,venus:Astro.SIGNS.includes(v.venus)?v.venus:null,mars:Astro.SIGNS.includes(v.mars)?v.mars:null,cards:!!v.cards}:null}catch(e){return null}}
+async function shareAstro(){const sh=S.astro.share||{},items=[],c=myChart();if(!c||!Soc.ready()){await Soc.write("astro",null);return}
+  for(const[id,lvl] of Object.entries(sh)){const r=Soc.rel[id];if(!r||!r.mutual||!lvl)continue;const p={sun:c.sun.sign,cards:!!(S.astro.cards||{})[id]};
+    if(lvl==="chart"){p.moon=c.moon.sign||null;p.venus=c.venus.sign||null;p.mars=c.mars.sign||null}items.push({k:r.out,c:await K.encJ(r.key,p)})}
+  await Soc.write("astro",items.length?{items}:null)}
+function coupleCosmos(me,them){const sky=todaySky();if(!sky)return null;const rel=ELEM_REL(ELEM[me.sun],ELEM[them.sun]),P=PAIR[rel],extra=[];
+  if(me.venus&&them.mars){extra.push("Your Venus in "+me.venus+" and their Mars in "+them.mars+": "+(ELEM_REL(ELEM[me.venus],ELEM[them.mars])==="contrast"?"attraction with an edge.":"attraction that comes easily."))}
+  if(me.moon&&them.moon)extra.push("Moons in "+me.moon+" and "+them.moon+": "+(ELEM_REL(ELEM[me.moon],ELEM[them.moon])==="contrast"?"you comfort each other differently, so ask what helps.":"you tend to comfort each other in similar ways."));
+  const mrel=[ELEM_REL(ELEM[sky.moon],ELEM[me.sun]),ELEM_REL(ELEM[sky.moon],ELEM[them.sun])];
+  const daily=mrel[0]===mrel[1]?"Today's Moon in "+sky.moon+" sits the same way for both of you. An easy day to be on the same page.":"Today's Moon in "+sky.moon+" suits one of you more than the other. Meet in the middle.";
+  return{rel,P,extra,daily,romance:"Venus in "+sky.venus+": "+VENUS_THEME[sky.venus]+".",talk:(sky.mercuryRetro?"Mercury retrograde: slow down, repeat back what you heard. ":"")+MERC_THEME[ELEM[sky.mercury]]}}
+function weekSky(){const z=Intl.DateTimeFormat().resolvedOptions().timeZone,out=[];for(let i=0;i<7;i++){const k=dayKey(Date.now()+i*DAY);try{const s=Astro.sky(k,z);out.push([k,s.moon])}catch(e){}}return out}
+
+/* ---------- age gate (onboarding step and, for older accounts, a one-time page) ---------- */
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function dobFrom(o){if(!o.y||!o.m||!o.d)return null;const dim=new Date(+o.y,+o.m,0).getDate();if(+o.d>dim)return null;return o.y+"-"+String(o.m).padStart(2,"0")+"-"+String(o.d).padStart(2,"0")}
+function vDob(o,nav,pre){pre=pre||"ob";const ty=new Date().getFullYear(),dob=dobFrom(o),a=dob?Astro.age(dob,fcToday()):null;
+  return`<div class="mid"><h3>When were you born?</h3><h1>VOUZ is for <em>adults 18 and older.</em></h1>
+   <div class="dob" role="group" aria-label="Date of birth"><label class="f" for="${pre}-m">Month<select id="${pre}-m" data-bind="${pre}.m" data-live="1"><option value="">Month</option>${MONTHS.map((m,i)=>`<option value="${i+1}" ${+o.m===i+1?"selected":""}>${m}</option>`).join("")}</select></label>
+    <label class="f" for="${pre}-d">Day<select id="${pre}-d" data-bind="${pre}.d" data-live="1"><option value="">Day</option>${Array.from({length:31},(_,i)=>`<option value="${i+1}" ${+o.d===i+1?"selected":""}>${i+1}</option>`).join("")}</select></label>
+    <label class="f" for="${pre}-y">Year<select id="${pre}-y" data-bind="${pre}.y" data-live="1"><option value="">Year</option>${Array.from({length:100},(_,i)=>ty-i).map(y=>`<option value="${y}" ${+o.y===y?"selected":""}>${y}</option>`).join("")}</select></label></div>
+   <p class="agechk ${a==null?"":a>=18?"ok":"no"}" role="status" aria-live="polite">${o.y&&o.m&&o.d&&!dob?"That date doesn't exist.":a==null?"Your age is worked out from this, nothing else.":a>=18?"You're "+a+". Welcome.":"VOUZ is only for people 18 and older."}</p>
+   <p class="tiny">Your birthday stays private: never shown on your profile, never shared with a partner, never on a card. It's used to confirm you're an adult and, if you want, to work out your sign. Entering a birthday is a self-declaration, not proof of age.</p></div>${nav("Continue",!(a!=null&&a>=0))}`}
+function ageDecide(o){const dob=dobFrom(o);if(!dob)return"none";const a=Astro.age(dob,fcToday());if(a<18){S.ageBlock={at:Date.now()};S.age=null;save();return"blocked"}
+  S.age={dob,at:Date.now(),method:"self-declared"};S.astro=Object.assign({on:true,time:null,unknownTime:false,place:null,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,share:{},cards:{}},S.astro||{});save();return"ok"}
+const vBlocked=()=>`<div class="ob"><div class="mid"><div class="mark" style="font-size:64px">vouz<b>.</b></div><h1>VOUZ isn't <em>for you yet.</em></h1><p class="sub">It's an experience for adults 18 and older. We haven't kept the birthday you entered.</p><p class="tiny">If you need support or someone to talk to, a trusted adult or a school counselor is a good place to start.</p></div></div>`;
+function vCosmicReveal(nav){const sun=mySun()||"";
+  return`<div class="mid creveal"><span class="fk">Your cosmic identity</span><span class="fw">${esc(sun.toUpperCase())}</span><p class="fl">${esc(SIGN_TAG[sun]||"")}</p>
+   <p class="tiny">Your Sun sign, worked out from your birthday. Astrology in VOUZ is for fun and reflection, not a personality test. You can turn it off any time.</p></div>${nav("Continue")}`}
+function vGoDeeper(o,nav){const a=S.astro,c=myChart();
+  return`<div class="mid"><h3>Go deeper</h3><h1>Unlock more detailed <em>cosmic forecasts.</em></h1><p class="sub">Optional. Your Moon, Venus and Mars need your birth date; your Rising sign also needs a birth time and place.</p>
+   ${astroDetailsForm(o)}${c?`<p class="small">${chartLine(c)}</p>`:""}</div>
+   <div class="row"><button class="btn ghost" data-act="obBack" aria-label="Back">${ic("back")}</button><button class="btn ghost grow" data-act="obSkipDeeper">Skip</button><button class="btn primary grow" data-act="obDeeper">Save</button></div>`}
+function astroDetailsForm(o){const a=S.astro||{},zones=(()=>{try{return Intl.supportedValuesOf("timeZone")}catch(e){return[a.tz||"UTC"]}})();
+  return`<label class="f" for="as-time">Birth time <em>Optional</em><input type="time" id="as-time" value="${esc(o.time!=null?o.time:a.time||"")}" ${(o.unknown!=null?o.unknown:a.unknownTime)?"disabled":""}></label>
+   ${sw("asUnknown",o.unknown!=null?o.unknown:!!a.unknownTime,"I don't know my birth time","Rising sign needs it, so it won't be shown.")}
+   <label class="f" for="as-place">Birth city and country <em>Optional</em><input type="text" id="as-place" maxlength="80" placeholder="e.g. Manila, Philippines" value="${esc(o.place!=null?o.place:(a.place&&a.place.label)||"")}" autocomplete="off"></label>
+   <label class="f" for="as-tz">Time zone where you were born<select id="as-tz">${zones.map(z=>`<option ${z===(o.tz||a.tz)?"selected":""}>${esc(z)}</option>`).join("")}</select></label>
+   ${o.err?`<p class="err" role="alert">${esc(o.err)}</p>`:""}`}
+const chartLine=c=>[["Sun",c.sun],["Moon",c.moon],["Venus",c.venus],["Mars",c.mars]].concat(c.rising?[["Rising",c.rising]]:[]).map(([l,b])=>`${l} <b>${esc(signTxt(b))}</b>`).join(" · ");
+async function saveAstroDetails(o){const a=S.astro,time=(($("#as-time")||{}).value||"").trim(),unknown=!!(o.unknown!=null?o.unknown:a.unknownTime),place=(($("#as-place")||{}).value||"").trim().slice(0,80),tz=(($("#as-tz")||{}).value||a.tz);
+  a.unknownTime=unknown;a.time=unknown?null:(/^\d{2}:\d{2}$/.test(time)?time:null);a.tz=tz;o.err="";
+  if(place&&(!a.place||a.place.label!==place)){const g=await Disc.geocode(place).catch(()=>null);a.place={label:place,lat:g?g.lat:null,lon:g?g.lon:null};if(!g&&a.time)o.err="Saved. To work out your Rising sign, VOUZ needs Mapbox connected to find "+place+" on the map."}
+  else if(!place)a.place=null;save()}
+
+/* ---------- profile: astrology settings ---------- */
+function vAstro(){const a=S.astro||{},c=myChart(),o=ui.astroF=ui.astroF||{},conns=Soc.ready()?Soc.conns():[];
+  if(!S.age)return hdr("Astrology")+`<div class="scroll"><p class="sub">Add your birthday first.</p></div>`;
+  return hdr("Astrology")+`<div class="scroll ins">
+   ${sw("asOn",!!a.on,"Use astrology in VOUZ","Cosmic outlooks, your signs, and couple astrology. Off: none of it is shown or used.")}
+   ${a.on&&c?`<section class="isec"><h3>Your signs</h3><dl class="ipat">${[["Sun",c.sun],["Moon",c.moon],["Venus",c.venus],["Mars",c.mars],["Rising",c.rising]].map(([l,b])=>`<div><dt>${l}</dt><dd>${b?esc(signTxt(b))+(b.either?" <span class='tiny'>(add your birth time to know which)</span>":""):`<span class="tiny">${a.unknownTime?"Needs a birth time":!a.time?"Add a birth time and place":"Needs your birthplace on the map"}</span>`}</dd></div>`).join("")}</dl>
+     <p class="tiny">Calculated on this device with standard astronomical methods. Astrology is for fun and reflection, not fact.</p></section>
+   <section class="isec"><h3>Birth details</h3>${astroDetailsForm(o)}<div class="row"><button class="btn primary grow" data-act="asSave">Save</button><button class="btn ghost grow" data-act="asDelete">Delete birth time and place</button></div></section>
+   ${conns.length?`<section class="isec"><h3>Share with a partner</h3><p class="sub small">They see only the signs you choose. Never your birthday, birth time or birthplace. With more than one partner, each pairing is separate.</p>
+     ${conns.map(id=>{const lvl=(a.share||{})[id]||"";return`<div class="col" style="gap:6px"><b>${esc(Soc.handle(id))}</b><div class="chips sm">${[["","Nothing"],["sun","Sun sign"],["chart","Sun, Moon, Venus, Mars"]].map(([v,l])=>`<button class="chip" data-act="asShare" data-id="${esc(id)}" data-v="${v}" aria-pressed="${lvl===v}">${l}</button>`).join("")}</div>
+       ${lvl?sw("asCards",!!(a.cards||{})[id],"Let them put my sign on share cards","Off: they can see it in VOUZ but not share it.","data-id=\""+esc(id)+"\""):""}</div>`}).join("")}</section>`:""}`:""}
+   <section class="isec"><h3>Birthday</h3><p class="sub small">Kept private, used to confirm you're 18+ and for your signs. ${esc(new Date(S.age.dob+"T12:00").toLocaleDateString(undefined,{month:"long",day:"numeric"}))}.</p><button class="link small" data-act="asFixDob" style="align-self:flex-start">Correct my birthday</button></section></div>`}
+
+/* ---------- insights: cosmic sections ---------- */
+function cosmicSection(){const co=cosmicOutlook();if(!co)return"";
+  return`<section class="isec" aria-labelledby="h-cos"><div class="row between"><h3 id="h-cos">Cosmic outlook</h3><span class="ftag">Astrology · for fun</span></div>
+   <p class="cosl">${esc(co.head)}</p><p class="sub small">${esc(co.line)}</p><button class="link small" style="align-self:flex-start" data-act="page" data-page="cosmic">Full horoscope and cosmic connection</button></section>`}
+function vCosmic(){const co=cosmicOutlook(),d=ui.cos=ui.cos||{};if(!co)return hdr("Cosmic")+`<div class="scroll"><p class="sub">Turn on astrology in Profile → Astrology to see this.</p></div>`;
+  if(!d.loaded){d.loaded=true;(async()=>{const out=[];if(Soc.ready())for(const id of Soc.conns()){const t=await theirAstro(id);if(t)out.push({id,t})}d.partners=out;render()})()}
+  const c=myChart(),me={sun:c.sun.sign,moon:c.moon.sign,venus:c.venus.sign,mars:c.mars.sign},wk=weekSky(),ps=d.partners||[];
+  return hdr("Cosmic")+`<div class="scroll ins"><p class="tiny">Astrology is for fun and reflection. Nothing here is a measurement of you or your relationship.</p>
+   <section class="isec"><h3>Your horoscope</h3><p class="cosl">${esc(co.head)}</p><p>${esc(co.line)}</p><p class="sub small">${esc(co.venus)} ${esc(co.merc)}</p></section>
+   ${ps.length?ps.map(({id,t})=>{const cc=coupleCosmos(me,t);return`<section class="isec"><div class="row between"><h3>Cosmic connection</h3><span class="tiny">You & ${esc(Soc.handle(id))}${ps.length>1?" (just you two)":""}</span></div>
+     <div class="cpair"><span>${esc(me.sun)}</span><b>${cc.P.w}</b><span>${esc(t.sun)}</span></div><p>${esc(cc.P.l)}</p>
+     ${cc.extra.map(x=>`<p class="sub small">${esc(x)}</p>`).join("")}
+     <dl class="ipat"><div><dt>Today</dt><dd>${esc(cc.daily)}</dd></div><div><dt>Romance</dt><dd>${esc(cc.romance)}</dd></div><div><dt>Talking</dt><dd>${esc(cc.talk)}</dd></div></dl></section>`}).join("")
+     :`<section class="isec"><h3>Cosmic connection</h3><p class="sub small">${Soc.ready()&&Soc.conns().length?"When your partner shares their sign with you (Profile → Astrology), your pairing, couple horoscope and themes appear here.":"Connect with your partner, then share signs with each other in Profile → Astrology."}</p></section>`}
+   <section class="isec"><h3>The week ahead</h3><dl class="ipat">${wk.map(([k,m])=>`<div><dt>${esc(new Date(k+"T12:00").toLocaleDateString(undefined,{weekday:"short"}))}</dt><dd>Moon in ${esc(m)}: ${esc(MOON_THEME[m].replace(/^The Moon in \w+ /,"").replace(/^makes/,"makes"))}</dd></div>`).join("")}</dl></section></div>`}
+
+Object.assign(A,{
+  asOn(){S.astro.on=!S.astro.on;save();if(!S.astro.on&&Soc.ready())shareAstro().catch(()=>{});render()},
+  asUnknown(){const o=ui.ob.step===3&&!S.onboarded?ui.ob:(ui.astroF=ui.astroF||{});o.unknown=!(o.unknown!=null?o.unknown:S.astro.unknownTime);o.time=(($("#as-time")||{}).value)||o.time;o.place=(($("#as-place")||{}).value)??o.place;render()},
+  async asSave(){await saveAstroDetails(ui.astroF=ui.astroF||{});const keep=ui.astroF.err;ui.astroF={err:keep};if(Soc.ready())shareAstro().catch(()=>{});render();if(!keep)toast("Saved.")},
+  asDelete(){sheet({type:"confirm",title:"Delete birth time and place?",body:"Your Sun, Moon, Venus and Mars stay (they only need your birthday). Rising goes.",yes:"Delete",danger:true,fn(){S.astro.time=null;S.astro.place=null;S.astro.unknownTime=false;ui.astroF={};save();if(Soc.ready())shareAstro().catch(()=>{});render();toast("Deleted.")}})},
+  async asShare(e){S.astro.share=S.astro.share||{};S.astro.share[e.dataset.id]=e.dataset.v||null;if(!e.dataset.v&&S.astro.cards)delete S.astro.cards[e.dataset.id];save();render();try{await shareAstro();toast(e.dataset.v?"Shared.":"Stopped sharing.")}catch(x){toast("That couldn't be saved.")}},
+  async asCards(e){const id=e.dataset.id;S.astro.cards=S.astro.cards||{};S.astro.cards[id]=!S.astro.cards[id];save();render();try{await shareAstro()}catch(x){}},
+  asFixDob(){ui.dobFix={m:"",d:"",y:""};openPage({type:"dobFix",from:ui.page})},
+  dobFixSave(){const o=ui.dobFix,dob=dobFrom(o);if(!dob)return;if(Astro.age(dob,fcToday())<18){ui.dobFix.err="That date makes you under 18. VOUZ is only for adults, so it can't be saved.";return render()}
+    S.age={dob,at:Date.now(),method:"self-declared"};save();ui.page=null;ui.astroF={};if(Soc.ready())shareAstro().catch(()=>{});render();toast("Birthday updated.")},
+  obSkipDeeper(){ui.ob.step++;render(true)},
+  async obDeeper(){await saveAstroDetails(ui.ob);ui.ob.err="";ui.ob.step++;render(true)},
+  gateNext(){const r=ageDecide(ui.gate);if(r==="ok"){ui.gate=null;render(true)}else render(true)}
+});
+document.addEventListener("change",ev=>{const t=ev.target;if(t.tagName==="SELECT"&&t.dataset&&t.dataset.live){const [o,k]=t.dataset.bind.split(".");const tgt={ob:ui.ob,gate:ui.gate,dobFix:ui.dobFix}[o];if(tgt){tgt[k]=t.value;render()}}});
+
 function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={guide:ui.guide,dsc:ui.dsc,feed:ui.feed,pc:ui.pc,me:ui.me,cp:ui.cp,soc:ui.soc,ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
 document.addEventListener("input",ev=>{bind(ev.target);const sid=ev.target.id;if(sid==="f-q"||sid==="s-q"||sid==="pc-loc"){clearTimeout(bind.t);bind.t=setTimeout(()=>{ui.feed.n=10;render();const el=document.getElementById(sid);if(el){el.focus();const n=el.value.length;try{el.setSelectionRange(n,n)}catch(x){}}},250)}if(ev.target.id==="mc-cap"){clearTimeout(refreshCard.t);refreshCard.t=setTimeout(refreshCard,250)}if(ev.target.id==="c-title"){const b=$(".share .big");if(b)b.textContent=ev.target.value||"Less scrolling. More together."}});
@@ -3138,7 +3354,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&S.onboarde
 window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.onboarded&&!ui.locked&&TABS().some(x=>x[0]===t)&&(t!==ui.tab||ui.page)&&!legacySessions().length){ui.tab=t;ui.page=null;ui.sheet=null;render(true)}});
 
 /* ============ boot ============ */
-(function boot(){normCats();S.shareDefaults=Object.assign({theme:"editorial",type:"serif",bg:"wine",fmt:"story",brand:"full"},S.shareDefaults||{});S.fc=Object.assign({on:true,checkins:{},hist:{},ai:false,closeIdeas:false,together:false,showEnergy:false,with:null},S.fc||{});S.disc=Object.assign({loc:null,saved:[],fb:{},kinds:{},hist:[],learn:true,ai:true,travel:"any",maxKm:8,budget:null,shareWith:[]},S.disc||{});
+(function boot(){normCats();normState();
   try{if(window.claude&&window.claude.use)window.claude.use("sample").then(f=>{SAMPLE=f||null;if(ui.tab==="discover"&&!typing())render()}).catch(()=>{})}catch(e){}const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
   if(S.onboarded&&S.settings.pinHash)ui.locked=true;
   if(S.active){ui.tab="intimacy";ui.int.seg="track"}
@@ -3148,7 +3364,7 @@ window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.on
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 })();
-window.__vouz={shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+window.__vouz={Astro,shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>

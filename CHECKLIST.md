@@ -38,10 +38,11 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 | Weekly streaks on screen | Logic only (`core/streaks.js`); intimacy is deliberately never part of a streak |
 | Apple Watch, HealthKit | Source only (`watch/`), never compiled |
 | Subscriptions | Logic only (`core/entitlements.js`); no purchase screen |
-| Supabase as the backend | Schema and policies tested locally (167 checks); not deployed; app not switched over |
+| Supabase as the backend | Schema and policies tested locally (208 checks); not deployed; app not switched over |
 | iOS/Android builds | Blocked: no Capacitor packages, Android SDK or Xcode here |
 
 | Social feed: Explore & Friends | Done in the web app: posts with media, visibility, likes, comments, saves, share, edit, report, block, profiles, couple profiles, notifications, moderation. Server version in migration 0005, tested locally, not deployed |
+| 18+ gate and astrology | Done in the web app: birthday gate in onboarding and for existing accounts, Sun/Moon/Rising/Venus/Mars, Cosmic Connection, cosmic forecast and cards. Server-side 18+ check in migration 0008, tested locally, not deployed |
 | Shareable memory cards | Done in the web app. Native share plugin path written, untested; Instagram "Share to Stories" direct button needs the native app and a Meta app ID |
 
 ## Known limits
@@ -66,6 +67,10 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 - **Precise location** in the artifact depends on the browser allowing it; typing an area always works.
 - **Merchant rewards:** none. VOUZ has no merchant partners and doesn't reward claimed visits.
 - **Forecast together** works for two people; Poly groups get individual forecasts. If both partners open VOUZ at the same moment before syncing, the one with the earlier account id wins and the other's view switches to it.
+- **Age check in the web app** runs on the device; the artifact has no server of its own. Someone editing browser storage could get past it there. The real enforcement is migration 0008 (server date, one entry function, a trigger on every write), which isn't deployed.
+- **Self-declared age** is a gate, not proof. Age assurance beyond that (ID or face estimation, e.g. Yoti, Persona, Stripe Identity) needs an outside provider and your approval; not built.
+- **Astrology accuracy:** Sun and Moon within about 0.01° and 0.05° of Meeus's worked examples; planets from JPL's approximate elements (good to a fraction of a degree for 1800–2050). A planet within a fraction of a degree of a cusp could land in the neighbouring sign. Birth places need Mapbox to find coordinates for Rising.
+- **Cosmic connection with Poly partners** is pairwise only; there's no group chart.
 - **Photos** are on one device only. Clearing browser data deletes them.
 - **Poly matching** requires every member to pick before anything is revealed.
 - Confirmation invites aren't updated if the session is edited after sending.

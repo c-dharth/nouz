@@ -15,7 +15,7 @@ def can_write(u,p):
     s=p.split('/')
     if p.startswith('data/users/'): return s[2]==u
     if u=='dave' and s[0]=='posts': return True   # the owner can moderate
-    return s[0] in('profiles','posts','reactions','comments','links','invites','spaces','exps','match','consent','reports','couples','media','prefs','fcheck','fcast') and s[1]==u
+    return s[0] in('profiles','posts','reactions','comments','links','invites','spaces','exps','match','consent','reports','couples','media','prefs','fcheck','fcast','astro') and s[1]==u
 def db_get(src,u,p): return STORE.get(p) if can_read(u,p) else None
 def db_set(src,u,p,d):
     if not can_write(u,p): raise Exception('invalid_argument')
@@ -60,9 +60,13 @@ def act(p,act_,**kw):
     sel=f'[data-act="{act_}"]'+''.join(f'[data-{k}="{v}"]' for k,v in kw.items())
     p.locator(sel).first.click()
 def S(p): return p.evaluate("JSON.parse(JSON.stringify(window.__vouz.S))")
-def onboard(p,social=False,account=False):
+def dob(p,pre,y,m,d):
+    p.select_option(f"#{pre}-m",str(m)); p.select_option(f"#{pre}-d",str(d)); p.select_option(f"#{pre}-y",str(y)); p.wait_for_timeout(50)
+def onboard(p,social=False,account=False,born=(1995,11,8),deeper=None):
     act(p,"obNext"); assert p.locator('[data-act="obNext"]').is_disabled()
-    act(p,"obAdult"); act(p,"obNext")
+    dob(p,"ob",*born); act(p,"obNext"); act(p,"obNext")
+    if deeper: deeper(p)
+    else: act(p,"obSkipDeeper")
     if account: act(p,"obMode",mode="account")
     p.fill("#ob-name","Sid")
     if social: act(p,"obSocial")
@@ -110,8 +114,23 @@ with sync_playwright() as pw:
     b=pw.chromium.launch(executable_path="/usr/bin/google-chrome",args=["--no-sandbox"])
     # ---------- local mode ----------
     ctx,p=newctx(b); p.goto(URL); p.wait_for_selector(".ob")
-    ok("onboarding is 3 steps with required 18+ acknowledgment",p.locator(".steps i").count()==3)
-    onboard(p)
+    # ---------- 18+ gate ----------
+    cx,q=newctx(b); q.goto(URL); q.wait_for_selector(".ob"); act(q,"obNext")
+    t=q.inner_text(".ob"); ok("age: its own step, asks for a birthday, says 18+","when were you born" in t.lower() and "18 and older" in t and q.locator('[data-act="obNext"]').is_disabled())
+    dob(q,"ob",2007,2,31); ok("age: impossible dates are caught","doesn't exist" in q.inner_text(".ob"))
+    import datetime as _dt; td=_dt.date.today(); tm=td+_dt.timedelta(days=1)
+    dob(q,"ob",tm.year-18,tm.month,tm.day); ok("age: one day short of 18 is under 18, shown live","only for people 18 and older" in q.inner_text(".ob"))
+    act(q,"obNext"); ok("age: under-18 is turned away and the birthday isn't kept","isn't for you yet" in q.inner_text("#app").lower() and S(q).get("age") is None and S(q).get("ageBlock"))
+    q.reload(); q.wait_for_timeout(400); ok("age: still turned away after reloading","isn't for you yet" in q.inner_text("#app").lower())
+    cx.close()
+    cx,q=newctx(b); q.goto(URL); q.wait_for_selector(".ob"); act(q,"obNext"); dob(q,"ob",td.year-18,td.month,td.day)
+    ok("age: an 18th birthday today is allowed",("You're 18" in q.inner_text(".ob")) and not q.locator('[data-act="obNext"]').is_disabled()); cx.close()
+    ok("onboarding: welcome, birthday, sign, optional details, setup",p.locator(".steps i").count()==5)
+    act(p,"obNext"); dob(p,"ob",1995,11,8); act(p,"obNext")
+    t=p.inner_text(".ob"); ok("sign: worked out from the birthday, shown as a cosmic identity, framed as for fun","SCORPIO" in t and "Unapologetically deep" in t and "not a personality test" in t)
+    act(p,"obNext"); t=p.inner_text(".ob"); ok("go deeper: optional, skippable, explains what Rising needs","go deeper" in t.lower() and p.locator('[data-act="obSkipDeeper"]').count()==1 and "Rising" in t)
+    p.fill("#as-time","14:30"); act(p,"obDeeper"); p.fill("#ob-name","Sid"); act(p,"obNext")
+    a0=S(p); ok("age record and astrology kept apart; birthday private",a0["age"]["dob"]=="1995-11-08" and a0["age"]["method"]=="self-declared" and a0["astro"]["time"]=="14:30" and "dob" not in a0["astro"])
     s=S(p); ok("onboarding: social off by default, local mode",s["onboarded"] and not s["settings"]["social"] and s["user"]["mode"]=="local")
     ok("nav: five tabs: Home, Sessions, Insights, Share, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Sessions","Insights","Share","Profile"] and p.locator(".feedsec").count()==1)
     t=p.inner_text(".scroll"); ok("home: a new account gets one welcome card, no fabricated stats","Start your" in t and "story." in t and p.locator(".trio").count()==0 and p.locator(".sec").count()==0)
@@ -406,6 +425,16 @@ with sync_playwright() as pw:
     ok("pulse: shows their energy only because they allowed it","REFLECTIVE" in a.inner_text(".pulse") and "PRIVATE" in bb.inner_text(".pulse"))
     ok("together: the forecast never draws on intimacy records","Just for you two" not in a.inner_text(".scroll"))
     act(a,"fcTogether"); a.wait_for_timeout(600); ok("together: turning it off removes what was shared",STORE.get("fcheck/alice") in (None,{}) and STORE.get("fcast/alice") in (None,{}))
+    # couple astrology: alice shares her Sun only, and allows it on cards; bob shares nothing
+    nav(a,"profile"); act(a,"page",page="astro"); act(a,"asShare",id="bob",v="sun"); a.wait_for_timeout(400); act(a,"asCards",id="bob"); a.wait_for_timeout(900); bb.wait_for_timeout(600)
+    raw=json.dumps(STORE.get("astro/alice"))
+    ok("couple astro: shared encrypted, never the birthday",STORE.get("astro/alice") and not any(x in raw for x in ["Scorpio","1995","dob","14:30"]))
+    nav(bb,"insights"); bb.wait_for_timeout(300); act(bb,"page",page="cosmic"); bb.wait_for_timeout(1200); t=bb.inner_text(".scroll")
+    ok("couple astro: partner sees the pairing and themes, from only the Sun sign alice chose to share","cosmic connection" in t.lower() and "Scorpio" in t and "Romance" in t and "Moons in" not in t)
+    act(bb,"back"); nav(bb,"share"); bb.wait_for_timeout(1500); nav(bb,"home"); nav(bb,"share"); bb.wait_for_timeout(600)
+    ok("couple astro: her sign can go on bob's cards only because she allowed it",bb.locator('.shtile[data-k="compat"]').count()==1 and bb.locator('.shtile[data-k="couplehoro"]').count()==1)
+    nav(a,"profile"); act(a,"page",page="astro"); act(a,"asShare",id="bob",v=""); a.wait_for_timeout(800)
+    ok("couple astro: sharing can be stopped",STORE.get("astro/alice") in (None,{}))
     # J8 social off (keep) -> nothing left in shared storage, stashed privately; back on -> restored
     nav(a,"profile"); act(a,"toggleSocial"); act(a,"socialOffYes"); a.wait_for_timeout(900)
     ok("J8 Social off: nothing of mine left in shared storage, tracking intact",not any(k.endswith("/alice") and not k.startswith("data/") for k in STORE) and "data/users/alice/stash" in STORE and a.locator('[data-page="spaces"]').count()==0 and len(S(a)["sessions"])==1,str([k for k in STORE if "alice" in k]))
@@ -415,7 +444,7 @@ with sync_playwright() as pw:
     nav(a,"profile"); act(a,"toggleSocial"); act(a,"sheetWipe"); act(a,"socialOffYes"); a.wait_for_timeout(900)
     ok("J8 Social off with delete: shared content, stash and keys gone",not any("alice" in k for k in STORE if k!="data/users/alice/vault"),str([k for k in STORE if "alice" in k]))
     # sync merge across devices
-    ca2,a2=newctx(b,"alice"); a2.goto(URL); a2.wait_for_timeout(400); act(a2,"obNext"); act(a2,"obAdult"); act(a2,"obNext"); act(a2,"obMode",mode="account"); a2.wait_for_selector('[data-act="obRestore"]'); act(a2,"obRestore"); a2.wait_for_timeout(300)
+    ca2,a2=newctx(b,"alice"); a2.goto(URL); a2.wait_for_timeout(400); act(a2,"obNext"); dob(a2,"ob",1990,1,1); act(a2,"obNext"); act(a2,"obNext"); act(a2,"obSkipDeeper"); act(a2,"obMode",mode="account"); a2.wait_for_selector('[data-act="obRestore"]'); act(a2,"obRestore"); a2.wait_for_timeout(300)
     ok("second device restores from private sync",len(S(a2)["sessions"])==1 and S(a2)["sessions"][0]["notes"]=="SECRETNOTE")
     log(a2,"fromdevice2",12); a2.wait_for_timeout(1700)
     nav(a,"history"); act(a,"openReplay",id=sid); act(a,"editSession",id=sid); act(a,"askDelete"); act(a,"confirmYes"); a.wait_for_timeout(1700)
@@ -434,7 +463,10 @@ with sync_playwright() as pw:
          "sessions":[L("osolo","solo",3),L("opart","partnered",2),L("oduo","duo",4),L("otrio","trio",5),L("ogrp","group",6,groupSize=6),L("ogrpx","group",7),L("onone",None,8)],
          "active":None,"draft":None,"blocks":[],"ignored":[]}
     ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script("if(!localStorage.getItem('vouz.v1'))localStorage.setItem('vouz.v1',"+json.dumps(json.dumps(LEG))+")")
-    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)+" @ "+str(getattr(e,"stack",""))[:600])); p.goto(URL); p.wait_for_selector(".sheet")
+    p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)+" @ "+str(getattr(e,"stack",""))[:600])); p.goto(URL); p.wait_for_timeout(400)
+    ok("existing accounts: asked for a birthday once before going in","when were you born" in p.inner_text("#app").lower() and p.locator(".tabs").count()==0)
+    dob(p,"gate",1990,5,5); act(p,"gateNext"); p.wait_for_selector(".sheet")
+    ok("existing accounts: in after a valid birthday",S(p)["age"]["dob"]=="1990-05-05")
     t=p.inner_text(".sheet"); ok("legacy: a notice explains the change before anything is removed","1 Solo session and 1 Partnered session" in t and len(S(p)["sessions"])==7,t[:160])
     by={x["id"]:x for x in S(p)["sessions"]}
     ok("legacy: Duo becomes Couple, Trio and Group become Poly with their head count",[by[k]["category"] for k in ("oduo","otrio","ogrp","ogrpx")]==["couple","poly","poly","poly"] and [by[k]["participants"] for k in ("oduo","otrio","ogrp","ogrpx")]==[2,3,6,4] and "groupSize" not in by["ogrp"])
@@ -518,8 +550,9 @@ with sync_playwright() as pw:
     ok("insights: patterns are honest when there's nothing yet","Nothing here is guessed" in th)
     act(p,"page",page="forecast"); p.wait_for_selector(".fcard .fw:not(.shimmer)")
     w0=p.inner_text(".fcard .fw"); t=p.inner_text(".scroll")
-    ok("forecast: the full forecast opens from Insights with the same word, honest about having nothing to go on",w0==hw and w0 in ["UNWRITTEN","CURIOUS","OPEN","WARM","PLAYFUL","SERENE"] and t.count("Not enough to go on")==4)
-    ok("forecast: three sections, each labelled observed, reflection or suggestion",all(x in t.lower() for x in ["your connection","what to embrace","what to watch"]) and p.locator(".ftag").count()==3)
+    ok("forecast: the full forecast opens from Insights with the same word, honest about having nothing to go on",w0==hw and w0 in ["UNWRITTEN","CURIOUS","OPEN","WARM","PLAYFUL","SERENE","ELECTRIC","BOLD","SPARKED","STEADY","DEVOTED","UNHURRIED","TENDER","INTIMATE","MAGNETIC"] and t.count("Not enough to go on")==4)
+    ok("forecast: with no check-ins yet, the word comes from the stars and says so","Word from the stars" in t and "astrology, for fun" in t and "cosmic outlook" in t.lower())
+    ok("forecast: three sections, each labelled observed, reflection or suggestion",all(x in t.lower() for x in ["your connection","what to embrace","what to watch"]) and p.locator(".fsec .ftag").count()==3)
     ok("forecast: no numbers on the energies","%" not in p.inner_text(".fdims") and not re.search(r"\d",p.inner_text(".fdims")))
     p.reload(); p.wait_for_timeout(400); nav(p,"forecast"); p.wait_for_selector(".fcard .fw:not(.shimmer)"); ok("forecast: same forecast after reopening (no re-roll)",p.inner_text(".fcard .fw")==w0 and len(S(p)["fc"]["hist"])==1)
     act(p,"fcE",v="Tender"); act(p,"fcC",v="5"); act(p,"fcW",v="closeness"); act(p,"fcCkSave"); p.wait_for_timeout(200)
@@ -546,6 +579,24 @@ with sync_playwright() as pw:
     ok("editor: choices are remembered for next time",S(p)["shareDefaults"]["theme"]=="minimal" and S(p)["shareDefaults"]["fmt"]=="square")
     act(p,"shSave"); p.wait_for_selector(".toast"); ok("export: only on tap, with an honest message when saving isn't available",p.locator(".toast").count()==1)
     p.screenshot(path=SH+"share-edit.png"); act(p,"back"); p.wait_for_timeout(300); p.screenshot(path=SH+"share.png"); nav(p,"insights"); p.wait_for_timeout(300); p.screenshot(path=SH+"insights.png"); ctx.close()
+    # ---------- astrology ----------
+    ctx,p=newctx(b); p.goto(URL); p.wait_for_timeout(300)
+    def deep(pg): pg.fill("#as-time","14:30"); pg.fill("#as-place","Mission District"); act(pg,"obDeeper")
+    onboard(p,born=(1995,11,8),deeper=deep); nav(p,"profile"); act(p,"page",page="astro"); t=p.inner_text(".scroll")
+    ok("astro: Sun, Moon, Venus, Mars from the birthday; Rising needs the place on a map",all(x in t for x in ["Scorpio","Gemini","Sagittarius"]) and "Needs your birthplace on the map" in t)
+    act(p,"asUnknown"); act(p,"asSave"); p.wait_for_timeout(200); t=p.inner_text(".scroll")
+    ok("astro: with birth time unknown, an uncertain Moon is shown as either sign, never guessed","Taurus or Gemini" in t and "Needs a birth time" in t)
+    act(p,"asDelete"); act(p,"confirmYes"); a1=S(p)["astro"]; ok("astro: birth time and place can be deleted",a1["time"] is None and a1["place"] is None and S(p)["age"]["dob"]=="1995-11-08")
+    act(p,"asFixDob"); dob(p,"dobFix",2012,1,1); act(p,"dobFixSave"); ok("birthday: a correction can't make someone under 18","under 18" in p.inner_text(".scroll") and S(p)["age"]["dob"]=="1995-11-08")
+    act(p,"back"); nav(p,"insights"); p.wait_for_selector(".ihero .fw:not(.shimmer)"); t=p.inner_text(".scroll")
+    ok("insights: cosmic outlook and real connection labelled separately","cosmic outlook" in t.lower() and "astrology · for fun" in t.lower() and "real connection" in t.lower())
+    act(p,"page",page="cosmic"); t=p.inner_text(".scroll"); ok("cosmic page: horoscope, week of Moon signs, and how to add a partner","your horoscope" in t.lower() and t.count("Moon in")>=7 and "cosmic connection" in t.lower())
+    act(p,"back"); nav(p,"share"); p.wait_for_timeout(400); t=p.inner_text(".scroll")
+    ok("share: zodiac and weekly cosmic cards available; partner ones say what they need",p.locator('.shtile[data-k="zodiac"]').count()==1 and p.locator('.shtile[data-k="weeklycos"]').count()==1 and "When a partner lets you share their sign" in t)
+    act(p,"shEdit",k="zodiac"); p.wait_for_selector("#sh-prev canvas"); ok("share: zodiac card renders",p.evaluate("document.querySelector('#sh-prev canvas').height")>=1080)
+    ok("share: no birth details anywhere in the card data",p.evaluate("JSON.stringify(window.__vouz.shData?window.__vouz.shData('zodiac'):'')").find("1995")<0)
+    nav(p,"profile"); act(p,"page",page="astro"); act(p,"asOn"); nav(p,"insights"); p.wait_for_timeout(300)
+    ok("astro: can be turned off; nothing cosmic shows","cosmic outlook" not in p.inner_text(".scroll").lower()); ctx.close()
     # ---------- AI planner (Claude mocked: records exactly what would be sent) ----------
     PMOCK="""window.__prompts=[];window.__planFail=null;(()=>{const f=async()=>({text:''});f.json=async(input,opts)=>{window.__prompts.push({input,opts:Object.keys(opts||{})});if(String(input).includes('connection guide')&&!window.__planFail)return{answer:'You two tend to enjoy outdoor dates. https://evil.example/x',ideas:['hike','nope']};if(window.__planFail)throw {code:window.__planFail};
       return {suggestions:[{title:'<img src=x onerror="window.__xss=1">Sunset walk',why:'Easy and free',cost:'Free',time:'1 hour',setting:'Outdoors',steps:['Pick a spot','Bring a blanket']},{title:'Cook a new recipe',cost:'$',steps:[]},{bogus:1}]}};

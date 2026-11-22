@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.13.0 — 2026-11-21
+
+Added: 18+ gate and astrology.
+- Onboarding asks "When were you born?" before anything else. Age is worked out as you pick the date; under 18 is stopped with a clear screen, and no birth date is kept, only that an attempt was made. Accounts made before 0.13 are asked once at next open. The birth date is private, never shown in the app, on cards or to a partner, and can be corrected in Profile → Astrology.
+- A self-entered birthday is an age gate, not proof of age. The app says so. Stronger age assurance needs an outside provider and isn't wired up.
+- Your Cosmic Identity: the Sun sign straight after the birthday. Go Deeper (optional) adds birth time (or "I don't know") and birth city, for Moon, Rising, Venus and Mars.
+- Placements are calculated, never made up: Sun and Moon from Meeus, Mercury, Venus and Mars from JPL orbital elements, Rising from sidereal time at the birth place. Without a birth time there's no Rising, and a body that changes sign that day is shown as "Taurus or Gemini".
+- Cosmic Connection in Insights: your pairing, element dynamic, today's couple horoscope from the real sky (Moon, Venus, Mercury, retrogrades), romance and communication themes, and the week ahead. Always labelled as reflection, not measurement.
+- Partners see your signs only if you share them, at the level you pick (Sun, Big Three, or all), and only you decide whether they can go on a card. Poly relationships share pairwise. Birth date, time and place are never shared.
+- Daily Forecast: Cosmic Outlook sits beside Real Connection, and the word says what it's based on (your check-ins and memories, the sky, or a fresh start).
+- Share cards: Daily Zodiac Energy, Couple Horoscope, Cosmic Compatibility and Weekly Cosmic Recap, with a celestial motif. No birth details on any card.
+- Astrology can be turned off, corrected or deleted at any time, without touching the age check.
+- Supabase migration 0008: the 18+ check runs on the server with its own date, through one function and a trigger that refuses under-18 dates on every path. New profiles need a passed check. Astrology lives in separate tables, with no birth date. Not deployed.
+
 ## 0.12.0 — 2026-11-21
 
 Changed: navigation, Insights and sharing.
