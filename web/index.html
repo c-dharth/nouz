@@ -208,6 +208,27 @@ input[type=search]{-webkit-appearance:none;appearance:none}
 .fcalg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}.fcal{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:46px;border-radius:10px;font-size:11px;color:var(--dim)}
 .fcal.on{--fg:#5A2230;background:color-mix(in srgb,var(--fg) 70%,transparent);color:#F4ECE6}.fcal b{font-size:8px;letter-spacing:.06em}.fcal i{font-style:normal}.fcal.now{outline:1px solid var(--line)}
 .fprev{align-self:center;flex:none;border-radius:14px;overflow:hidden;background:var(--surface)}.fprev.story{width:min(62vw,calc(56vh*.5625));aspect-ratio:9/16}.fprev.square{width:min(80vw,46vh);aspect-ratio:1}.fprev canvas{width:100%;height:100%;display:block}
+.ins{gap:26px}.ins h1{margin:0}
+.ihero{--fg:#5A2230;position:relative;display:flex;flex-direction:column;gap:8px;text-align:left;width:100%;padding:28px 22px 20px;border-radius:26px;min-height:300px;justify-content:flex-end;overflow:hidden;
+ background:radial-gradient(110% 80% at 85% 0%,color-mix(in srgb,var(--fg) 90%,transparent),transparent 72%),linear-gradient(180deg,#140C0F,#0E0B0C)}
+.ihero .fk{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--pink)}
+.ihero .fw{font-family:var(--serif,"Instrument Serif",Georgia,serif);font-size:clamp(54px,18vw,104px);line-height:.9;color:#F4ECE6;overflow-wrap:anywhere;animation:fcin .9s ease both}
+.ihero .fl{font-family:var(--serif,"Instrument Serif",Georgia,serif);font-style:italic;font-size:20px;line-height:1.3;color:#E8CBC6;max-width:30ch}
+.ifoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:var(--dim)}.iread{display:inline-flex;align-items:center;gap:2px;color:#F4ECE6;font-weight:700}.iread svg{width:14px;height:14px}
+.isec{display:flex;flex-direction:column;gap:12px}.isec h3{margin:0}
+.ipulse{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}.ipulse>div{display:flex;flex-direction:column;gap:6px}.ipulse>div>span:first-child{font-weight:700;font-size:15px}
+.imove{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;font-family:var(--serif,Georgia,serif);font-size:22px;line-height:1.25;color:var(--text);padding:0}.imove svg{flex:none;color:var(--dim)}
+.ipat{display:flex;flex-direction:column;gap:14px;margin:0}.ipat div{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:baseline}.ipat dt{font-weight:700;font-size:15px}.ipat dd{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.iwords{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px}.iwords::-webkit-scrollbar{display:none}.iwords button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:none;padding:0}.iwords b{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:20px;letter-spacing:.02em}
+.ilinks{display:flex;flex-direction:column}.ilinks button{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:14px 0;border-top:1px solid var(--line)}.ilinks button>span{display:flex;flex-direction:column;gap:2px;font-weight:600}.ilinks button:last-child{border-bottom:1px solid var(--line)}
+.backhome{align-self:flex-start;display:inline-flex;align-items:center;gap:2px}.backhome svg{width:14px;height:14px}
+.shero{display:flex;flex-direction:column;gap:14px}.shero .fprev{width:min(70vw,calc(52vh*.5625))}
+.shgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px 14px}.shtile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:0}.shtile.off{opacity:.45}
+.shmini{--fg:#5A2230;width:100%;aspect-ratio:4/5;border-radius:14px;display:flex;align-items:flex-end;padding:12px;overflow:hidden;background:radial-gradient(100% 70% at 80% 10%,color-mix(in srgb,var(--fg) 85%,transparent),transparent 70%),#0E0B0C}
+.shmini.minimal{background:#F4ECE6}.shmini.minimal b{color:#7A2E3B}.shmini.dark{background:#0E0B0C}
+.shmini b{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:22px;color:#F4ECE6;line-height:1;overflow-wrap:anywhere}.shl{font-weight:700;font-size:14px;margin-top:4px}
+.shctl{display:flex;flex-direction:column;gap:14px}.shctl>div{display:flex;flex-direction:column;gap:6px}
+.swatches{display:flex;gap:10px}.swc{width:40px;height:40px;border-radius:50%;border:2px solid transparent}.swc[aria-pressed="true"]{border-color:#F4ECE6;box-shadow:0 0 0 2px var(--bg)}
 .rec{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
 .rec .rt{display:block;font-size:17px;line-height:1.25}.recph{position:relative;margin:-14px -14px 4px;border-radius:var(--r) var(--r) 0 0;overflow:hidden;aspect-ratio:16/9;background:var(--surface2)}
 .recph img{width:100%;height:100%;object-fit:cover;display:block}.recph .tiny{position:absolute;right:8px;bottom:6px;background:rgba(14,11,12,.7);padding:2px 6px;border-radius:6px}
@@ -266,8 +287,8 @@ ul.plain li.p svg{color:var(--warn)}
 .stepper span{min-width:160px;text-align:center;color:var(--muted)}
 .stepper b{font-family:var(--display);font-size:32px;font-weight:400;color:var(--text);vertical-align:-4px;margin-right:4px}
 .pill.ok{background:rgba(147,201,170,.14);color:var(--ok)}
-.qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.qa button{background:var(--surface);border-radius:var(--r-sm);min-height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:var(--text);transition:transform .12s,background .15s}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.qa button{background:var(--surface);border-radius:var(--r-sm);min-height:80px;padding:0 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:var(--text);transition:transform .12s,background .15s}
 .qa button:active{transform:scale(.97);background:var(--surface2)}
 .qa svg{width:24px;height:24px;color:var(--coral)}
 .card.rowcard{flex-direction:row;align-items:center;gap:12px;text-align:left;width:100%}
@@ -463,7 +484,7 @@ const Soc={profiles:{},prefs:{},fcheck:{},fcast:{},couples:{},reportsAll:{},isOw
   sched(){clearTimeout(this.t);this.t=setTimeout(async()=>{if(this.busy){this.again=true;return}this.busy=true;
     try{await this.recompute()}catch(e){}this.busy=false;if(this.status==="loading"||this.status==="slow")this.status="ready";
     const sig=JSON.stringify([this.inbox.map(x=>x.a+x.i),this.inv,Object.values(this.sp).map(x=>[x.id,x.role,x.name,x.members,x.invited]),this.shared.map(x=>x.id+x.updatedAt),this.mres,this.creq.map(r=>r.id),this.cans]),moved=sig!==this.invSig;this.invSig=sig;
-    if(S.fc&&S.fc.on&&S.fc.together&&ui.tab==="intimacy"&&ui.ins.tab==="forecast")fcEnsure();
+    if(S.fc&&S.fc.on&&S.fc.together&&(ui.tab==="insights"&&!ui.page||ui.page&&ui.page.type==="forecast"))fcEnsure();
     if((ui.tab==="home"&&!ui.page||ui.tab==="profile"||ui.tab==="discover"&&!ui.dsc.busy&&!ui.dsc.ibusy||ui.page&&["compose","social","user","couple","notifs","saved","mod"].includes(ui.page.type)||moved)&&!typing())render();
     if(this.again){this.again=false;this.sched()}},40)},
   write(coll,data){this[coll]=Object.assign({},this[coll]);if(data===null)delete this[coll][Cloud.uid];else this[coll][Cloud.uid]=data;
@@ -601,13 +622,13 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
 
 /* ============ ui state ============ */
 const ui={tab:"home",page:null,sheet:null,toast:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null},
-  ins:{range:"month",cat:"all",from:"",to:"",tab:"forecast"},fc:{view:null,busy:false,err:"",mode:null,started:false,moveOpen:false,ck:null,fix:false,month:null},fcs:null,guide:{q:"",msgs:[],busy:false,err:null,off:false},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
-const TABS=()=>[["home","Home","home"],["intimacy","Intimacy","heart"],["discover","Discover","compass"],["story","Our Story","book"],["profile","Profile","user"]];
+  ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},she:null,fc:{view:null,busy:false,err:"",mode:null,started:false,moveOpen:false,ck:null,fix:false,month:null},fcs:null,guide:{q:"",msgs:[],busy:false,err:null,off:false},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
+const TABS=()=>[["home","Home","home"],["intimacy","Sessions","heart"],["insights","Insights","spark"],["share","Share","share"],["profile","Profile","user"]];
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
 function paintToast(){let t=$(".toast");if(!ui.toast){t&&t.remove();return}if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");$("#app").appendChild(t)}t.textContent=ui.toast}
-/* Older names still work: Track, History and Insights live inside Intimacy; the old Social page is Friends, under Feed. */
-function go(tab){if(["track","history","insights"].includes(tab)){ui.int.seg=tab;tab="intimacy"}
+/* Older names still work: Track and History live in Sessions; Discover and Our Story open from Home; Friends is a page. */
+function go(tab){if(["track","history"].includes(tab)){ui.int.seg=tab;tab="intimacy"}
   if(tab==="feed")tab="home";
   if(tab==="social"){ui.tab="home";ui.page={type:"social"};ui.sheet=null;render(true);return}
   ui.tab=tab;ui.page=null;ui.sheet=null;try{if(location.hash!=="#"+tab)location.hash=tab}catch(e){}render(true)}
@@ -670,18 +691,25 @@ function render(resetScroll){
   if(ui.locked)h=vLock();
   else if(!S.onboarded)h=vOnboard();
   else{if(!ui.sheet&&legacySessions().length)ui.sheet={type:"legacy"}}
-  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Friends")+vSocial(),fcShare:vFcShare,notifs:vNotifs,saved:vSaved,user:vUser,meEdit:vMeEdit,couple:vCouple,postNew:vPostNew,mod:vMod,spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
-  else h=({home:vHome,feed:vHome,intimacy:vIntimacy,discover:vDiscover,story:vStory,profile:vProfile})[ui.tab]()+vTabs();
+  if(ui.locked||!S.onboarded);else if(ui.page)h=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Friends")+vSocial(),fcShare:vFcShare,
+      forecast:()=>hdr(ui.fc.view&&ui.fc.view!==fcToday()?"Past forecast":"Today's forecast")+`<div class="scroll"><div class="fcwrap">${vForecast()}</div></div>`,
+      fcCal:()=>hdr("Your words")+`<div class="scroll">${fcHistory()}</div>`,analytics:()=>hdr("Session analytics")+vAnalytics(),
+      guide:()=>hdr("Connection guide")+`<div class="scroll"><p class="sub small">A gentle read of your dates, memories and intimacy together. There's no right amount of anything.</p>${vGuide()}</div>`,
+      shareEdit:vShareEdit,shareMem:vShareMem,notifs:vNotifs,saved:vSaved,user:vUser,meEdit:vMeEdit,couple:vCouple,postNew:vPostNew,mod:vMod,spaces:vSpaces,exp:vExp,expEdit:vExpEdit})[ui.page.type]();
+  else{const back=`<button class="link small backhome" data-act="tab" data-tab="home">${ic("back")} Home</button>`;
+    h=({home:vHome,feed:vHome,intimacy:vIntimacy,insights:vInsightsHome,share:vShare,discover:()=>vDiscover().replace('<div class="scroll">','<div class="scroll">'+back),story:()=>vStory().replace('<div class="scroll">','<div class="scroll">'+back),profile:vProfile})[ui.tab]()+vTabs()}
   const sheetNew=ui.sheet&&ui.sheet!==lastSheet;lastSheet=ui.sheet;
   app.classList.toggle("enter",changed);
   app.innerHTML=h+(ui.sheet?vSheet(sheetNew):"");
-  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();hydratePhotos();hydrateMedia();applyTheme();if(ui.page&&ui.page.type==="fcShare")fcPaint();checkRewards();paintCel();if(ui.page&&ui.page.type==="cardEdit")refreshCard();
+  const ns=$(".scroll");if(ns&&keep)ns.scrollTop=keep;paintToast();hydratePhotos();hydrateMedia();applyTheme();if(ui.page&&ui.page.type==="fcShare")fcPaint();
+  if(ui.page&&ui.page.type==="shareEdit"&&ui.she)shPaint("sh-prev",ui.she.kind,ui.she,ui.she.ref);
+  if(!ui.page&&ui.tab==="share"){const av=shAvailable(),k=av.includes("daily")?"daily":av.find(x=>x!=="memory");if(k)shPaint("sh-hero",k,{...S.shareDefaults,names:"",viz:false},null)}checkRewards();paintCel();if(ui.page&&ui.page.type==="cardEdit")refreshCard();
   if(sheetNew){const f=$(".sheet input,.sheet textarea")||$(".sheet");f&&f.focus({preventScroll:true})}
   else if(changed&&!ui.sheet){if(ns){ns.setAttribute("tabindex","-1");if(!typing())ns.focus({preventScroll:true})}countUp()}
 }
 function countUp(){if(reduced())return;document.querySelectorAll("[data-count]").forEach(el=>{const to=+el.dataset.count;if(!(to>0))return;const t0=performance.now();
   const f=t=>{const p=Math.min(1,(t-t0)/700),e=1-Math.pow(1-p,3);el.textContent=Number.isInteger(to)?Math.round(to*e):(to*e).toFixed(1);if(p<1&&el.isConnected)requestAnimationFrame(f);else el.textContent=to};requestAnimationFrame(f)})}
-const vTabs=()=>`<nav class="tabs" aria-label="Primary">${TABS().map(([id,l,i])=>`<button class="tab" data-act="tab" data-tab="${id}" ${ui.tab===id?'aria-current="page"':""}>${ic(i)}${l}</button>`).join("")}</nav>`;
+const vTabs=()=>`<nav class="tabs" aria-label="Primary">${TABS().map(([id,l,i])=>`<button class="tab" data-act="tab" data-tab="${id}" ${ui.tab===id||(id==="home"&&["discover","story"].includes(ui.tab))?'aria-current="page"':""}>${ic(i)}${l}</button>`).join("")}</nav>`;
 const hdr=(title,right="")=>`<div class="top"><button class="ib" data-act="back" aria-label="Back">${ic("back")}</button><div class="grow" style="font-weight:700;text-align:center">${esc(title)}</div>${right||'<span style="width:44px"></span>'}</div>`;
 const sw=(act,on,label,sub="",extra="")=>`<button class="sw" role="switch" aria-checked="${!!on}" data-act="${act}" ${extra}><span class="grow"><b>${label}</b>${sub?`<span class="sub small" style="display:block">${sub}</span>`:""}</span><span class="k"></span></button>`;
 const sessRow=s=>{const d=new Date(s.start);return`<button class="sess" data-act="openReplay" data-id="${s.id}"><span class="d"><b>${d.getDate()}</b><span>${MO[d.getMonth()]}</span></span><span class="grow"><span class="t" style="display:block">${esc(s.title||"Session")}</span><span class="sub small">${WD[d.getDay()]} ${fmtTime(s.start)}${catLabel(s)?" · "+esc(catLabel(s)):""}${s.mood?" · "+esc(s.mood):""}${verifyStatus(s).k==="mutual"?" · confirmed":verifyStatus(s).k==="pending"?" · pending":""}${s.demo?" · demo":""}</span></span><span class="pill c">${fmtDur(s.durationSec)}</span></button>`};
@@ -821,15 +849,14 @@ function insRange(){const r=ui.ins,now=Date.now();
   const f=r.from?new Date(r.from+"T00:00").getTime():NaN,t=r.to?new Date(r.to+"T00:00").getTime():NaN;
   if(isNaN(f)||isNaN(t)||t<f)return null;return[f,addDays(t,1)]}
 function prevRange(rg){const r=ui.ins.range,d=new Date(rg[0]);if(r==="month")return[new Date(d.getFullYear(),d.getMonth()-1,1).getTime(),rg[0]];if(r==="year")return[new Date(d.getFullYear()-1,0,1).getTime(),rg[0]];return[addDays(rg[0],-Math.round((rg[1]-rg[0])/DAY)),rg[0]]}
-function vInsights(){const r=ui.ins,inCat=s=>r.cat==="all"||s.category===r.cat,base=S.sessions.filter(inCat),rg=insRange();
+function vAnalytics(){const r=ui.ins,inCat=s=>r.cat==="all"||s.category===r.cat,base=S.sessions.filter(inCat),rg=insRange();
   const list=rg?base.filter(s=>s.start>=rg[0]&&s.start<rg[1]):[],st=stats(list),rl={week:"this week",month:"this month",year:"this year",custom:"this range"}[r.range];
   const head=`<div><h1>Patterns, <em>not scores.</em></h1><p class="sub small">A description of what you logged. There's no right amount, and how often says nothing about how a relationship is doing.</p></div>${demoBanner()}
    <div class="chips" role="group" aria-label="Time range">${[["week","Week"],["month","Month"],["year","Year"],["custom","Custom"]].map(([v,l])=>`<button class="chip" data-act="insRange" data-v="${v}" aria-pressed="${r.range===v}">${l}</button>`).join("")}</div>
    ${r.range==="custom"?`<div class="row"><label class="f grow" for="i-from">From<input type="date" id="i-from" data-bind="ins.from" data-live="1" value="${esc(r.from)}"></label><label class="f grow" for="i-to">To<input type="date" id="i-to" data-bind="ins.to" data-live="1" value="${esc(r.to)}"></label></div>${rg?"":`<p class="sub small">Pick a start and end date.</p>`}`:""}
    <div class="chips" role="group" aria-label="Who was involved">${[["all","All"]].concat(CAT_PICK.map(v=>[v,CATS[v]])).map(([v,l])=>`<button class="chip" data-act="insCat" data-v="${v}" aria-pressed="${r.cat===v}">${l}</button>`).join("")}</div>`;
-  const tabs=`<div class="chips scrollx itabs" role="group" aria-label="Insights section">${[["forecast","Forecast"],["overview","Overview"],["patterns","Patterns"],["mood","Mood"],["connection","Connection"]].map(([v,l])=>`<button class="chip" data-act="insTab" data-v="${v}" aria-pressed="${r.tab===v}">${l}</button>`).join("")}</div>`;
-  if(r.tab==="forecast")return`<div class="scroll">${tabs}<div class="fcwrap">${vForecast()}</div></div>`;
-  if(r.tab==="connection")return`<div class="scroll"><div><h1>Your <em>connection.</em></h1><p class="sub small">A gentle read of your dates, memories and intimacy together. There's no right amount of anything.</p></div>${demoBanner()}${tabs}${vGuide()}</div>`;
+  if(!["overview","patterns","mood"].includes(r.tab))r.tab="overview";
+  const tabs=`<div class="seg3" role="group" aria-label="Analytics section">${[["overview","Overview"],["patterns","Patterns"],["mood","Mood"]].map(([v,l])=>`<button data-act="insTab" data-v="${v}" aria-pressed="${r.tab===v}">${l}</button>`).join("")}</div>`;
   if(!S.sessions.length)return`<div class="scroll">${head}${tabs}<div class="card"><h2>Nothing to chart yet.</h2><p class="sub">Save a session and this page fills in from your own records.</p><button class="btn sm primary" data-act="iSeg" data-v="track" style="align-self:flex-start">Go to Track</button></div></div>`;
   const none=`<div class="card line"><p class="sub small">No sessions ${rl}${r.cat!=="all"?" in this category":""}. Try a wider range.</p></div>`;
   let body="";
@@ -1451,8 +1478,8 @@ const whoX=e=>e.a==="me"?"":Soc.handle(e.a);
 function nextAnniv(e,now=Date.now()){const d=new Date(e.date),t=new Date(new Date(now).getFullYear(),d.getMonth(),d.getDate()).getTime();const n=t>=startOfDay(now)?t:new Date(new Date(now).getFullYear()+1,d.getMonth(),d.getDate()).getTime();return{at:n,years:new Date(n).getFullYear()-d.getFullYear(),days:Math.round((n-startOfDay(now))/DAY)}}
 
 /* ---------------- views ---------------- */
-function vIntimacy(){const seg=ui.int.seg,bar=`<div><h3>Intimacy</h3></div><div class="seg3" role="group" aria-label="Intimacy section">${[["track","Track"],["history","History"],["insights","Insights"]].map(([v,l])=>`<button data-act="iSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
-  const h=seg==="insights"?vInsights():seg==="history"?vHistList():vTrack();return h.replace('<div class="scroll">','<div class="scroll">'+bar)}
+function vIntimacy(){if(ui.int.seg==="insights")ui.int.seg="track";const seg=ui.int.seg,bar=`<div><h3>Sessions</h3></div><div class="seg3" role="group" aria-label="Sessions section">${[["track","Track"],["history","History"]].map(([v,l])=>`<button data-act="iSeg" data-v="${v}" aria-pressed="${seg===v}">${l}</button>`).join("")}</div>`;
+  const h=seg==="history"?vHistList():vTrack();return h.replace('<div class="scroll">','<div class="scroll">'+bar)}
 
 function vHistList(){const all=sessions(),st=stats(all),ws=startOfWeek(Date.now()),cd=countByDay(all),todayI=(new Date().getDay()+6)%7,sel=ui.homeDay===null?todayI:ui.homeDay;
   if(!all.length)return`<div class="scroll">${demoBanner()}<div class="card"><h2>Nothing logged yet.</h2><p class="sub">This fills in from what you save, and only from that.</p><div class="row wrap"><button class="btn sm primary" data-act="quick">${ic("plus")} Quick log</button><button class="btn sm" data-act="manual">Log a past session</button><button class="btn sm ghost" data-act="loadDemo">See it with demo data</button></div></div></div>`;
@@ -1497,7 +1524,7 @@ function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning
   const sec=(title,go,goLabel,body)=>`<div class="sec"><div class="row between"><h3>${title}</h3>${go}</div>${body}</div>`;
   return`<div class="scroll">${head}${demoBanner()}${invitesCard()}${spaceInvitesCard()}${consentCard()}
    <h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1>${live}${prog}${howWasCard()}
-   <div class="qa"><button data-act="quick">${ic("heart")}<span>Quick log</span></button><button data-act="expNew" data-kind="done">${ic("book")}<span>Memory</span></button><button data-act="tab" data-tab="discover">${ic("compass")}<span>Ideas</span></button></div>
+   <div class="qa"><button data-act="quick">${ic("heart")}<span>Quick log</span></button><button data-act="expNew" data-kind="done">${ic("book")}<span>Memory</span></button><button data-act="tab" data-tab="discover">${ic("compass")}<span>Discover</span></button><button data-act="tab" data-tab="story">${ic("photo")}<span>Our Story</span></button></div>
    ${fresh?`<div class="card"><h2>Start your <em>story.</em></h2><p class="sub small">Everything stays private unless you choose to share it.</p><button class="link small" style="align-self:flex-start" data-act="loadDemo">See it with demo data</button></div>${idea}`
     :`${plans.length?sec("Coming up",`<button class="link small" data-act="discSeg" data-v="plans">All</button>`,"",`<div>${plans.map(homeRow).join("")}</div>`):idea}
    <button class="card rowcard" data-act="tab" data-tab="history" aria-label="Intimacy: ${wk} this week, private"><span class="badge" aria-hidden="true">${ic("heart")}</span><span class="grow"><b>Intimacy</b><span class="sub small" style="display:block">${wk?wk+" this week":"None this week"}</span></span>${ic("lock")}</button>`}
@@ -2965,7 +2992,7 @@ Object.assign(A,{
   async fcTogether(){S.fc.together=!S.fc.together;if(!S.fc.together)S.fc.showEnergy=false;save();render();try{await fcShareCheckins();if(!S.fc.together)await Soc.write("fcast",null)}catch(x){toast("That couldn't be saved.")}
     ui.fc.started=false;ui.fc.mode=null;render()},
   async fcShowE(){S.fc.showEnergy=!S.fc.showEnergy;save();render();try{await fcShareCheckins()}catch(x){}},
-  fcShareOpen(){ui.fcs={tpl:"editorial",fmt:"story",names:false,viz:false};openPage({type:"fcShare",from:ui.page})},
+  fcShareOpen(){ui.she={...S.shareDefaults,kind:"daily",ref:null,viz:false,names:""};openPage({type:"shareEdit",from:ui.page})},
   fcsT(e){ui.fcs.tpl=e.dataset.v;render()},fcsF(e){ui.fcs.fmt=e.dataset.v;render()},fcsN(){ui.fcs.names=!ui.fcs.names;render()},fcsV(){ui.fcs.viz=!ui.fcs.viz;render()},
   async fcsShare(){let f;try{f=await fcShareBlob(true)}catch(x){return toast("The card couldn't be drawn here.")}
     const file=typeof File==="function"?new File([f.blob],f.name,{type:"image/png"}):null;
@@ -2973,6 +3000,128 @@ Object.assign(A,{
     const r=await saveOut(f.blob,f.name);toast(r==="saved"?"Ready: pick Instagram, Snapchat, Messages or Save Image.":r==="declined"?"Not saved.":"Sharing isn't available in this view. Open VOUZ in the Claude app or a browser that supports sharing.")},
   async fcsSave(){let f;try{f=await fcShareBlob(false)}catch(x){return toast("The card couldn't be drawn here.")}const r=await saveOut(f.blob,f.name);toast(r==="saved"?"Saved.":r==="declined"?"Not saved.":"Saving isn't available in this view.")}
 });
+
+/* ============ Insights: private, forecast first ============
+   One screen, five sections, one purpose each: today's forecast, the pulse, today's move, patterns from real data,
+   and past words. Detail lives one tap away (the full forecast, session analytics, the guide). Nothing social here. */
+function fcCurrent(){const h=S.fc.hist[fcToday()]||{},m=ui.fc.mode;return(m&&!m.solo?h.together:h.solo)||h.together||h.solo||null}
+function insPatterns(){const out=[],now=Date.now(),cks=Object.entries(S.fc.checkins).filter(([d])=>d>=dayKey(now-14*DAY)).map(([,c])=>c);
+  if(cks.length>=3){const c={};cks.forEach(x=>c[x.energy]=(c[x.energy]||0)+1);const top=Object.keys(c).sort((a,b)=>c[b]-c[a])[0];out.push([top,`Your most common check-in lately: ${c[top]} of ${cks.length} in two weeks.`])
+    const cl=cks.map(x=>x.close).filter(v=>typeof v==="number");if(cl.length>=3){const a=cl.slice(-3).reduce((x,y)=>x+y,0)/3,b=cl.slice(0,-3).length?cl.slice(0,-3).reduce((x,y)=>x+y,0)/cl.slice(0,-3).length:null;
+      if(b!=null&&Math.abs(a-b)>=.6)out.push([a>b?"Closer":"A little further",a>b?"You've been feeling closer in your last few check-ins.":"Your last few check-ins felt a little less connected than before."])}}
+  const mem=S.exps.filter(e=>!e.demo&&e.kind==="done"&&e.date>=now-30*DAY);if(mem.length){const k=mode0(mem.map(m=>m.cat));out.push([mem.length+" memor"+(mem.length===1?"y":"ies"),"In the last 30 days"+(mem.length>1&&XCATS[k]?", mostly "+XCATS[k].toLowerCase():"")+"."])}
+  const done=S.exps.filter(e=>!e.demo&&e.planned&&e.doneAt&&e.doneAt>=now-60*DAY).length;if(done)out.push(["Plans kept",`${done} plan${done===1?"":"s"} made and followed through in two months.`]);
+  const ses=S.sessions.filter(s=>!s.demo&&s.start>=now-60*DAY);if(ses.length>=5){const p=[0,0,0,0];ses.forEach(s=>p[partOf(new Date(s.start).getHours())]++);const i=p.indexOf(Math.max(...p));out.push([PARTS[i],"When your sessions most often happen. Private to you."])}
+  return out.slice(0,4)}
+function vInsightsHome(){const f=S.fc;
+  if(!f.on)return`<div class="scroll ins"><h1>Insights</h1><p class="sub">The daily forecast is off.</p><button class="btn sm primary" style="align-self:flex-start" data-act="fcOn">Turn it on</button>${insMore()}</div>`;
+  if(!ui.fc.started){ui.fc.started=true;setTimeout(()=>fcEnsure(),0)}
+  const fc=fcCurrent(),mode=ui.fc.mode||{solo:true},pats=insPatterns(),d=new Date();
+  const hero=fc?`<button class="ihero" data-act="page" data-page="forecast" style="--fg:${fcHue(fc.word)}" aria-label="Today's energy: ${esc(fc.word)}. Read the full forecast">
+      <span class="fk">Today's energy</span><span class="fw">${esc(fc.word)}</span><span class="fl">${esc(fc.line)}</span>
+      <span class="ifoot"><span>${esc(d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}))}${mode.solo?"":" · Together"}</span><span class="iread">Read the forecast ${ic("next")}</span></span></button>`
+    :`<div class="ihero" aria-busy="true"><span class="fk">Today's energy</span><span class="fw shimmer" style="height:80px;width:70%">&nbsp;</span><span class="sub small" role="status">${ui.fc.err?esc(ui.fc.err):"Writing today's forecast…"}</span></div>`;
+  const recent=Object.keys(f.hist).sort().slice(-7).map(k=>[k,(f.hist[k].together||f.hist[k].solo||{}).word]).filter(x=>x[1]);
+  return`<div class="scroll ins">${demoBanner()}${hero}
+   ${fc?`<section class="isec" aria-labelledby="h-pulse"><h3 id="h-pulse">Relationship pulse</h3><div class="ipulse">${FC_DIMS.map(([k,l])=>`<div><span>${l}</span>${fc.dims[k]==null?`<span class="tiny">Not enough yet</span>`:`<span class="row" style="gap:8px">${fcDots(fc.dims[k])}<span class="tiny">${fcLevel(fc.dims[k])}</span></span>`}</div>`).join("")}</div>
+     ${S.fc.checkins[fcToday()]?"":`<button class="link small" data-act="page" data-page="forecast">Check in to sharpen this</button>`}</section>
+   <section class="isec" aria-labelledby="h-move"><h3 id="h-move">Today's move</h3><button class="imove" data-act="page" data-page="forecast">${esc(fc.move.t)}${ic("next")}</button></section>`:""}
+   <section class="isec" aria-labelledby="h-pat"><h3 id="h-pat">Patterns</h3>${pats.length?`<dl class="ipat">${pats.map(([a,b])=>`<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("")}</dl>`:`<p class="sub small">Patterns show up after a few check-ins and shared memories. Nothing here is guessed.</p>`}</section>
+   <section class="isec" aria-labelledby="h-hist"><div class="row between"><h3 id="h-hist">Past words</h3><button class="link small" data-act="page" data-page="fcCal">Calendar</button></div>
+    ${recent.length>1?`<div class="iwords">${recent.map(([k,w])=>`<button data-act="fcOpenDay" data-v="${k}" aria-label="${esc(fcDate(k))}: ${esc(w)}"><span class="tiny">${esc(new Date(k+"T12:00").toLocaleDateString(undefined,{weekday:"short"}))}</span><b>${esc(w)}</b></button>`).join("")}</div>`:`<p class="sub small">Your daily words collect here.</p>`}</section>
+   ${insMore()}</div>`}
+function insMore(){return`<section class="isec"><h3>More</h3><div class="ilinks">
+   <button data-act="page" data-page="analytics"><span>Session analytics<span class="tiny">Your logged sessions over time. Private.</span></span>${ic("next")}</button>
+   <button data-act="page" data-page="guide"><span>Ask the connection guide<span class="tiny">${S.settings.guide?"On":"Off until you turn it on"}</span></span>${ic("next")}</button></div>
+   <p class="tiny">Reflections and descriptions, not scores or predictions. Everything here stays private.</p></section>`}
+
+/* ============ Share: a studio, not a feed ============ */
+const SH_KINDS={daily:"Daily Energy",couple:"Couple Forecast",weekly:"Weekly Reflection",monthly:"Monthly Recap",milestone:"Milestone",memory:"Shared Memories"};
+const SH_THEMES={minimal:"Minimal",dark:"Dark",gradient:"Gradient",editorial:"Editorial"};
+const SH_BG={wine:["#7A2E3B","#C9939B"],ink:["#1B1F2E","#8C93B8"],blush:["#C9939B","#F4ECE6"],moss:["#2F3B2C","#B9C4A6"]};
+const MO_UP=d=>d.toLocaleDateString(undefined,{month:"short",day:"numeric"}).toUpperCase();
+/* Couple names or initials go on a card only when both partners have agreed: a live couple profile, approved by both. */
+function shCoupleOk(){return!!(Soc.ready()&&Soc.coupleMine&&!Soc.coupleMine.waiting)}
+function shCoupleLabel(o){if(!o.names||!shCoupleOk())return"";const c=Soc.coupleMine;return o.names==="names"?c.data.name:c.members.map(u=>o2(u===Cloud.uid?((Soc.me()||{}).handle||S.user.name||"?"):Soc.handle(u))).join(" & ")}
+/* What each card says. Only what's on screen in VOUZ already, and never session details, check-ins or notes. */
+function shData(kind,ref){const now=new Date(),fc=fcCurrent(),h=S.fc.hist;
+  if(kind==="daily"&&fc)return{kicker:"Today's energy",big:fc.word,line:fc.line,foot:"VOUZ — "+MO_UP(now)};
+  if(kind==="couple"){const t=(h[fcToday()]||{}).together;if(t)return{kicker:"Our forecast",big:t.word,line:t.line,foot:"VOUZ — "+MO_UP(now),couple:true,dims:t.dims}}
+  if(kind==="weekly"){const days=[];for(let i=6;i>=0;i--){const k=dayKey(Date.now()-i*DAY),x=h[k]&&(h[k].together||h[k].solo);days.push([k,x?x.word:null])}const ws=days.filter(d=>d[1]);if(ws.length>=3){const c={};ws.forEach(d=>c[d[1]]=(c[d[1]]||0)+1);const top=Object.keys(c).sort((a,b)=>c[b]-c[a]||0)[0];
+    return{kicker:"Our week",big:top,line:ws.length+" days, "+Object.keys(c).length+" moods.",list:days.map(([k,w])=>[new Date(k+"T12:00").toLocaleDateString(undefined,{weekday:"short"}).toUpperCase().slice(0,3),w||"—"]),foot:"VOUZ — "+MO_UP(new Date(days[0][0]+"T12:00"))+" TO "+MO_UP(now)}}}
+  if(kind==="monthly"){const m=dayKey(Date.now()).slice(0,7),ws=Object.keys(h).filter(k=>k.startsWith(m)).map(k=>(h[k].together||h[k].solo||{}).word).filter(Boolean),mem=S.exps.filter(e=>!e.demo&&e.kind==="done"&&e.date&&dayKey(e.date).startsWith(m)).length;
+    if(ws.length>=5||mem>=2){const c={};ws.forEach(w=>c[w]=(c[w]||0)+1);const top=Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||"TOGETHER";
+      return{kicker:now.toLocaleDateString(undefined,{month:"long"}),big:top,line:[mem?mem+" memor"+(mem===1?"y":"ies")+" made":null,ws.length?ws.length+" daily words":null].filter(Boolean).join(" · ")+".",foot:"VOUZ — "+now.getFullYear()}}}
+  if(kind==="milestone"){const e=S.exps.find(x=>x.id===ref)||shMilestones()[0];if(e)return{kicker:e.anniv?"Anniversary":"Milestone",big:String(e.title).slice(0,40),line:fmtDate(e.date),foot:"VOUZ",title:true}}
+  return null}
+const shMilestones=()=>S.exps.filter(e=>!e.demo&&e.kind==="done"&&e.date&&(e.anniv||e.cat==="milestone")).sort((a,b)=>b.date-a.date);
+function shAvailable(){const k=[];for(const x of ["daily","couple","weekly","monthly"])if(shData(x))k.push(x);if(shMilestones().length)k.push("milestone");if(S.exps.some(e=>!e.demo&&e.kind==="done"))k.push("memory");return k}
+async function shRender(kind,o,ref){const d=shData(kind,ref);if(!d)throw{code:"no_data"};const[W,H]=FC_FMT[o.fmt],c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d"),u=W/1080;
+  try{await Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))])}catch(e){}
+  const D=o.type==="sans"?CARD_FONT.b:CARD_FONT.d,B=CARD_FONT.b,big=d.title?d.big:d.big.toUpperCase(),bg=SH_BG[o.bg]||SH_BG.wine,sp=t=>String(t).toUpperCase().split("").join(String.fromCharCode(8202));
+  const T=o.theme,light=T==="minimal",fg=light?"#2A1A1E":"#F4ECE6",soft=light?bg[0]:"#E8CBC6",acc=light?bg[0]:bg[1];
+  if(T==="minimal"){x.fillStyle="#F4ECE6";x.fillRect(0,0,W,H)}
+  else if(T==="dark"){x.fillStyle="#0E0B0C";x.fillRect(0,0,W,H)}
+  else if(T==="gradient"){const g=x.createLinearGradient(0,0,W*.4,H);g.addColorStop(0,bg[0]);g.addColorStop(1,"#120A0C");x.fillStyle=g;x.fillRect(0,0,W,H);const r=x.createRadialGradient(W*.85,H*.15,10,W*.85,H*.15,W);r.addColorStop(0,bg[1]+"55");r.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=r;x.fillRect(0,0,W,H)}
+  else{x.fillStyle="#0B0809";x.fillRect(0,0,W,H);const r=x.createRadialGradient(W*.75,H*.28,10,W*.75,H*.28,W*.95);r.addColorStop(0,bg[0]+"AA");r.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=r;x.fillRect(0,0,W,H)}
+  const M=96*u,center=T==="minimal"||T==="dark";x.textAlign=center?"center":"left";const X=center?W/2:M;
+  const fit=(t,max,start,font)=>{let s=start;do{x.font=font(s);if(x.measureText(t).width<=max)break;s-=4}while(s>36);return s};
+  const who=d.couple||o.names?shCoupleLabel(o):"";
+  x.fillStyle=acc;x.font=`700 ${24*u}px ${B}`;if(!center||who)x.fillText(sp(who||"VOUZ / "+(SH_KINDS[kind]||"")),X,M+28*u);
+  const story=o.fmt==="story",top=H*(story?(center?.40:.38):(center?.36:.32));
+  x.fillStyle=acc;x.font=`700 ${(center?26:28)*u}px ${B}`;x.fillText(sp(d.kicker),X,top);
+  const s=fit(big,W-2*M,(d.title?160:story?250:210)*u,z=>`${o.type==="sans"?"800":"400"} ${z}px ${D}`);x.font=`${o.type==="sans"?"800":"400"} ${s}px ${D}`;x.fillStyle=fg;
+  let yy=top+s*.98;if(d.title){const ls=wrapLines(x,big,W-2*M,3);ls.forEach((l,i)=>x.fillText(l,X,top+s*(i+1)*.98));yy=top+s*ls.length*.98}else x.fillText(big,center?X:X-6*u,yy);
+  yy+=(story?84:64)*u;x.fillStyle=soft;x.font=`italic 400 ${(story?46:40)*u}px ${CARD_FONT.d}`;for(const l of wrapLines(x,d.line,W-2*M-(center?60*u:0),story?4:2)){x.fillText(l,X,yy);yy+=(story?58:50)*u}
+  if(d.list){yy+=36*u;x.font=`600 ${22*u}px ${B}`;const cw=(W-2*M)/7;d.list.forEach(([a,w],i)=>{const cx=M+cw*i+cw/2;x.textAlign="center";x.fillStyle=acc;x.fillText(a,cx,yy);x.fillStyle=fg;x.font=`600 ${15*u}px ${B}`;x.fillText(w==="—"?"—":w.slice(0,7),cx,yy+34*u);x.font=`600 ${22*u}px ${B}`});x.textAlign=center?"center":"left"}
+  if(d.couple&&o.viz&&d.dims){yy+=30*u;const L={ch:"Chemistry",co:"Communication",in:"Closeness",ad:"Adventure"},bx=center?W/2-300*u:M,bw=center?600*u:W-2*M;x.textAlign="left";
+    for(const[k] of FC_DIMS){if(d.dims[k]==null)continue;x.fillStyle=acc;x.font=`600 ${20*u}px ${B}`;x.fillText(sp(L[k]),bx,yy);x.fillStyle=light?"rgba(42,26,30,.12)":"rgba(244,236,230,.15)";x.fillRect(bx+300*u,yy-12*u,bw-300*u,5*u);x.fillStyle=soft;x.fillRect(bx+300*u,yy-12*u,(bw-300*u)*d.dims[k],5*u);yy+=44*u}x.textAlign=center?"center":"left"}
+  if(o.brand!=="off"){x.fillStyle=acc;x.font=`700 ${22*u}px ${B}`;x.fillText(sp(d.foot),X,H-M);if(o.brand==="full"&&!center){x.textAlign="right";x.fillStyle=fg;x.globalAlpha=.85;x.font=`italic 400 ${46*u}px ${CARD_FONT.d}`;x.fillText("vouz.",W-M,H-M+4*u);x.globalAlpha=1}}
+  return c}
+function vShare(){const av=shAvailable(),o=S.shareDefaults;
+  if(!av.length)return`<div class="scroll ins"><h1>Share</h1><p class="sub">Cards to share appear here once you have a daily word or a memory. Nothing private is ever put on a card.</p><button class="btn sm" style="align-self:flex-start" data-act="tab" data-tab="insights">See today's forecast</button></div>`;
+  const first=av.includes("daily")?"daily":av[0];
+  return`<div class="scroll ins"><div><h1>Share</h1><p class="sub small">Cards made from your forecast and memories. You see every card before it leaves VOUZ.</p></div>
+   ${first!=="memory"?`<div class="shero"><div class="fprev story" id="sh-hero" aria-label="Today's card"></div><div class="row"><button class="btn primary grow" data-act="shEdit" data-k="${first}">Customize</button><button class="btn grow" data-act="shQuick" data-k="${first}">${ic("share")} Share</button></div></div>`:""}
+   <section class="isec"><h3>Cards</h3><div class="shgrid">${Object.keys(SH_KINDS).map(k=>{const on=av.includes(k),d=on&&k!=="memory"?shData(k):null;
+     return`<button class="shtile${on?"":" off"}" ${on?`data-act="${k==="memory"?"shMemories":"shEdit"}" data-k="${k}"`:"disabled"} aria-label="${SH_KINDS[k]}${on?"":", not available yet"}">
+       <span class="shmini ${o.theme}" style="--fg:${d&&FC_WORDS[d.big]?fcHue(d.big):"#5A2230"}"><b>${d?esc(d.title?d.big.slice(0,14):d.big):k==="memory"?"Memories":"—"}</b></span><span class="shl">${SH_KINDS[k]}</span><span class="tiny">${on?shHint(k):shWhy(k)}</span></button>`}).join("")}</div></section>
+   <p class="tiny">Cards never include session details, check-ins, notes or anything from your partner. Names or initials need a couple profile you've both approved.</p></div>`}
+const shHint=k=>({daily:"Today's word",couple:"The forecast you share",weekly:"Your last seven words",monthly:"This month so far",milestone:shMilestones().length+" to choose from",memory:"Pick a memory"})[k];
+const shWhy=k=>({daily:"After today's forecast",couple:"Turn on forecast together",weekly:"After three daily words this week",monthly:"After five daily words or two memories this month",milestone:"Mark a memory as a milestone or anniversary",memory:"After your first memory"})[k];
+function vShareEdit(){const o=ui.she;if(!o||!shData(o.kind,o.ref)){ui.page=null;return vShare()+vTabs()}const ms=o.kind==="milestone"?shMilestones():[],ok=shCoupleOk();
+  return hdr(SH_KINDS[o.kind])+`<div class="scroll ins">
+   <div class="fprev ${o.fmt}" id="sh-prev" aria-label="Card preview"></div>
+   ${ms.length>1?`<div class="chips sm scrollx" role="group" aria-label="Which milestone">${ms.slice(0,12).map(e=>`<button class="chip" data-act="shSet" data-k="ref" data-v="${esc(e.id)}" aria-pressed="${(o.ref||ms[0].id)===e.id}">${esc(String(e.title).slice(0,24))}</button>`).join("")}</div>`:""}
+   <div class="shctl">
+    <div><span class="tiny">Theme</span><div class="chips sm">${Object.entries(SH_THEMES).map(([v,l])=>`<button class="chip" data-act="shSet" data-k="theme" data-v="${v}" aria-pressed="${o.theme===v}">${l}</button>`).join("")}</div></div>
+    <div><span class="tiny">Type</span><div class="chips sm">${[["serif","Editorial serif"],["sans","Modern sans"]].map(([v,l])=>`<button class="chip" data-act="shSet" data-k="type" data-v="${v}" aria-pressed="${o.type===v}">${l}</button>`).join("")}</div></div>
+    ${o.theme!=="dark"?`<div><span class="tiny">Color</span><div class="swatches">${Object.entries(SH_BG).map(([v,c])=>`<button class="swc" data-act="shSet" data-k="bg" data-v="${v}" aria-pressed="${o.bg===v}" aria-label="${v}" style="background:linear-gradient(135deg,${c[0]},${c[1]})"></button>`).join("")}</div></div>`:""}
+    <div><span class="tiny">Size</span><div class="chips sm">${[["story","Story 9:16"],["square","Square 1:1"]].map(([v,l])=>`<button class="chip" data-act="shSet" data-k="fmt" data-v="${v}" aria-pressed="${o.fmt===v}">${l}</button>`).join("")}</div></div>
+    <div><span class="tiny">Names</span><div class="chips sm">${[["","None"],["initials","Initials"],["names","Couple name"]].map(([v,l])=>`<button class="chip" data-act="shSet" data-k="names" data-v="${v}" aria-pressed="${(o.names||"")===v}" ${v&&!ok?"disabled":""}>${l}</button>`).join("")}</div>${ok?"":`<span class="tiny">Needs a couple profile you've both approved (Profile → Couple profile).</span>`}</div>
+    <div><span class="tiny">VOUZ mark</span><div class="chips sm">${[["full","Full"],["small","Date only"],["off","Off"]].map(([v,l])=>`<button class="chip" data-act="shSet" data-k="brand" data-v="${v}" aria-pressed="${o.brand===v}">${l}</button>`).join("")}</div></div>
+    ${o.kind==="couple"?sw("shViz",!!o.viz,"Energy lines","Four lines, no numbers. Off by default."):""}</div>
+   <p class="tiny">This is exactly what will be shared. Nothing leaves VOUZ until you tap below.</p>
+   <div class="row"><button class="btn primary grow" data-act="shShare">${ic("share")} Share</button><button class="btn grow" data-act="shSave">Save image</button></div>
+   <p class="tiny">Share opens your phone's share sheet, where Instagram Stories, Snapchat and Messages appear when installed. A direct Instagram button needs the native VOUZ app.</p></div>`}
+async function shPaint(id,kind,o,ref){const el=document.getElementById(id);if(!el)return;const n=(shPaint[id]=(shPaint[id]||0)+1);let c;try{c=await shRender(kind,o,ref)}catch(e){return}if(n!==shPaint[id])return;
+  c.setAttribute("role","img");c.setAttribute("aria-label",(shData(kind,ref)||{}).big+" card");el.innerHTML="";el.appendChild(c);el.dataset.n=n}
+async function shExport(kind,o,ref,share){let blob,name;try{const c=await shRender(kind,o,ref);blob=await canvasBlob(c,"image/png");name="vouz-"+kind+"-"+fcToday()+".png"}catch(e){return toast("The card couldn't be drawn here.")}
+  if(share){const file=typeof File==="function"?new File([blob],name,{type:"image/png"}):null;
+    if(file&&navigator.canShare&&navigator.share){let can=false;try{can=navigator.canShare({files:[file]})}catch(x){}if(can){try{await navigator.share({files:[file]});return}catch(x){if(x&&x.name==="AbortError")return}}}}
+  const r=await saveOut(blob,name);toast(r==="saved"?(share?"Ready: choose Instagram, Snapchat, Messages or Save Image.":"Saved."):r==="declined"?"Not saved.":"Saving isn't available in this view. Open VOUZ in the Claude app or a browser that supports sharing.")}
+Object.assign(A,{
+  shEdit(e){const k=e.dataset.k;ui.she={...S.shareDefaults,kind:k,ref:null,viz:false,names:""};openPage({type:"shareEdit",from:ui.page})},
+  shQuick(e){shExport(e.dataset.k,{...S.shareDefaults,names:"",viz:false},null,true)},
+  shSet(e){const o=ui.she,k=e.dataset.k,v=e.dataset.v;if(k==="names"&&v&&!shCoupleOk())return;o[k]=v;if(["theme","type","bg","fmt","brand"].includes(k)){S.shareDefaults[k]=v;save()}render()},
+  shViz(){ui.she.viz=!ui.she.viz;render()},
+  shShare(){const o=ui.she;shExport(o.kind,o,o.ref,true)},shSave(){const o=ui.she;shExport(o.kind,o,o.ref,false)},
+  shMemories(){openPage({type:"shareMem",from:ui.page})},
+  fcOpenDay(e){ui.fc.view=e.dataset.v;openPage({type:"forecast",from:ui.page})}
+});
+function vShareMem(){const list=S.exps.filter(e=>!e.demo&&e.kind==="done").sort((a,b)=>(b.date||0)-(a.date||0));
+  return hdr("Shared memories")+`<div class="scroll ins"><p class="sub small">Pick a memory to turn into a card. Memories shared in a space need everyone in it to agree first.</p>
+   <div>${list.map(e=>`<button class="hist" data-act="mcOpen" data-id="${esc(e.id)}" data-a="me" style="width:100%;text-align:left"><span class="grow"><b>${esc(e.title)}</b><span class="sub small" style="display:block">${fmtDate(e.date)} · ${esc(XCATS[e.cat]||"")}</span></span>${ic("next")}</button>`).join("")}</div></div>`}
 
 function bind(e){const b=e.dataset.bind;if(!b)return;const [o,k]=b.split(".");const tgt={guide:ui.guide,dsc:ui.dsc,feed:ui.feed,pc:ui.pc,me:ui.me,cp:ui.cp,soc:ui.soc,ob:ui.ob,draft:S.draft,ins:ui.ins,compose:ui.compose,user:S.user,xd:ui.xd,plan:ui.plan,mc:ui.mc}[o];if(!tgt)return;tgt[k]=e.value;
   if(o==="draft"||e.dataset.save){S.stamp=Date.now();saveLocal();Cloud.queueVault()}}
@@ -2989,7 +3138,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&S.onboarde
 window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.onboarded&&!ui.locked&&TABS().some(x=>x[0]===t)&&(t!==ui.tab||ui.page)&&!legacySessions().length){ui.tab=t;ui.page=null;ui.sheet=null;render(true)}});
 
 /* ============ boot ============ */
-(function boot(){normCats();S.fc=Object.assign({on:true,checkins:{},hist:{},ai:false,closeIdeas:false,together:false,showEnergy:false,with:null},S.fc||{});S.disc=Object.assign({loc:null,saved:[],fb:{},kinds:{},hist:[],learn:true,ai:true,travel:"any",maxKm:8,budget:null,shareWith:[]},S.disc||{});
+(function boot(){normCats();S.shareDefaults=Object.assign({theme:"editorial",type:"serif",bg:"wine",fmt:"story",brand:"full"},S.shareDefaults||{});S.fc=Object.assign({on:true,checkins:{},hist:{},ai:false,closeIdeas:false,together:false,showEnergy:false,with:null},S.fc||{});S.disc=Object.assign({loc:null,saved:[],fb:{},kinds:{},hist:[],learn:true,ai:true,travel:"any",maxKm:8,budget:null,shareWith:[]},S.disc||{});
   try{if(window.claude&&window.claude.use)window.claude.use("sample").then(f=>{SAMPLE=f||null;if(ui.tab==="discover"&&!typing())render()}).catch(()=>{})}catch(e){}const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
   if(S.onboarded&&S.settings.pinHash)ui.locked=true;
   if(S.active){ui.tab="intimacy";ui.int.seg="track"}
@@ -2999,7 +3148,7 @@ window.addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(S.on
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 })();
-window.__vouz={fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+window.__vouz={shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>

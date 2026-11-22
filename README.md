@@ -9,7 +9,7 @@ Working with an AI assistant? Start with [AGENTS.md](AGENTS.md): it holds the pr
 
 | Path | What it is | State |
 |---|---|---|
-| `web/index.html` | The working app (single file, no build step): Home (with the feed), Intimacy, Discover, Our Story, Profile | Working, browser-tested |
+| `web/index.html` | The working app (single file, no build step): Home (feed, plus Discover and Our Story), Sessions, Insights, Share, Profile | Working, browser-tested |
 | `core/timer.js` | Session timer state machine over stored timestamps | Tested, not yet wired into the app |
 | `core/streaks.js` | Weekly streaks, Monday to Sunday | Tested, not yet wired into the app |
 | `core/storage.js` | Vault: migrations, backup, corruption recovery, export/import, optional encryption | Tested, not yet wired into the app |
@@ -18,7 +18,7 @@ Working with an AI assistant? Start with [AGENTS.md](AGENTS.md): it holds the pr
 | `supabase/migrations/` | Database schema and row-level security | Tested on local Postgres, not deployed |
 | `supabase/functions/` | Account deletion, purchase verification | Written, never run |
 | `watch/` | Apple Watch app source and iPhone bridge | Written, never compiled |
-| `e2e/run.py` | Browser tests for the app, including simulated users and connector stand-ins | 311 checks |
+| `e2e/run.py` | Browser tests for the app, including simulated users and connector stand-ins | 317 checks |
 
 The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in this repository. See CHECKLIST.md.
 
@@ -27,7 +27,7 @@ The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in thi
 ```
 npm test            # 105 unit tests (incl. private matching, rewards, feed and discover helpers, run straight from web/index.html): timer, streaks, storage, sync, backend client, entitlements (Node 20+)
 npm run test:db     # 186 policy tests on a throwaway local Postgres (needs initdb and psql)
-npm run test:ui     # 311 browser checks (needs Python, Playwright and Chrome)
+npm run test:ui     # 317 browser checks (needs Python, Playwright and Chrome)
 ```
 
 No packages are installed by any of these. There are no runtime dependencies.

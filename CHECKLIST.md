@@ -25,6 +25,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 
 | Feature | State |
 |---|---|
+| Share tab (card studio) | Done in the web app: six card types, editor, PNG export via share sheet or save. Direct Instagram Stories button needs the native app |
 | Daily Forecast | Done in the web app: Insights → Forecast, check-ins, together mode, history, share cards. Server tables in migration 0007, tested locally |
 | Connection guide (AI) | Done in the web app: Insights → Connection. Opt-in, aggregated totals only, tested with Claude mocked |
 | AI experience planner | Done. Discover → Planner. Sends only the request, budget, time, a typed area and (optional) memory titles |

@@ -89,10 +89,15 @@ def nav(p,t):
         if p.locator(".tabs").count(): break
         if p.locator(".sheet").count(): act(p,"closeSheet")
         act(p,"back")
-    if t in ("track","history","insights"): nav(p,"intimacy"); act(p,"iSeg",v=t)
+    if t in ("track","history"): nav(p,"intimacy"); act(p,"iSeg",v=t)
+    elif t=="insights": act(p,"tab",tab="insights")
+    elif t=="analytics": act(p,"tab",tab="insights"); act(p,"page",page="analytics")
+    elif t=="forecast": act(p,"tab",tab="insights"); p.wait_for_selector(".ihero .fw:not(.shimmer)"); act(p,"page",page="forecast")
+    elif t=="guide": act(p,"tab",tab="insights"); act(p,"page",page="guide")
     elif t=="social": nav(p,"home"); act(p,"page",page="social")
     elif t=="feed": act(p,"tab",tab="home")
     elif t in ("ideas","planner","match","plans"): nav(p,"discover"); act(p,"discSeg",v=t)
+    elif t in ("discover","story"): act(p,"tab",tab="home"); act(p,"tab",tab=t)
     else: act(p,"tab",tab=t)
 def feed(p,seg=None):
     """Everything this person can see: Friends feed, Explore (latest), then their own posts. Ends on Friends > My posts, or on seg if given."""
@@ -108,7 +113,7 @@ with sync_playwright() as pw:
     ok("onboarding is 3 steps with required 18+ acknowledgment",p.locator(".steps i").count()==3)
     onboard(p)
     s=S(p); ok("onboarding: social off by default, local mode",s["onboarded"] and not s["settings"]["social"] and s["user"]["mode"]=="local")
-    ok("nav: five tabs: Home (with the feed), Intimacy, Discover, Our Story, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Intimacy","Discover","Our Story","Profile"] and p.locator(".feedsec").count()==1)
+    ok("nav: five tabs: Home, Sessions, Insights, Share, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Sessions","Insights","Share","Profile"] and p.locator(".feedsec").count()==1)
     t=p.inner_text(".scroll"); ok("home: a new account gets one welcome card, no fabricated stats","Start your" in t and "story." in t and p.locator(".trio").count()==0 and p.locator(".sec").count()==0)
     top=p.evaluate("()=>{const c=document.querySelector('.scroll').cloneNode(true);c.querySelector('.feedsec')?.remove();return c.innerText}")
     ok("home: the part above the feed is kept short",len(top.split())<=45,str(len(top.split())))
@@ -144,7 +149,7 @@ with sync_playwright() as pw:
     act(p,"editSession",id=sid); p.fill("#d-min","10"); p.fill("#d-sec","0"); act(p,"saveSession"); p.wait_for_timeout(200)
     e=[x for x in S(p)["sessions"] if x["id"]==sid][0]
     ok("J2 edit updates record, keeps private fields",e["durationSec"]==600 and e["notes"]=="SECRETNOTE" and e["reflection"]=="REFLECTTEXT")
-    act(p,"back"); nav(p,"insights"); act(p,"insTab",v="overview"); act(p,"insRange",v="year")
+    act(p,"back"); nav(p,"analytics"); act(p,"insRange",v="year")
     tl=[t.inner_text() for t in p.locator(".tile b").all()]
     ok("J4 analytics reflect edit",tl[0]=="2" and tl[1]=="50m" and tl[3].startswith("40m"),str(tl[:4]))
     act(p,"insCat",v="poly"); ok("filter: Couple or Poly",p.locator(".tile b").first.inner_text()=="1")
@@ -280,6 +285,7 @@ with sync_playwright() as pw:
     ma=sorted(x.inner_text() for x in a.locator(".idea .it").all()); mb=sorted(x.inner_text() for x in bb.locator(".idea .it").all())
     ok("match: only ideas everyone picked are revealed, to both sides",ma==mb==["Cook something new together","Pack a picnic"],f"{ma} {mb}")
     for v in ("museum","stars","bike","garden","brunch"): act(a,"pickToggle",v=v)
+    a.wait_for_timeout(400)
     ok("match: picks are capped at 8, so nobody can pick everything",len(S(a)["picks"][spid])==8 and a.locator('[data-act="pickToggle"][data-v="dance"]').is_disabled())
     a.wait_for_timeout(1500); bb.wait_for_timeout(800)
     ma=sorted(x.inner_text() for x in a.locator(".idea .it").all())
@@ -389,10 +395,10 @@ with sync_playwright() as pw:
     ok("moderation: owner removes a reported public post",not any(i.get("id")==pid for i in STORE["posts/alice"]["items"]))
     cd.close()
     # Forecast together: both opt in, same words, partner's answers stay theirs
-    nav(a,"insights"); a.wait_for_selector(".fcard .fw:not(.shimmer)"); act(a,"fcTogether"); a.wait_for_timeout(600)
+    nav(a,"forecast"); a.wait_for_selector(".fcard .fw:not(.shimmer)"); act(a,"fcTogether"); a.wait_for_timeout(600)
     act(a,"fcE",v="Playful"); act(a,"fcCkSave"); a.wait_for_timeout(600)
-    nav(bb,"insights"); bb.wait_for_selector(".fcard .fw:not(.shimmer)"); act(bb,"fcTogether"); bb.wait_for_timeout(600); act(bb,"fcShowE"); act(bb,"fcE",v="Reflective"); act(bb,"fcCkSave"); bb.wait_for_timeout(1500)
-    nav(bb,"home"); nav(bb,"insights"); bb.wait_for_timeout(1200); a.wait_for_timeout(600); nav(a,"home"); nav(a,"insights"); a.wait_for_timeout(1500)
+    nav(bb,"forecast"); bb.wait_for_selector(".fcard .fw:not(.shimmer)"); act(bb,"fcTogether"); bb.wait_for_timeout(600); act(bb,"fcShowE"); act(bb,"fcE",v="Reflective"); act(bb,"fcCkSave"); bb.wait_for_timeout(1500)
+    nav(bb,"home"); nav(bb,"forecast"); bb.wait_for_timeout(1200); a.wait_for_timeout(600); nav(a,"home"); nav(a,"forecast"); a.wait_for_timeout(1500)
     wa=a.inner_text(".fcard .fw"); wb=bb.inner_text(".fcard .fw")
     ok("together: both partners see the same forecast",wa==wb and "Together" in a.inner_text(".fcard") and a.inner_text(".fsec")==bb.inner_text(".fsec"),wa+" / "+wb)
     raw=json.dumps({k:STORE[k] for k in STORE if k.startswith("fcheck/") or k.startswith("fcast/")})
@@ -468,7 +474,7 @@ with sync_playwright() as pw:
     ok("quick log: open, pick a length, save; stored as an estimate",len(S(p)["sessions"])==n0+1 and q["durationSec"]==1800 and q["segments"] is None and q["category"]=="couple")
     act(p,"quick"); act(p,"qDur",v="30"); act(p,"qSave"); p.wait_for_timeout(150); ok("quick log: an accidental second save is caught",len(S(p)["sessions"])==n0+1)
     # insights
-    nav(p,"insights"); act(p,"insTab",v="overview"); act(p,"insRange",v="year"); cnt={}
+    nav(p,"analytics"); act(p,"insRange",v="year"); cnt={}
     for cat in ("all","couple","poly"): act(p,"insCat",v=cat); cnt[cat]=p.locator(".tile b").first.inner_text()
     ok("insights: counts for All, Couple and Poly",cnt=={"all":"9","couple":"4","poly":"4"},str(cnt))
     act(p,"insCat",v="all"); t=p.inner_text(".scroll"); ok("insights: timed and estimated are kept apart","1 timed with VOUZ, 8 entered by hand" in t,t[t.find("timed")-40:t.find("timed")+60])
@@ -506,12 +512,16 @@ with sync_playwright() as pw:
     nav(p,"match"); ok("Mutual Match: explains it needs Connections when they're off","needs Connections" in p.inner_text(".scroll"))
     ctx.close()
     # ---------- Daily Forecast (Insights → Forecast) ----------
-    ctx,p=newctx(b); p.goto(URL); p.wait_for_timeout(300); onboard(p); nav(p,"insights"); p.wait_for_selector(".fcard .fw:not(.shimmer)")
+    ctx,p=newctx(b); p.goto(URL); p.wait_for_timeout(300); onboard(p); nav(p,"insights"); p.wait_for_selector(".ihero .fw:not(.shimmer)")
+    th=p.inner_text(".scroll"); hw=p.inner_text(".ihero .fw")
+    ok("insights: forecast is the centerpiece, then pulse, move, patterns and past words, nothing social",th.lower().index("today's energy")<th.lower().index("relationship pulse")<th.lower().index("today's move")<th.lower().index("patterns")<th.lower().index("past words") and p.locator(".post2").count()==0 and "%" not in th)
+    ok("insights: patterns are honest when there's nothing yet","Nothing here is guessed" in th)
+    act(p,"page",page="forecast"); p.wait_for_selector(".fcard .fw:not(.shimmer)")
     w0=p.inner_text(".fcard .fw"); t=p.inner_text(".scroll")
-    ok("forecast: first tab in Insights, a word for a new couple, honest about having nothing to go on",p.locator('.itabs [data-v="forecast"][aria-pressed="true"]').count()==1 and w0 in ["UNWRITTEN","CURIOUS","OPEN","WARM","PLAYFUL","SERENE"] and t.count("Not enough to go on")==4)
+    ok("forecast: the full forecast opens from Insights with the same word, honest about having nothing to go on",w0==hw and w0 in ["UNWRITTEN","CURIOUS","OPEN","WARM","PLAYFUL","SERENE"] and t.count("Not enough to go on")==4)
     ok("forecast: three sections, each labelled observed, reflection or suggestion",all(x in t.lower() for x in ["your connection","what to embrace","what to watch"]) and p.locator(".ftag").count()==3)
     ok("forecast: no numbers on the energies","%" not in p.inner_text(".fdims") and not re.search(r"\d",p.inner_text(".fdims")))
-    p.reload(); p.wait_for_timeout(400); nav(p,"insights"); p.wait_for_selector(".fcard .fw:not(.shimmer)"); ok("forecast: same forecast after reopening (no re-roll)",p.inner_text(".fcard .fw")==w0 and len(S(p)["fc"]["hist"])==1)
+    p.reload(); p.wait_for_timeout(400); nav(p,"forecast"); p.wait_for_selector(".fcard .fw:not(.shimmer)"); ok("forecast: same forecast after reopening (no re-roll)",p.inner_text(".fcard .fw")==w0 and len(S(p)["fc"]["hist"])==1)
     act(p,"fcE",v="Tender"); act(p,"fcC",v="5"); act(p,"fcW",v="closeness"); act(p,"fcCkSave"); p.wait_for_timeout(200)
     ok("check-in: saved on this device",S(p)["fc"]["checkins"][list(S(p)["fc"]["checkins"])[0]]["energy"]=="Tender")
     act(p,"fcUpdate"); p.wait_for_timeout(500); fc=[v for v in S(p)["fc"]["hist"].values()][0]["solo"]
@@ -521,13 +531,21 @@ with sync_playwright() as pw:
     act(p,"fcFit",v="0"); alt=p.locator('[data-act="fcFix"]').first.get_attribute("data-v"); act(p,"fcFix",v=alt); fc=[v for v in S(p)["fc"]["hist"].values()][0]["solo"]
     ok("not quite: recorded with the better word, kept on the device",fc["rejected"]==fc["word"] and fc["corrected"]==alt)
     ok("history: today's word on the calendar",p.locator(".fcal.on").count()==1)
-    act(p,"fcShareOpen"); p.wait_for_selector("#fc-prev canvas"); cv=p.evaluate("()=>{const c=document.querySelector('#fc-prev canvas');return [c.width,c.height,document.querySelector('#fc-prev').getBoundingClientRect().height]}")
-    ok("share: previewed first, 9:16 story by default",cv[0]==1080 and cv[1]==1920 and cv[2]>200 and "Nothing leaves VOUZ until you tap" in p.inner_text(".scroll"))
-    act(p,"fcsF",v="square"); p.wait_for_timeout(300); act(p,"fcsT",v="minimal"); p.wait_for_timeout(300)
-    ok("share: square and minimal",p.evaluate("document.querySelector('#fc-prev canvas').height")==1080)
-    act(p,"fcsT",v="couple"); ok("share: couple card hides names and energy lines unless chosen",p.locator('[data-act="fcsV"][aria-checked="false"], [data-act="fcsV"][aria-pressed="false"]').count()+p.locator('[data-act="fcsV"]').count()>=1)
-    act(p,"fcsSave"); p.wait_for_selector(".toast"); ok("share: only on tap, with an honest message when saving isn't available",p.locator(".toast").count()==1)
-    p.screenshot(path=SH+"fc-share.png"); act(p,"back"); nav(p,"insights"); p.screenshot(path=SH+"forecast.png"); ctx.close()
+    act(p,"fcShareOpen"); p.wait_for_selector("#sh-prev canvas"); cv=p.evaluate("()=>{const c=document.querySelector('#sh-prev canvas');return [c.width,c.height,document.querySelector('#sh-prev').getBoundingClientRect().height]}")
+    ok("share: the forecast's share button opens the studio editor, previewed, 9:16 by default",cv[0]==1080 and cv[1]==1920 and cv[2]>200 and "exactly what will be shared" in p.inner_text(".scroll"))
+    act(p,"back"); act(p,"back"); nav(p,"share"); p.wait_for_selector("#sh-hero canvas")
+    t=p.inner_text(".scroll")
+    ok("share tab: today's card up top with Customize and Share",p.locator('[data-act="shEdit"][data-k="daily"]').count()>=1 and p.locator('[data-act="shQuick"]').count()==1)
+    ok("share tab: only cards there's data for; the rest say what they need",p.locator('.shtile[data-k="daily"]').count()==1 and p.locator('.shtile.off').count()>=3 and "Turn on forecast together" in t and "Mark a memory as a milestone" in t)
+    act(p,"shEdit",k="daily"); p.wait_for_selector("#sh-prev canvas"); h0=p.evaluate("document.querySelector('#sh-prev').dataset.n")
+    act(p,"shSet",k="theme",v="minimal"); p.wait_for_timeout(300); act(p,"shSet",k="fmt",v="square"); p.wait_for_timeout(300); act(p,"shSet",k="type",v="sans"); p.wait_for_timeout(300); act(p,"shSet",k="brand",v="off"); p.wait_for_timeout(300)
+    ok("editor: theme, size, type and branding change the real image",p.evaluate("document.querySelector('#sh-prev canvas').height")==1080 and p.evaluate("document.querySelector('#sh-prev').dataset.n")!=h0)
+    ok("editor: names need a couple profile both approved",p.locator('[data-act="shSet"][data-k="names"][data-v="initials"][disabled]').count()==1 and "both approved" in p.inner_text(".scroll"))
+    png=p.evaluate("async()=>{const c=await shRender('daily',{...S.shareDefaults,names:'',viz:false},null);return c.toDataURL('image/png').length}") if False else p.evaluate("async()=>{const V=window.__vouz;return (await V.shRender('daily',{theme:'editorial',type:'serif',bg:'wine',fmt:'story',brand:'full'},null)).toDataURL('image/png').length}")
+    ok("export: a real high-resolution PNG is produced",png>20000,str(png))
+    ok("editor: choices are remembered for next time",S(p)["shareDefaults"]["theme"]=="minimal" and S(p)["shareDefaults"]["fmt"]=="square")
+    act(p,"shSave"); p.wait_for_selector(".toast"); ok("export: only on tap, with an honest message when saving isn't available",p.locator(".toast").count()==1)
+    p.screenshot(path=SH+"share-edit.png"); act(p,"back"); p.wait_for_timeout(300); p.screenshot(path=SH+"share.png"); nav(p,"insights"); p.wait_for_timeout(300); p.screenshot(path=SH+"insights.png"); ctx.close()
     # ---------- AI planner (Claude mocked: records exactly what would be sent) ----------
     PMOCK="""window.__prompts=[];window.__planFail=null;(()=>{const f=async()=>({text:''});f.json=async(input,opts)=>{window.__prompts.push({input,opts:Object.keys(opts||{})});if(String(input).includes('connection guide')&&!window.__planFail)return{answer:'You two tend to enjoy outdoor dates. https://evil.example/x',ideas:['hike','nope']};if(window.__planFail)throw {code:window.__planFail};
       return {suggestions:[{title:'<img src=x onerror="window.__xss=1">Sunset walk',why:'Easy and free',cost:'Free',time:'1 hour',setting:'Outdoors',steps:['Pick a spot','Bring a blanket']},{title:'Cook a new recipe',cost:'$',steps:[]},{bogus:1}]}};
@@ -553,7 +571,7 @@ with sync_playwright() as pw:
     p.evaluate("window.__planFail='not_granted'"); act(p,"plAsk",again="1"); p.wait_for_timeout(300); ok("planner: hides itself if Claude isn't allowed","isn't available here" in p.inner_text(".scroll"))
     # ---------- connection guide (Insights → Your connection) ----------
     p.evaluate("window.__planFail=null"); n0=p.evaluate("window.__prompts.length")
-    nav(p,"insights"); act(p,"insTab",v="connection")
+    nav(p,"guide")
     ok("guide: off until turned on, explains what it gets, sends nothing","Turn on the guide" in p.inner_text(".scroll") and "never gets" in p.inner_text(".scroll").lower() and p.evaluate("window.__prompts.length")==n0)
     act(p,"guideOn"); act(p,"guideEx",i="0"); act(p,"guideAsk"); p.wait_for_selector(".ga")
     pr=p.evaluate("window.__prompts.slice(-1)[0].input")
@@ -755,7 +773,7 @@ with sync_playwright() as pw:
     ok("count-up settles on the true value",p.locator(".trio b").first.inner_text()=="12")
     nav(p,"story"); p.screenshot(path=SH+"story.png"); nav(p,"ideas"); p.screenshot(path=SH+"ideas.png")
     sid=S(p)["sessions"][0]["id"]; nav(p,"history"); act(p,"openReplay",id=sid); p.wait_for_timeout(1500); p.screenshot(path=SH+"replay.png"); p.locator(".scroll").evaluate("e=>e.scrollTop=560"); p.wait_for_timeout(200); p.screenshot(path=SH+"replay2.png")
-    nav(p,"insights"); act(p,"insTab",v="overview"); act(p,"insRange",v="year"); act(p,"insTab",v="patterns"); p.wait_for_timeout(3400); p.screenshot(path=SH+"patterns.png"); act(p,"insTab",v="mood"); p.screenshot(path=SH+"mood.png")
+    nav(p,"analytics"); act(p,"insRange",v="year"); act(p,"insTab",v="patterns"); p.wait_for_timeout(3400); p.screenshot(path=SH+"patterns.png"); act(p,"insTab",v="mood"); p.screenshot(path=SH+"mood.png")
     ok("no page overflow sideways",p.evaluate("document.documentElement.scrollWidth<=window.innerWidth"))
     ctx.close(); b.close()
     ok("no uncaught page errors",not errs,str(errs[:5]))

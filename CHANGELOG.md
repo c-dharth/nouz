@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0 — 2026-11-21
+
+Changed: navigation, Insights and sharing.
+- Bottom bar: Home | Sessions | Insights | Share | Profile. Discover and Our Story open from Home's quick actions, with a way back to Home. Intimacy is now called Sessions (Track and History).
+- Insights is one private screen in five parts: today's energy (a large editorial card that opens the full forecast), relationship pulse, today's move, patterns from real check-ins and shared memories, and past words with a calendar. Session analytics and the connection guide sit under More. Nothing social appears here.
+- Share is a new tab and a studio, not a feed. Today's card is previewed large, with Customize and Share. The cards are Daily Energy, Couple Forecast, Weekly Reflection, Monthly Recap, Milestone and Shared Memories. A card type appears only when there's real data for it; otherwise it says what it needs.
+- Editor: Minimal, Dark, Gradient and Editorial themes, serif or sans, four colors, Story 9:16 or Square 1:1, the VOUZ mark full, date only or off. Choices are remembered. Exports a real 1080-wide PNG through the native share sheet or Save.
+- Couple names or initials on cards need a couple profile both partners approved. Cards never carry session details, check-ins, notes or a partner's answers.
+
 ## 0.11.0 — 2026-11-21
 
 Added: Daily Forecast, the first tab in Intimacy → Insights.
