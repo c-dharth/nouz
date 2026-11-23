@@ -62,15 +62,18 @@ def act(p,act_,**kw):
 def S(p): return p.evaluate("JSON.parse(JSON.stringify(window.__vouz.S))")
 def dob(p,pre,y,m,d):
     p.select_option(f"#{pre}-m",str(m)); p.select_option(f"#{pre}-d",str(d)); p.select_option(f"#{pre}-y",str(y)); p.wait_for_timeout(50)
-def onboard(p,social=False,account=False,born=(1995,11,8),deeper=None):
+def onboard(p,social=False,account=False,born=(1995,11,8),deeper=None,astro=False):
+    """Welcome, birthday, storage, then straight into the app. Astrology is optional, in Profile."""
     act(p,"obNext"); assert p.locator('[data-act="obNext"]').is_disabled()
-    dob(p,"ob",*born); act(p,"obNext"); act(p,"obNext")
-    if deeper: deeper(p)
-    else: act(p,"obSkipDeeper")
+    dob(p,"ob",*born); act(p,"obNext")
     if account: act(p,"obMode",mode="account")
     p.fill("#ob-name","Sid")
     if social: act(p,"obSocial")
-    act(p,"obNext")
+    act(p,"obNext"); p.wait_for_selector(".tabs")
+    if astro or deeper:
+        nav(p,"profile"); act(p,"page",page="astro"); act(p,"asOn")
+        if deeper: deeper(p)
+        nav(p,"home")
 errs=[]
 def newctx(b,uid=None,motion="reduce"):
     ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion=motion)
@@ -83,7 +86,6 @@ def newctx(b,uid=None,motion="reduce"):
 def log(p,title,mins,**kw):
     nav(p,"track"); act(p,"manual"); p.fill("#d-title",title); p.fill("#d-min",str(mins))
     if "notes" in kw: p.fill("#d-notes",kw["notes"])
-    if "hr" in kw: p.fill("#d-hra",kw["hr"])
     if "cat" in kw: act(p,"dCat",v=kw["cat"])
     if "mood" in kw: act(p,"dMood",v=kw["mood"])
     if "tag" in kw: p.fill("#d-tag",kw["tag"]); p.press("#d-tag","Enter")
@@ -95,13 +97,15 @@ def nav(p,t):
         act(p,"back")
     if t in ("track","history"): nav(p,"intimacy"); act(p,"iSeg",v=t)
     elif t=="insights": act(p,"tab",tab="insights")
-    elif t=="analytics": act(p,"tab",tab="insights"); act(p,"page",page="analytics")
+    elif t=="analytics": nav(p,"intimacy"); act(p,"iSeg",v="patterns")
     elif t=="forecast": act(p,"tab",tab="insights"); p.wait_for_selector(".ihero .fw:not(.shimmer)"); act(p,"page",page="forecast")
     elif t=="guide": act(p,"tab",tab="insights"); act(p,"page",page="guide")
     elif t=="social": nav(p,"home"); act(p,"page",page="social")
-    elif t=="feed": act(p,"tab",tab="home")
+    elif t=="feed": act(p,"tab",tab="home"); act(p,"page",page="social"); act(p,"socSeg",v="feed")
     elif t in ("ideas","planner","match","plans"): nav(p,"discover"); act(p,"discSeg",v=t)
-    elif t in ("discover","story"): act(p,"tab",tab="home"); act(p,"tab",tab=t)
+    elif t=="story": act(p,"tab",tab="home"); act(p,"tab",tab=t)
+    elif t=="share": act(p,"tab",tab="insights"); act(p,"page",page="share")
+    elif t=="storyshare": act(p,"tab",tab="home"); act(p,"tab",tab="story"); act(p,"page",page="share")
     else: act(p,"tab",tab=t)
 def feed(p,seg=None):
     """Everything this person can see: Friends feed, Explore (latest), then their own posts. Ends on Friends > My posts, or on seg if given."""
@@ -109,7 +113,7 @@ def feed(p,seg=None):
     for v in ("friends","explore"):
         if p.locator('[data-act="feedSeg"]').count(): act(p,"feedSeg",v=v); p.wait_for_timeout(150); t+=p.inner_text(".scroll")
     if seg: act(p,"feedSeg",v=seg); return t
-    act(p,"page",page="social"); act(p,"socSeg",v="mine"); p.wait_for_timeout(150); return t+p.inner_text(".scroll")
+    act(p,"socSeg",v="mine"); p.wait_for_timeout(150); return t+p.inner_text(".scroll")
 with sync_playwright() as pw:
     b=pw.chromium.launch(executable_path="/usr/bin/google-chrome",args=["--no-sandbox"])
     # ---------- local mode ----------
@@ -125,26 +129,29 @@ with sync_playwright() as pw:
     cx.close()
     cx,q=newctx(b); q.goto(URL); q.wait_for_selector(".ob"); act(q,"obNext"); dob(q,"ob",td.year-18,td.month,td.day)
     ok("age: an 18th birthday today is allowed",("You're 18" in q.inner_text(".ob")) and not q.locator('[data-act="obNext"]').is_disabled()); cx.close()
-    ok("onboarding: welcome, birthday, sign, optional details, setup",p.locator(".steps i").count()==5)
+    # ---------- NEW USER FLOW: welcome, age check, storage, straight in ----------
+    ok("new user: onboarding is three steps",p.locator(".steps i").count()==3)
+    t=p.inner_text(".ob"); ok("new user: welcome says location goes to Mapbox, Yelp and AllTrails only when Discover is used","no location tracking" not in t.lower() and "only when you search in Discover" in t and all(x in t for x in ["Mapbox","Yelp","AllTrails"]))
     act(p,"obNext"); dob(p,"ob",1995,11,8); act(p,"obNext")
-    t=p.inner_text(".ob"); ok("sign: worked out from the birthday, shown as a cosmic identity, framed as for fun","SCORPIO" in t and "Unapologetically deep" in t and "not a personality test" in t)
-    act(p,"obNext"); t=p.inner_text(".ob"); ok("go deeper: optional, skippable, explains what Rising needs","go deeper" in t.lower() and p.locator('[data-act="obSkipDeeper"]').count()==1 and "Rising" in t)
-    p.fill("#as-time","14:30"); act(p,"obDeeper"); p.fill("#ob-name","Sid"); act(p,"obNext")
-    a0=S(p); ok("age record and astrology kept apart; birthday private",a0["age"]["dob"]=="1995-11-08" and a0["age"]["method"]=="self-declared" and a0["astro"]["time"]=="14:30" and "dob" not in a0["astro"])
+    t=p.inner_text(".ob"); ok("new user: no astrology in onboarding; the next step is storage","SCORPIO" not in t and "cosmic" not in t.lower() and "Keep it on this device" in t and p.locator('[data-act="obSkipDeeper"]').count()==0)
+    ok("new user: sync unavailable shows a clear fallback, not a dead end","Not available in this view" not in t and "send your partner a session as a code" in t)
+    p.fill("#ob-name","Sid"); act(p,"obNext"); p.wait_for_selector(".tabs")
+    a0=S(p); ok("new user: age record kept; astrology off until chosen in Profile",a0["age"]["dob"]=="1995-11-08" and a0["age"]["method"]=="self-declared" and a0["astro"]["on"] is False and "dob" not in a0["astro"])
     s=S(p); ok("onboarding: social off by default, local mode",s["onboarded"] and not s["settings"]["social"] and s["user"]["mode"]=="local")
-    ok("nav: five tabs: Home, Sessions, Insights, Share, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Sessions","Insights","Share","Profile"] and p.locator(".feedsec").count()==1)
+    ok("nav: five tabs: Home, Sessions, Discover, Forecast, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Sessions","Discover","Forecast","Profile"])
+    ok("home: no feed and no points, levels or badges by default",p.locator(".feedsec").count()==0 and p.locator(".prog2").count()==0 and "VP" not in p.inner_text(".scroll") and not S(p)["settings"]["games"])
     t=p.inner_text(".scroll"); ok("home: a new account gets one welcome card, no fabricated stats","Start your" in t and "story." in t and p.locator(".trio").count()==0 and p.locator(".sec").count()==0)
-    top=p.evaluate("()=>{const c=document.querySelector('.scroll').cloneNode(true);c.querySelector('.feedsec')?.remove();return c.innerText}")
-    ok("home: the part above the feed is kept short",len(top.split())<=45,str(len(top.split())))
-    ok("home: the feed section explains itself briefly when Connections are off","Turn on Connections" in t and len(p.inner_text(".feedsec").split())<=40)
+    ok("home: kept short",len(t.split())<=45,str(len(t.split())))
     ok("brand: old tagline gone","cardio" not in p.content().lower())
     nav(p,"history"); ok("history: empty state, no fabricated stats",p.locator("text=Nothing logged yet").count()==1 and p.locator(".trio").count()==0)
-    nav(p,"track"); act(p,"start"); p.wait_for_timeout(2100); act(p,"pause"); p.wait_for_timeout(1000)
+    nav(p,"track"); qb=p.locator('[data-act="quick"]'); sb=p.locator('[data-act="start"]')
+    ok("track: Quick log is the primary button, the timer secondary","primary" in qb.get_attribute("class") and "primary" not in sb.get_attribute("class") and qb.bounding_box()["y"]<sb.bounding_box()["y"])
+    act(p,"start"); p.wait_for_timeout(2100); act(p,"pause"); p.wait_for_timeout(1000)
     t_paused=p.inner_text("#clock"); p.wait_for_timeout(1100)
     ok("timer: paused clock does not advance",p.inner_text("#clock")==t_paused,t_paused)
     act(p,"resume"); p.reload(); p.wait_for_selector("#clock"); p.wait_for_timeout(1200)
     ok("timer: active session survives reload",p.inner_text("#clock")>="00:00:03",p.inner_text("#clock"))
-    act(p,"finish"); p.fill("#d-title","Friday"); p.fill("#d-notes","SECRETNOTE"); p.fill("#d-hra","111"); act(p,"dCat",v="couple"); act(p,"dMood",v="Tender")
+    act(p,"finish"); p.fill("#d-title","Friday"); p.fill("#d-notes","SECRETNOTE"); ok("heart rate entry hidden until it works",p.locator("#d-hra").count()==0); act(p,"dCat",v="couple"); act(p,"dMood",v="Tender")
     p.reload(); p.wait_for_timeout(300); act(p,"resumeDraft")
     ok("draft survives reload",p.input_value("#d-notes")=="SECRETNOTE")
     act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
@@ -173,7 +180,7 @@ with sync_playwright() as pw:
     ok("J4 analytics reflect edit",tl[0]=="2" and tl[1]=="50m" and tl[3].startswith("40m"),str(tl[:4]))
     act(p,"insCat",v="poly"); ok("filter: Couple or Poly",p.locator(".tile b").first.inner_text()=="1")
     act(p,"insCat",v="all"); act(p,"insTab",v="patterns"); t=p.inner_text(".scroll")
-    ok("insights: time-of-day and weekday patterns","time of day" in t.lower() and "most often in the" in t.lower() and "couple and poly" in t.lower())
+    ok("insights: time-of-day and weekday patterns","time of day" in t.lower() and "most often in the" in t.lower() and "who was involved" in t.lower())
     act(p,"insTab",v="mood"); t=p.inner_text(".scroll"); ok("insights: mood and reflections","Playful" in t and "REFLECTTEXT" in t)
     ok("insights copy never frames more as better",not re.search(r"\b(better than|keep it up|great job|improve|goal reached|up from)\b",p.inner_text("body"),re.I))
     act(p,"insTab",v="overview"); act(p,"insRange",v="custom"); p.fill("#i-from","2020-01-01"); p.dispatch_event("#i-from","change"); p.fill("#i-to","2020-01-31"); p.dispatch_event("#i-to","change")
@@ -185,7 +192,7 @@ with sync_playwright() as pw:
     nav(p,"profile"); ok("social toggle unavailable without account",p.locator('[data-act="toggleSocial"]').is_disabled())
     small=p.evaluate("""()=>Array.from(document.querySelectorAll('button,[role=button],input,textarea')).filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&(r.height<43.5)}).map(e=>(e.dataset.act||e.id||e.tagName)+':'+Math.round(e.getBoundingClientRect().height))""")
     ok("touch targets at least 44px (profile)",not small,str(small))
-    act(p,"togglePin"); p.fill("#pin-new","1234"); act(p,"pinSave"); p.wait_for_timeout(600)
+    act(p,"page",page="privacy"); act(p,"togglePin"); p.fill("#pin-new","1234"); act(p,"pinSave"); p.wait_for_timeout(600)
     ok("passcode stored as slow salted hash, not the code",S(p)["settings"]["pinAlg"]=="pbkdf2" and len(S(p)["settings"]["pinHash"])==64)
     p.reload(); p.wait_for_selector("#pin-in")
     ok("lock screen renders no session data",p.locator(".scroll").count()==0 and "SECRETNOTE" not in p.inner_text("body") and "Session" not in p.inner_text("body"))
@@ -234,7 +241,7 @@ with sync_playwright() as pw:
     # public card: only achievement cards can go to everyone
     nav(a,"history"); act(a,"openReplay",id=sid); act(a,"composeRecap",id=sid)
     ok("a session card can never be shared with everyone",a.locator('[data-act="cAud"][data-v="everyone"]').count()==0)
-    a.evaluate("()=>{}"); nav(a,"profile"); act(a,"page",page="achievements"); act(a,"composeAch",id="first"); a.fill("#c-cap","PUBLICCAP"); act(a,"cAud",v="everyone"); act(a,"composeStep",v="preview"); act(a,"publish"); a.wait_for_timeout(800)
+    nav(a,"profile"); ok("achievements: hidden while rewards are off",a.locator('[data-page="achievements"]').count()==0); act(a,"page",page="rewards"); act(a,"rwGames"); nav(a,"profile"); act(a,"page",page="achievements"); act(a,"composeAch",id="first"); a.fill("#c-cap","PUBLICCAP"); act(a,"cAud",v="everyone"); act(a,"composeStep",v="preview"); act(a,"publish"); a.wait_for_timeout(800)
     pub=json.dumps([{k:v for k,v in i.items() if k not in ("postedAt","id")} for i in STORE["posts/alice"]["items"] if i.get("vis")=="everyone"])
     ok("everyone-card is sanitized whitelist only","PUBLICCAP" in pub and not any(w in pub for w in ["SECRETNOTE","SECRETTAG","PRIVATETITLE","Electric","123","About",sid]),pub)
     ok("everyone-card visible to unconnected user","PUBLICCAP" in feed(c))
@@ -250,12 +257,12 @@ with sync_playwright() as pw:
         nav(pg,"home"); pg.wait_for_timeout(700); return pg.inner_text(".scroll")
     replay(a,sid); act(a,"addPeople"); names=[x.locator("b").inner_text().strip() for x in a.locator('[data-act="inviteAsk"]').all()]
     ok("people: only my connections are offered",names==["bobby"],str(names))
-    act(a,"inviteAsk",id="bob"); ok("people: sending asks first and says what is shown","date, time, length, Couple" in a.inner_text(".sheet") and "invites/alice" not in STORE); a.screenshot(path=SH+"ppl_confirm.png")
+    act(a,"inviteAsk",id="bob"); ok("people: sending asks first and says what is shown","date, time, length, Two of us" in a.inner_text(".sheet") and "invites/alice" not in STORE); a.screenshot(path=SH+"ppl_confirm.png")
     act(a,"confirmYes"); a.wait_for_timeout(900); raw=json.dumps(STORE["invites/alice"]); st=str(S(a)["sessions"][0]["start"])
-    ok("people: the invite is sealed in storage",len(STORE["invites/alice"]["items"])==1 and not any(w in raw for w in ["bob","alice",sid,st,"duo","1980","PRIVATETITLE","SECRETNOTE"]),raw[:200])
+    ok("people: the invite is sealed in storage",len(STORE["invites/alice"]["items"])==1 and not any(w in raw for w in ["bob","alice",sid,st,"\"duo\"","\"couple\"",":1980","PRIVATETITLE","SECRETNOTE"]),raw[:200])
     ok("people: sender sees Invited","Invited" in a.inner_text(".scroll") and S(a)["sessions"][0]["people"][0]["id"]=="bob"); a.screenshot(path=SH+"ppl_replay.png")
     hb=home(bb); bb.screenshot(path=SH+"ppl_inbox.png")
-    ok("people: the invited person is asked, nothing is added yet","ali added you to a session" in hb and "Couple" in hb and len(S(bb)["sessions"])==0,hb[:200])
+    ok("people: the invited person is asked, nothing is added yet","ali added you to a session" in hb and "Two of us" in hb and len(S(bb)["sessions"])==0,hb[:200])
     ok("people: nobody else can see the invite","added you" not in home(c) and c.evaluate("window.__vouz.Soc.inbox.length")==0)
     act(bb,"invYes"); bb.wait_for_timeout(900); bs=S(bb)["sessions"]
     ok("people: accepting saves a private copy with time, length and category only",len(bs)==1 and bs[0]["durationSec"]==1980 and bs[0]["category"]=="couple" and bs[0]["participants"]==2 and bs[0]["start"]==S(a)["sessions"][0]["start"] and bs[0]["notes"]=="" and bs[0]["title"]=="" and bs[0]["mood"]=="" and bs[0]["tags"]==[] and bs[0]["hrAvg"]=="" and "you confirmed" in bb.inner_text(".scroll") and "Mutually confirmed" in bb.inner_text(".scroll"),str(bs)[:300])
@@ -382,7 +389,7 @@ with sync_playwright() as pw:
     ok("likes: one per person, stored with time",isinstance(STORE["reactions/carol"]["r"][k],dict) and c.locator(f'[data-act="like"][data-k="{k}"]').get_attribute("aria-pressed")=="true")
     ok("saved: kept in the private vault only",k in S(c)["saved"] and '"saved"' not in json.dumps({x:STORE[x] for x in STORE if not x.startswith("data/")}))
     nav(c,"feed"); act(c,"page",page="saved"); ok("saved page lists it","PUBLICIDEA" in c.inner_text(".scroll"))
-    a.wait_for_timeout(600); nav(a,"feed"); ok("notifications: bell shows unread",a.locator('[data-page="notifs"] .dot').count()==1)
+    a.wait_for_timeout(600); nav(a,"home"); ok("notifications: bell on Home shows unread",a.locator('[data-page="notifs"] .dot').count()==1)
     act(a,"page",page="notifs"); ok("notifications: like listed","caz liked" in a.inner_text(".scroll"))
     # edit own post
     feed(a); pid=[i for i in STORE["posts/alice"]["items"] if i.get("vis")=="everyone" and "PUBLICIDEA" in i.get("caption","")][0]["id"]
@@ -426,7 +433,7 @@ with sync_playwright() as pw:
     ok("together: the forecast never draws on intimacy records","Just for you two" not in a.inner_text(".scroll"))
     act(a,"fcTogether"); a.wait_for_timeout(600); ok("together: turning it off removes what was shared",STORE.get("fcheck/alice") in (None,{}) and STORE.get("fcast/alice") in (None,{}))
     # couple astrology: alice shares her Sun only, and allows it on cards; bob shares nothing
-    nav(a,"profile"); act(a,"page",page="astro"); act(a,"asShare",id="bob",v="sun"); a.wait_for_timeout(400); act(a,"asCards",id="bob"); a.wait_for_timeout(900); bb.wait_for_timeout(600)
+    nav(bb,"profile"); act(bb,"page",page="astro"); act(bb,"asOn"); nav(a,"profile"); act(a,"page",page="astro"); act(a,"asOn"); act(a,"asShare",id="bob",v="sun"); a.wait_for_timeout(400); act(a,"asCards",id="bob"); a.wait_for_timeout(900); bb.wait_for_timeout(600)
     raw=json.dumps(STORE.get("astro/alice"))
     ok("couple astro: shared encrypted, never the birthday",STORE.get("astro/alice") and not any(x in raw for x in ["Scorpio","1995","dob","14:30"]))
     nav(bb,"insights"); bb.wait_for_timeout(300); act(bb,"page",page="cosmic"); bb.wait_for_timeout(1200); t=bb.inner_text(".scroll")
@@ -444,7 +451,7 @@ with sync_playwright() as pw:
     nav(a,"profile"); act(a,"toggleSocial"); act(a,"sheetWipe"); act(a,"socialOffYes"); a.wait_for_timeout(900)
     ok("J8 Social off with delete: shared content, stash and keys gone",not any("alice" in k for k in STORE if k!="data/users/alice/vault"),str([k for k in STORE if "alice" in k]))
     # sync merge across devices
-    ca2,a2=newctx(b,"alice"); a2.goto(URL); a2.wait_for_timeout(400); act(a2,"obNext"); dob(a2,"ob",1990,1,1); act(a2,"obNext"); act(a2,"obNext"); act(a2,"obSkipDeeper"); act(a2,"obMode",mode="account"); a2.wait_for_selector('[data-act="obRestore"]'); act(a2,"obRestore"); a2.wait_for_timeout(300)
+    ca2,a2=newctx(b,"alice"); a2.goto(URL); a2.wait_for_timeout(400); act(a2,"obNext"); dob(a2,"ob",1990,1,1); act(a2,"obNext"); act(a2,"obMode",mode="account"); a2.wait_for_selector('[data-act="obRestore"]'); act(a2,"obRestore"); a2.wait_for_timeout(300)
     ok("second device restores from private sync",len(S(a2)["sessions"])==1 and S(a2)["sessions"][0]["notes"]=="SECRETNOTE")
     log(a2,"fromdevice2",12); a2.wait_for_timeout(1700)
     nav(a,"history"); act(a,"openReplay",id=sid); act(a,"editSession",id=sid); act(a,"askDelete"); act(a,"confirmYes"); a.wait_for_timeout(1700)
@@ -456,29 +463,43 @@ with sync_playwright() as pw:
     ok("J10 account deletion removes vault and every document of mine",not any("alice" in k for k in STORE),str([k for k in STORE if "alice" in k]))
     for x in (ca,cb,cc,ca2): x.close()
 
-    # ---------- earlier data: conversion to Couple/Poly and removal of Solo/Partnered ----------
+    # ---------- RETURNING USER FLOW: a 0.13-era account opens 0.14; nothing is lost ----------
     NOW=int(time.time()*1000); D=86400000
     def L(i,cat,days,**kw): return {"id":i,"title":i.upper(),"start":NOW-days*D,"durationSec":900,"segments":None,"category":cat,"tags":[],"mood":"","notes":"keep-"+i,"hrAvg":"","hrPeak":"","createdAt":1,"updatedAt":1,**kw}
-    LEG={"v":1,"onboarded":True,"stamp":1,"user":{"name":"Sid","mode":"local","createdAt":1},"settings":{"social":False,"privateProfile":True,"defaultVis":"connections","regular":None,"pinHash":None,"pinSalt":None},
-         "sessions":[L("osolo","solo",3),L("opart","partnered",2),L("oduo","duo",4),L("otrio","trio",5),L("ogrp","group",6,groupSize=6),L("ogrpx","group",7),L("onone",None,8)],
+    LEG={"v":1,"onboarded":True,"stamp":1,"user":{"name":"Sid","mode":"local","createdAt":1},"settings":{"social":False,"privateProfile":True,"defaultVis":"connections","regular":None,"pinHash":None,"pinSalt":None,"games":True,"celebrate":True},
+         "rewards":{"spent":[],"unlocked":[],"cards":[],"ch":{},"theme":None,"frame":None,"seen":None,"seenB":[],"seenL":1},
+         "sessions":[L("osolo","solo",3),L("opart","partnered",2,hrAvg="101"),L("oduo","duo",4),L("otrio","trio",5),L("ogrp","group",6,groupSize=6),L("ogrpx","group",7),L("onone",None,8)],
+         "exps":[{"id":"oplan","kind":"plan","title":"OLDPLAN","cat":"dinner","date":NOW+3*D,"location":"Pier 39","photos":[],"createdAt":1,"updatedAt":1}],
          "active":None,"draft":None,"blocks":[],"ignored":[]}
     ctx=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); ctx.add_init_script("if(!localStorage.getItem('vouz.v1'))localStorage.setItem('vouz.v1',"+json.dumps(json.dumps(LEG))+")")
     p=ctx.new_page(); p.on("pageerror",lambda e:errs.append(str(e)+" @ "+str(getattr(e,"stack",""))[:600])); p.goto(URL); p.wait_for_timeout(400)
-    ok("existing accounts: asked for a birthday once before going in","when were you born" in p.inner_text("#app").lower() and p.locator(".tabs").count()==0)
-    dob(p,"gate",1990,5,5); act(p,"gateNext"); p.wait_for_selector(".sheet")
-    ok("existing accounts: in after a valid birthday",S(p)["age"]["dob"]=="1990-05-05")
-    t=p.inner_text(".sheet"); ok("legacy: a notice explains the change before anything is removed","1 Solo session and 1 Partnered session" in t and len(S(p)["sessions"])==7,t[:160])
+    ok("returning user: asked for a birthday once before going in","when were you born" in p.inner_text("#app").lower() and p.locator(".tabs").count()==0)
+    dob(p,"gate",1990,5,5); act(p,"gateNext"); p.wait_for_selector(".tabs")
+    ok("returning user: in after a valid birthday, no removal notice",S(p)["age"]["dob"]=="1990-05-05" and p.locator(".sheet").count()==0)
     by={x["id"]:x for x in S(p)["sessions"]}
-    ok("legacy: Duo becomes Couple, Trio and Group become Poly with their head count",[by[k]["category"] for k in ("oduo","otrio","ogrp","ogrpx")]==["couple","poly","poly","poly"] and [by[k]["participants"] for k in ("oduo","otrio","ogrp","ogrpx")]==[2,3,6,4] and "groupSize" not in by["ogrp"])
-    ok("legacy: sessions with no mode stay unset, private fields kept",by["onone"]["category"] is None and by["oduo"]["notes"]=="keep-oduo")
-    p.keyboard.press("Escape"); p.wait_for_timeout(100); ok("legacy: the notice can't be skipped",p.locator(".sheet").count()==1)
-    act(p,"legacyExport"); p.wait_for_selector("#exp-out"); ok("legacy: a copy can be downloaded first, including the sessions about to go","OSOLO" in p.input_value("#exp-out") and "OPART" in p.input_value("#exp-out")); act(p,"closeSheet"); p.wait_for_selector('[data-act="legacyRemove"]')
-    act(p,"legacyRemove"); p.wait_for_timeout(200); st=S(p)
-    ok("legacy: Solo and Partnered removed, with tombstones so other devices remove them too",len(st["sessions"])==5 and "osolo" in st["deleted"] and "opart" in st["deleted"] and p.locator(".sheet").count()==0)
-    p.reload(); p.wait_for_selector(".tabs"); ok("legacy: removal is final and the storage key is unchanged",p.locator(".sheet").count()==0 and len(S(p)["sessions"])==5 and p.evaluate("Object.keys(localStorage).join()")=="vouz.v1")
+    ok("returning user: every earlier session kept",len(by)==7 and all(by[k]["notes"]=="keep-"+k for k in by) and by["opart"]["hrAvg"]=="101")
+    ok("returning user: Solo stays Solo, Partnered stays as it was",by["osolo"]["category"]=="solo" and by["osolo"]["participants"]==1 and by["opart"]["category"]=="partnered")
+    ok("returning user: Duo becomes Two of us, Trio and Group More than two with their head count",[by[k]["category"] for k in ("oduo","otrio","ogrp","ogrpx")]==["couple","poly","poly","poly"] and [by[k]["participants"] for k in ("oduo","otrio","ogrp","ogrpx")]==[2,3,6,4] and "groupSize" not in by["ogrp"])
+    ok("returning user: sessions with no type stay unset",by["onone"]["category"] is None)
+    ok("returning user: rewards were on by default before; now off and hidden, records kept",not S(p)["settings"]["games"] and p.locator(".prog2").count()==0 and S(p)["rewards"] is not None)
+    nav(p,"history"); t=p.inner_text(".scroll"); ok("returning user: history shows the new neutral labels","Solo" in t and "With a partner" in t and "Two of us" in t and "More than two · 6" in t and "Poly" not in t and "Couple" not in t)
+    act(p,"openReplay",id="opart"); act(p,"editSession",id="opart"); ok("returning user: editing a Partnered session keeps it, and keeps its heart rate","With a partner" in p.inner_text(".scroll") and "101 bpm" in p.inner_text(".scroll")); act(p,"saveSession"); p.wait_for_timeout(200)
+    ok("returning user: saving it changes nothing it shouldn't",[x for x in S(p)["sessions"] if x["id"]=="opart"][0]["category"]=="partnered"); act(p,"back")
+    p.reload(); p.wait_for_selector(".tabs"); ok("returning user: still all there after reloading, same storage key",len(S(p)["sessions"])==7 and p.evaluate("Object.keys(localStorage).join()")=="vouz.v1")
+    nav(p,"profile"); ok("returning user: Wearables and VOUZ Plus pages hidden",p.locator('[data-page="wearables"]').count()==0 and p.locator('[data-page="plus"]').count()==0)
+    act(p,"page",page="astro"); ok("returning user: astrology is optional in Profile",not S(p)["astro"]["on"] and "cosmic identity" in p.inner_text(".scroll").lower()); act(p,"asOn"); ok("astrology: the reveal moved to Profile","TAURUS" in p.inner_text(".creveal") and "Go deeper".upper() in p.inner_text(".scroll").upper()); act(p,"asOn"); act(p,"back")
+    # plans: add to calendar
+    nav(p,"story"); act(p,"tab",tab="home"); p.evaluate("()=>{window.__ics=null;const o=window.claude;}")
+    act(p,"expOpen",id="oplan"); ok("plans: every plan has Add to calendar",p.locator('[data-act="planIcs"]').count()==1)
+    ics=p.evaluate("()=>{const V=window.__vouz;return V.planIcs(V.S.exps.find(e=>e.id==='oplan'))}")
+    ok("plans: the calendar file is a valid event with title, time and place","BEGIN:VCALENDAR" in ics and "SUMMARY:OLDPLAN" in ics and "LOCATION:Pier 39" in ics and "DTSTART:" in ics and "DTEND:" in ics and ics.count("\r\n")>=8)
+    act(p,"planIcs",id="oplan"); p.wait_for_selector(".toast"); ok("plans: without downloads here, says so honestly","isn't available in this view" in p.inner_text(".toast")); act(p,"back")
+    # backup reminder: this account was created long ago and never exported
+    nav(p,"home"); ok("backup: a gentle reminder after 30 days without an export",p.locator('[aria-label="Backup reminder"]').count()==1)
+    act(p,"backupLater"); ok("backup: 'later' hides it for another 30 days",p.locator('[aria-label="Backup reminder"]').count()==0 and S(p)["backupSnooze"]>0)
     # ---------- Couple and Poly ----------
     nav(p,"track"); act(p,"manual")
-    ok("modes: only Couple and Poly are offered, Couple by default",[x.inner_text() for x in p.locator('[data-act="dCat"]').all()]==["Couple","Poly"] and p.locator('[data-act="dCat"][data-v="couple"]').get_attribute("aria-pressed")=="true" and "Who was involved?".upper() in p.inner_text(".scroll").upper())
+    ok("types: Two of us, More than two and Solo, Two of us by default",[x.inner_text() for x in p.locator('[data-act="dCat"]').all()]==["Two of us","More than two","Solo"] and p.locator('[data-act="dCat"][data-v="couple"]').get_attribute("aria-pressed")=="true" and "Who was involved?".upper() in p.inner_text(".scroll").upper())
     act(p,"dCat",v="poly"); ok("modes: Poly starts at 3 and can't go below",p.locator(".stepper b").inner_text()=="3" and p.locator('[data-act="dP"][data-d="-1"]').is_disabled())
     for _ in range(25):
         if p.locator('[data-act="dP"][data-d="1"]').is_disabled(): break
@@ -487,12 +508,15 @@ with sync_playwright() as pw:
     for _ in range(16): act(p,"dP",d="-1")
     p.fill("#d-title","NEWPOLY"); act(p,"dSat",v="4"); p.fill("#d-shared","SHAREDLINE"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
     x=S(p)["sessions"][-1]; ok("modes: Poly saves its head count, satisfaction and shared note",x["category"]=="poly" and x["participants"]==4 and x["satisfaction"]==4 and x["sharedNote"]=="SHAREDLINE")
-    t=p.inner_text(".scroll"); ok("replay: mode, status, estimate label and satisfaction shown","Poly · 4" in t and "Self-reported" in t and "Estimated" in t and "4 of 5" in t)
+    t=p.inner_text(".scroll"); ok("replay: mode, status, estimate label and satisfaction shown","More than two · 4" in t and "Self-reported" in t and "Estimated" in t and "4 of 5" in t)
     ok("replay: a Poly session can invite up to 3 others (Connections off: none offered)",p.locator('[data-act="addPeople"]').count()==1); act(p,"back")
     nav(p,"track"); act(p,"manual"); p.evaluate("()=>{const d=window.__vouz.S.draft;d.category='poly';d.participants=2}"); act(p,"saveSession")
     ok("modes: Poly with fewer than 3 people is refused",p.locator(".err").count()==1 and "3 to 20" in p.inner_text(".err"))
     p.evaluate("()=>{const d=window.__vouz.S.draft;d.category='trio'}"); act(p,"saveSession"); ok("modes: an unknown mode is refused",p.locator(".err").count()==1); act(p,"dCat",v="couple"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately")
-    ok("modes: Couple is always exactly 2",S(p)["sessions"][-1]["participants"]==2); act(p,"back")
+    ok("types: Two of us is always exactly 2",S(p)["sessions"][-1]["participants"]==2); act(p,"back")
+    nav(p,"track"); act(p,"manual"); act(p,"dCat",v="solo"); ok("types: Solo says it's just you and never shared","Just you" in p.inner_text(".scroll") and p.locator(".stepper").count()==0)
+    p.fill("#d-title","MYSOLO"); act(p,"saveSession"); p.wait_for_selector("text=Saved privately"); x=S(p)["sessions"][-1]
+    ok("types: a Solo session saves as one person, with nothing to confirm or send",x["category"]=="solo" and x["participants"]==1 and p.locator('[data-act="addPeople"]').count()==0 and p.locator('[data-act="sessCode"]').count()==0); act(p,"back")
     # timer with Poly chosen up front and changed mid-session
     nav(p,"track"); act(p,"tCat",v="poly"); act(p,"tP",d="1"); act(p,"start"); p.wait_for_timeout(1100)
     ok("timer: who-was-involved set before starting is kept",S(p)["active"]["category"]=="poly" and S(p)["active"]["participants"]==4)
@@ -507,21 +531,21 @@ with sync_playwright() as pw:
     act(p,"quick"); act(p,"qDur",v="30"); act(p,"qSave"); p.wait_for_timeout(150); ok("quick log: an accidental second save is caught",len(S(p)["sessions"])==n0+1)
     # insights
     nav(p,"analytics"); act(p,"insRange",v="year"); cnt={}
-    for cat in ("all","couple","poly"): act(p,"insCat",v=cat); cnt[cat]=p.locator(".tile b").first.inner_text()
-    ok("insights: counts for All, Couple and Poly",cnt=={"all":"9","couple":"4","poly":"4"},str(cnt))
-    act(p,"insCat",v="all"); t=p.inner_text(".scroll"); ok("insights: timed and estimated are kept apart","1 timed with VOUZ, 8 entered by hand" in t,t[t.find("timed")-40:t.find("timed")+60])
-    act(p,"insTab",v="patterns"); t=p.inner_text(".scroll"); ok("insights: Couple and Poly compared, earlier unset sessions counted","COUPLE AND POLY" in t.upper() and "1 earlier session with no mode set" in t)
+    for cat in ("all","couple","poly","solo"): act(p,"insCat",v=cat); cnt[cat]=p.locator(".tile b").first.inner_text()
+    ok("patterns: counts for All, Two of us, More than two and Solo",cnt=={"all":"12","couple":"4","poly":"4","solo":"2"},str(cnt))
+    act(p,"insCat",v="all"); t=p.inner_text(".scroll"); ok("insights: timed and estimated are kept apart","1 timed with VOUZ, 11 entered by hand" in t,t[t.find("timed")-40:t.find("timed")+60])
+    act(p,"insTab",v="patterns"); t=p.inner_text(".scroll"); ok("patterns: types compared, earlier unset sessions counted","WHO WAS INVOLVED" in t.upper() and "1 earlier session with no mode set" in t)
     sid=[x for x in S(p)["sessions"] if x.get("title")=="NEWPOLY"][0]["id"]
     card=p.evaluate("id=>JSON.stringify(window.__vouz.buildCard({kind:'recap',showCategory:true,showDuration:true,style:0},window.__vouz.S.sessions.find(s=>s.id===id)))",sid)
-    ok("sharing: a card says Poly and never the head count, satisfaction or shared note",'"category":"Poly"' in card and "4" not in card.replace('"arc":15',"").replace("About 15 min","") and "SHAREDLINE" not in card,card)
+    ok("sharing: a card says More than two and never the head count, satisfaction or shared note",'"category":"More than two"' in card and "4" not in card.replace('"arc":15',"").replace("About 15 min","") and "SHAREDLINE" not in card,card)
     # ---------- Discover, plans, Our Story ----------
     nav(p,"ideas"); n_all=p.locator('[data-act="ideaSave"]').count(); act(p,"fOpen"); act(p,"fSet",k="b",v="0"); act(p,"fSet",k="ds",v="home")
     titles=[x.inner_text() for x in p.locator(".idea .it").all()]
     ok("discover: filters narrow the ideas to free, at-home ones",0<len(titles)<n_all and "Write each other letters" in titles and "Take a road trip" not in titles,str(titles))
     act(p,"fClear"); ok("discover: clearing filters brings everything back",p.locator('[data-act="ideaSave"]').count()==n_all)
-    act(p,"ideaSave",v="picnic"); ok("discover: an idea saves to plans once",p.locator('[data-act="ideaSave"][data-v="picnic"]').is_disabled() and len([e for e in S(p)["exps"] if e["idea"]=="picnic"])==1)
+    act(p,"ideaSave",v="picnic"); ok("discover: an idea saves to plans once",p.locator('[data-act="ideaSave"][data-v="picnic"]').is_disabled() and len([e for e in S(p)["exps"] if e.get("idea")=="picnic"])==1)
     nav(p,"home"); ok("home: the plan shows under Coming up","Pack a picnic" in p.inner_text(".scroll") and "Unscheduled" in p.inner_text(".scroll"))
-    pid=[e for e in S(p)["exps"] if e["idea"]=="picnic"][0]["id"]
+    pid=[e for e in S(p)["exps"] if e.get("idea")=="picnic"][0]["id"]
     nav(p,"plans"); act(p,"planSched",id=pid); p.fill("#sch-in",time.strftime("%Y-%m-%dT18:30",time.localtime(time.time()+3*86400))); act(p,"schedSave"); ok("plans: scheduling sets the date",S(p)["exps"][-1]["date"] is not None and "6:30pm" in p.inner_text(".scroll"))
     act(p,"planDone",id=pid); ok("plans: marking done opens the memory form",p.locator("#x-title").input_value()=="Pack a picnic")
     p.fill("#x-fav","FAVMOMENT"); p.fill("#x-notes","PRIVNOTE"); act(p,"xMood",v="Relaxed"); act(p,"expSave"); p.wait_for_timeout(150); e=[x for x in S(p)["exps"] if x["id"]==pid][0]
@@ -551,7 +575,7 @@ with sync_playwright() as pw:
     act(p,"page",page="forecast"); p.wait_for_selector(".fcard .fw:not(.shimmer)")
     w0=p.inner_text(".fcard .fw"); t=p.inner_text(".scroll")
     ok("forecast: the full forecast opens from Insights with the same word, honest about having nothing to go on",w0==hw and w0 in ["UNWRITTEN","CURIOUS","OPEN","WARM","PLAYFUL","SERENE","ELECTRIC","BOLD","SPARKED","STEADY","DEVOTED","UNHURRIED","TENDER","INTIMATE","MAGNETIC"] and t.count("Not enough to go on")==4)
-    ok("forecast: with no check-ins yet, the word comes from the stars and says so","Word from the stars" in t and "astrology, for fun" in t and "cosmic outlook" in t.lower())
+    ok("forecast: with no check-ins and astrology off, it's an opening word and says so","An opening word" in t and "cosmic outlook" not in t.lower())
     ok("forecast: three sections, each labelled observed, reflection or suggestion",all(x in t.lower() for x in ["your connection","what to embrace","what to watch"]) and p.locator(".fsec .ftag").count()==3)
     ok("forecast: no numbers on the energies","%" not in p.inner_text(".fdims") and not re.search(r"\d",p.inner_text(".fdims")))
     p.reload(); p.wait_for_timeout(400); nav(p,"forecast"); p.wait_for_selector(".fcard .fw:not(.shimmer)"); ok("forecast: same forecast after reopening (no re-roll)",p.inner_text(".fcard .fw")==w0 and len(S(p)["fc"]["hist"])==1)
@@ -581,7 +605,7 @@ with sync_playwright() as pw:
     p.screenshot(path=SH+"share-edit.png"); act(p,"back"); p.wait_for_timeout(300); p.screenshot(path=SH+"share.png"); nav(p,"insights"); p.wait_for_timeout(300); p.screenshot(path=SH+"insights.png"); ctx.close()
     # ---------- astrology ----------
     ctx,p=newctx(b); p.goto(URL); p.wait_for_timeout(300)
-    def deep(pg): pg.fill("#as-time","14:30"); pg.fill("#as-place","Mission District"); act(pg,"obDeeper")
+    def deep(pg): pg.fill("#as-time","14:30"); pg.fill("#as-place","Mission District"); act(pg,"asSave"); pg.wait_for_timeout(300)
     onboard(p,born=(1995,11,8),deeper=deep); nav(p,"profile"); act(p,"page",page="astro"); t=p.inner_text(".scroll")
     ok("astro: Sun, Moon, Venus, Mars from the birthday; Rising needs the place on a map",all(x in t for x in ["Scorpio","Gemini","Sagittarius"]) and "Needs your birthplace on the map" in t)
     act(p,"asUnknown"); act(p,"asSave"); p.wait_for_timeout(200); t=p.inner_text(".scroll")
@@ -644,7 +668,8 @@ with sync_playwright() as pw:
         if loc: p.fill("#x-loc",loc)
         act(p,"expSave"); p.wait_for_timeout(150)
     def R_(): return p.evaluate("(()=>{const r=window.__vouz.R();return {earned:r.earned,balance:r.balance,level:r.level.n,awards:r.awards.map(a=>[a.k,a.vp,a.why]),badges:r.badges.filter(b=>b.earnedAt).map(b=>b.id)}})()")
-    nav(p,"home"); ok("rewards: Home shows level and points, starting from nothing",p.locator(".prog2").count()==1 and "Spark" in p.inner_text(".prog2") and "0 VP" in p.inner_text(".prog2") and R_()["earned"]==0)
+    nav(p,"profile"); act(p,"page",page="rewards"); ok("rewards: off until turned on, and says so","are off" in p.inner_text(".scroll")); act(p,"rwGames")
+    nav(p,"home"); ok("rewards: once on, Home shows level and points, starting from nothing",p.locator(".prog2").count()==1 and "Spark" in p.inner_text(".prog2") and "0 VP" in p.inner_text(".prog2") and R_()["earned"]==0)
     addmem("FIRSTDINNER","dinner","Corner bistro")
     ok("rewards: a memory earns 20, a first kind 50, and First Spark",R_()["earned"]==70 and "spark" in R_()["badges"])
     ok("rewards: earning celebrates, with the points and the badge",p.locator(".cel").count()==1 and "+70 VP" in p.inner_text(".cel") and "First Spark" in p.inner_text(".cel"))
@@ -676,15 +701,15 @@ with sync_playwright() as pw:
     ok("redeem: too-expensive rewards can't be redeemed",p.locator('[data-act="rwBuy"][data-v="th_champagne"]').is_disabled())
     ok("redeem: no fictional offers, coupons or discounts","no partner offers" in p.inner_text(".scroll") and not re.search(r"\b(coupon code|% off|discount code)\b",p.inner_text(".scroll"),re.I))
     bal=R_()["balance"]; lv=R_()["level"]; act(p,"rwBuy",v="th_bordeaux"); ok("redeem: asks first",p.locator(".sheet").count()==1 and R_()["balance"]==bal); act(p,"confirmYes"); p.wait_for_timeout(150)
-    ok("redeem: spends points once, keeps the level, applies the theme",R_()["balance"]==bal-300 and R_()["level"]==lv and p.evaluate("document.body.className")=="th-bordeaux")
+    ok("redeem: spends points once, keeps the level, applies the theme",R_()["balance"]==bal-300 and R_()["level"]==lv and p.evaluate("document.body.className.replace('veiled','').trim()")=="th-bordeaux")
     ok("redeem: an owned reward can't be bought twice",p.locator('[data-act="rwBuy"][data-v="th_bordeaux"]').count()==0)
-    act(p,"rwUse",v="th_bordeaux"); ok("redeem: a theme can be switched off and on",p.evaluate("document.body.className")=="")
+    act(p,"rwUse",v="th_bordeaux"); ok("redeem: a theme can be switched off and on",p.evaluate("document.body.className.replace('veiled','').trim()")=="")
     act(p,"rwSeg",v="history"); t=p.inner_text(".scroll"); ok("history: earnings, the daily limit and the redemption are listed","Redeemed: Bordeaux theme" in t and "not counted" in t and "Weekly challenge" in t)
     act(p,"rwSeg",v="badges"); ok("badges: earned, up next and private achievements are shown",p.locator(".btile.on").count()>=2 and "Up next".upper() in p.inner_text(".scroll").upper() and "Private achievements" in p.inner_text(".scroll")); p.screenshot(path=SH+"badges.png")
     # switches
     act(p,"rwSeg",v="progress"); act(p,"rwCel"); addmem("QUIETONE","celebration"); ok("switch: celebrations can be turned off",p.locator(".cel").count()==0 and R_()["earned"]>0)
     nav(p,"profile"); act(p,"page",page="rewards"); act(p,"rwCel"); act(p,"rwGames"); nav(p,"home")
-    ok("switch: gamification off hides levels and points everywhere",p.locator(".prog2").count()==0 and "VP" not in p.inner_text(".scroll") and p.evaluate("document.body.className")=="")
+    ok("switch: gamification off hides levels and points everywhere",p.locator(".prog2").count()==0 and "VP" not in p.inner_text(".scroll") and p.evaluate("document.body.className.replace('veiled','').trim()")=="")
     addmem("WHILEOFF","movie"); ok("switch: nothing celebrates while it's off",p.locator(".cel").count()==0)
     nav(p,"profile"); act(p,"page",page="rewards"); act(p,"rwGames"); nav(p,"home"); p.wait_for_timeout(200)
     ok("switch: turning it back on picks up quietly from the records",p.locator(".cel").count()==0 and p.locator(".prog2").count()==1)
@@ -809,7 +834,7 @@ with sync_playwright() as pw:
     act(e,"discSeg",v="nearby"); e.wait_for_timeout(200); act(e,"dNk",v="coffee"); e.wait_for_timeout(500)
     ok("yelp: nearby asks Yelp for that kind",e.evaluate("window.__yelpCalls.slice(-1)[0].query")=="coffee")
     t=e.inner_text(".scroll"); card=[x.inner_text() for x in e.locator(".rec").all() if "TEST COFFEE 0" in x.inner_text()]
-    ok("merge: the same café from Mapbox and Yelp is one card with both sources' facts",len(card)==1 and "Mapbox + Yelp" in card[0] and "★" in card[0] and "Yelp\nWebsite" in card[0] and "Open now" in card[0] and "per Mapbox" in card[0] and " mi" in card[0],str(card[:1]))
+    ok("merge: the same café from Mapbox and Yelp is one card with both sources' facts",len(card)==1 and "Mapbox + Yelp" in card[0] and "★" in card[0] and "Yelp\nWebsite" in card[0] and ("Open now" in card[0] or "Closed now · today 7am–11pm" in card[0]) and "per Mapbox" in card[0] and " mi" in card[0],str(card[:1]))
     ok("mapbox hours: a closed place says so",any("Closed now" in x.inner_text() for x in e.locator(".rec").all() if "MAPBOX ONLY CAFE" in x.inner_text()))
     act(e,"dNk",v="trail"); e.wait_for_timeout(500); t=e.inner_text(".scroll")
     ok("alltrails: trails with length, time, gain and distance to the trailhead","TEST RIDGE LOOP" in t and "1.9 mi" in t and "314 ft gain" in t and "to the trailhead" in t)
@@ -820,6 +845,86 @@ with sync_playwright() as pw:
     e.evaluate("window.__yelpFail=null"); act(e,"dRetry"); e.wait_for_timeout(500); ok("yelp: try again recovers","Couldn't get places" not in e.inner_text(".scroll") and "TEST" in e.inner_text(".scroll"))
     ctx.close()
     # screenshots with motion on
+    # ---------- 0.14: backups, codes, passphrase, blur, Discreet mode ----------
+    import base64 as _b64, zipfile as _zf, io as _io2
+    DLMOCK="""window.__files=[];window.claude={use:async n=>n==='downloads'?{save:async({filename,data})=>{const u=new Uint8Array(await (data instanceof Blob?data:new Blob([data])).arrayBuffer());let s='';for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);window.__files.push({filename,b64:btoa(s)});return{status:'saved'}}}:null};"""
+    def dlctx():
+        c=b.new_context(viewport={"width":390,"height":844},reduced_motion="reduce"); c.add_init_script(DLMOCK); pg=c.new_page(); pg.on("pageerror",lambda e:errs.append(str(e)+" @ "+str(getattr(e,"stack",""))[:600])); return c,pg
+    ctx,p=dlctx(); p.goto(URL); p.wait_for_selector(".ob"); onboard(p)
+    log(p,"VAULTTITLE",25,notes="VAULTNOTE"); sid=S(p)["sessions"][0]["id"]
+    jpg=open(os.path.join(HERE,"fixtures","gps.jpg"),"rb").read()
+    nav(p,"story"); act(p,"expNew",kind="done"); p.fill("#x-title","PHOTOMEM"); p.set_input_files("#x-photo",files=[{"name":"g.jpg","mimeType":"image/jpeg","buffer":jpg}]); p.wait_for_function("document.querySelectorAll('.ph img').length===1"); act(p,"expSave"); p.wait_for_timeout(300)
+    phid=[e for e in S(p)["exps"] if e["title"]=="PHOTOMEM"][0]["photos"][0]
+    nav(p,"profile"); act(p,"exportData"); p.wait_for_function("window.__files.length===1",timeout=15000)
+    f=p.evaluate("window.__files[0]"); z=_b64.b64decode(f["b64"]); zf=_zf.ZipFile(_io2.BytesIO(z)); names=zf.namelist()
+    ok("export: a .zip with the JSON and the photos, readable by standard tools",f["filename"].endswith(".zip") and "vouz-export.json" in names and any(n.startswith("photos/") for n in names) and zf.testzip() is None,str(names))
+    j=json.loads(zf.read("vouz-export.json"))
+    ok("export: the JSON keeps the earlier format, now with photo ids",j["app"]=="vouz" and isinstance(j["sessions"],list) and j["sessions"][0]["notes"]=="VAULTNOTE" and j["settings"]["pinHash"] is None and phid in j["exps"][0]["photos"] and j["photos"][0]["file"] in names and '"keys"' not in json.dumps(j))
+    ok("export: photo bytes are the stored JPEG",zf.read(j["photos"][0]["file"])[:2]==b"\xff\xd8")
+    ok("backup: the export is remembered",S(p)["lastBackup"]>0 and "Last export" in p.inner_text(".scroll"))
+    cq,q=dlctx(); q.goto(URL); q.wait_for_selector(".ob"); onboard(q)
+    nav(q,"profile"); act(q,"sheet",s="import"); q.set_input_files("#imp-file",files=[{"name":"v.zip","mimeType":"application/zip","buffer":z}]); act(q,"importYes"); q.wait_for_timeout(800)
+    sq=S(q); ok("import: sessions, memories and photos come back from the zip",any(x["title"]=="VAULTTITLE" and x["notes"]=="VAULTNOTE" for x in sq["sessions"]) and any(e["title"]=="PHOTOMEM" for e in sq["exps"]) and q.evaluate("id=>window.__vouz.Photos.get(id).then(b=>!!b&&b.size>100)",phid))
+    old=dict(j); old.pop("photos"); old["exps"]=[]; old["sessions"]=[dict(j["sessions"][0],id="jsononly",title="JSONONLY",category="solo")]
+    act(q,"sheet",s="import"); q.set_input_files("#imp-file",files=[{"name":"old.json","mimeType":"application/json","buffer":json.dumps(old).encode()}]); act(q,"importYes"); q.wait_for_timeout(400)
+    ok("import: a plain JSON export still imports, Solo included",any(x["id"]=="jsononly" and x["category"]=="solo" for x in S(q)["sessions"]))
+    # shared-session code: the fallback when pairing isn't possible here
+    nav(p,"history"); act(p,"openReplay",id=sid); ok("code: a session offers Send as a code when Connections aren't available",p.locator('[data-act="sessCode"]').count()==1 and "shared-session code" in p.inner_text(".scroll"))
+    act(p,"sessCode"); code=p.input_value("#sc-out"); dec=p.evaluate("c=>JSON.stringify(window.__vouz.readSessionCode(c))",code)
+    ok("code: carries date, time, length and type, never private fields",code.startswith("VOUZ-S1:") and "VAULTNOTE" not in dec and "VAULTTITLE" not in dec and '"d":1500' in dec); act(p,"closeSheet")
+    nav(q,"profile"); act(q,"page",page="pair"); t=q.inner_text(".scroll")
+    ok("pair: without sync, a clear fallback instead of a dead end","pairing needs sync" in t.lower() and "export a shared-session code to send your partner" in t and "Not available in this view" not in t)
+    n0=len(S(q)["sessions"]); q.fill("#sc-in",code); act(q,"codeAdd"); q.wait_for_timeout(200); x=S(q)["sessions"][-1]
+    ok("code: the partner adds it as their own private entry",len(S(q)["sessions"])==n0+1 and x["durationSec"]==1500 and x["notes"]=="" and x["title"]=="" and x["fromCode"])
+    q.fill("#sc-in",code); act(q,"codeAdd"); ok("code: adding the same one twice is caught",len(S(q)["sessions"])==n0+1)
+    cq.close()
+    # passphrase encryption
+    act(p,"back"); nav(p,"profile"); act(p,"page",page="privacy"); act(p,"togglePass"); p.fill("#pp-1","short"); p.fill("#pp-2","short"); act(p,"passSave")
+    ok("passphrase: at least 8 characters",p.locator(".sheet .err").count()==1)
+    p.fill("#pp-1","correct horse battery"); p.fill("#pp-2","correct horse battery"); act(p,"passSave"); p.wait_for_function("!document.querySelector('.sheet')",timeout=20000); p.wait_for_timeout(500)
+    raw=p.evaluate("localStorage.getItem('vouz.v1')")
+    ok("passphrase: everything in this browser is ciphertext",'"enc"' in raw and not any(w in raw for w in ["VAULTTITLE","VAULTNOTE","PHOTOMEM","1995-11-08"]))
+    ok("passphrase: photos are encrypted too",p.evaluate("id=>window.__vouz.Photos.rawGet(id).then(v=>!!v&&v.e===1&&!(v instanceof Blob))",phid))
+    p.reload(); p.wait_for_selector("#vault-in")
+    ok("passphrase: asked for on opening, and nothing shows before",p.locator(".tabs").count()==0 and "VAULTTITLE" not in p.inner_text("body"))
+    p.fill("#vault-in","wrong guess"); act(p,"vaultUnlock"); p.wait_for_selector("#app .err",timeout=20000); ok("passphrase: a wrong one is refused",p.locator(".tabs").count()==0)
+    p.fill("#vault-in","correct horse battery"); act(p,"vaultUnlock"); p.wait_for_selector(".tabs",timeout=20000)
+    ok("passphrase: the right one opens everything, photos too",any(x["title"]=="VAULTTITLE" for x in S(p)["sessions"]) and p.evaluate("id=>window.__vouz.Photos.get(id).then(b=>!!b&&b.size>100)",phid))
+    log(p,"AFTERLOCK",12); p.wait_for_timeout(500); raw=p.evaluate("localStorage.getItem('vouz.v1')")
+    p.reload(); p.wait_for_selector("#vault-in"); p.fill("#vault-in","correct horse battery"); p.press("#vault-in","Enter"); p.wait_for_selector(".tabs",timeout=20000)
+    ok("passphrase: changes are saved encrypted and survive a reload","AFTERLOCK" not in raw and any(x["title"]=="AFTERLOCK" for x in S(p)["sessions"]))
+    nav(p,"profile"); act(p,"page",page="privacy"); act(p,"togglePass"); p.fill("#pp-off","nope nope"); act(p,"passOffYes"); p.wait_for_selector(".sheet .err",timeout=20000)
+    p.fill("#pp-off","correct horse battery"); act(p,"passOffYes"); p.wait_for_function("!document.querySelector('.sheet')",timeout=20000); p.wait_for_timeout(300)
+    ok("passphrase: can be turned off with the passphrase, data and photos back to plain",'"enc"' not in p.evaluate("localStorage.getItem('vouz.v1')") and p.evaluate("id=>window.__vouz.Photos.rawGet(id).then(v=>v instanceof Blob)",phid))
+    # Discreet mode and blur
+    act(p,"toggleDiscreet"); nav(p,"home")
+    ok("discreet: no VOUZ name, neutral labels",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Log","Discover","Today","Profile"] and "vouz." not in p.inner_text("#app").lower() and p.title()=="Journal" and "Private log" in p.inner_text(".scroll"))
+    nav(p,"profile"); act(p,"page",page="privacy"); act(p,"toggleDiscreet"); ok("discreet: turns off again",p.title()=="VOUZ")
+    p.evaluate("Object.defineProperty(document,'hidden',{value:true,configurable:true});document.dispatchEvent(new Event('visibilitychange'))")
+    ok("blur: the screen is covered when VOUZ goes to the background",p.evaluate("document.body.classList.contains('veiled')"))
+    p.evaluate("Object.defineProperty(document,'hidden',{value:false,configurable:true});document.dispatchEvent(new Event('visibilitychange'))"); p.wait_for_timeout(300)
+    ok("blur: and uncovered on return",not p.evaluate("document.body.classList.contains('veiled')"))
+    t=p.inner_text(".scroll"); ok("privacy: location wording is accurate","Mapbox, Yelp and AllTrails" in t and "doesn't track" in t)
+    act(p,"back"); act(p,"page",page="policy"); t=p.inner_text(".scroll"); ok("policy: no blanket 'location never collected' claim","Never collected: location" not in t and "never tracked" in t and "Mapbox, Yelp and AllTrails" in t)
+    ctx.close()
+    # ---------- pairing: one code or one scan connects two people ----------
+    cpa,pa=newctx(b,"pam"); cpb,pb=newctx(b,"pat")
+    for pg,nm in ((pa,"pammy"),(pb,"patty")):
+        pg.goto(URL); pg.wait_for_timeout(400); onboard(pg,account=True); nav(pg,"profile"); act(pg,"toggleSocial"); pg.fill("#s-handle",nm); act(pg,"sheetPrivate"); act(pg,"socialOnYes"); pg.wait_for_function("window.__vouz.S.settings.social===true"); pg.wait_for_timeout(800)
+    nav(pa,"home"); ok("pair: one tap from Home",pa.locator('[data-act="page"][data-page="pair"]').count()==1); act(pa,"page",page="pair"); act(pa,"pairCreate"); pa.wait_for_selector(".paircode")
+    code=pa.inner_text(".paircode").strip(); raw=json.dumps(STORE.get("links/pam"))
+    ok("pair: the invite publishes only a hash of the code, with an expiry",len(code.replace("-",""))==12 and code.replace("-","") not in raw and '"pc"' in raw and '"exp"' in raw)
+    pa.locator(".qrbox").screenshot(path=SH+"pair_qr.png")
+    import cv2 as _cv; img=_cv.imread(SH+"pair_qr.png"); qd=_cv.QRCodeDetector().detectAndDecode(img)[0]
+    ok("pair: the QR code scans to the invite with the code and the link",code in qd and "claude.ai/artifact/" in qd,qd[:80])
+    nav(pb,"profile"); act(pb,"page",page="pair"); pb.fill("#pair-in","AAAA-AAAA-AAAA"); act(pb,"pairJoin"); pb.wait_for_timeout(300)
+    ok("pair: a wrong code says so",pb.locator(".err").count()==1 and "No open invite" in pb.inner_text(".err"))
+    pb.fill("#pair-in",code.lower().replace("-"," ")); act(pb,"pairJoin"); pb.wait_for_timeout(1800); pa.wait_for_timeout(1800); pb.wait_for_timeout(800)
+    ok("pair: entering the code connects both, no approval step",pa.evaluate("window.__vouz.Soc.conns().length")==1 and pb.evaluate("window.__vouz.Soc.conns().length")==1)
+    raw=json.dumps({k:STORE[k] for k in ("links/pam","links/pat")})
+    ok("pair: the code is used up and never stored readable",code.replace("-","") not in raw and STORE["links/pam"].get("pc")==[] and S(pa).get("pairInv") is None)
+    nav(pa,"profile"); act(pa,"page",page="pair"); ok("pair: shows who you're paired with","patty" in pa.inner_text(".scroll"))
+    cpa.close(); cpb.close()
     ctx,p=newctx(b,motion="no-preference"); p.goto(URL); p.wait_for_timeout(700); p.screenshot(path=SH+"ob.png"); onboard(p); act(p,"loadDemo"); p.wait_for_timeout(600); p.screenshot(path=SH+"home.png"); nav(p,"history"); p.wait_for_timeout(1200)
     ok("count-up settles on the true value",p.locator(".trio b").first.inner_text()=="12")
     nav(p,"story"); p.screenshot(path=SH+"story.png"); nav(p,"ideas"); p.screenshot(path=SH+"ideas.png")

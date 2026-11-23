@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.14.0 — 2026-11-23
+
+Changed: closer to the pitch, easier to pair, harder to lose or leak.
+- Rewards, points, levels and badges are off by default, for new and existing accounts, and Home shows none of it unless you turn them on in Profile → Rewards. Your earlier points and badges are kept and come back if you turn them on.
+- The social feed is gone from Home. It lives in Friends (Feed, People, My posts), only when Social is on.
+- Tabs are now Home, Sessions, Discover, Forecast and Profile. Insights is now Forecast. The "Patterns, not scores" analytics are the third part of Sessions, next to Track and History. Share now opens from Our Story ("Share a card") and from Forecast (More → Share a card).
+- Onboarding is welcome, age check, storage, then straight into the app. The astrology reveal and "Go deeper" moved to Profile → Astrology, which is now off until you turn it on.
+- Track: "Quick log: just finished" is the primary button; the timer is the secondary one.
+- Session types are now "Two of us", "More than two" and "Solo". The stored values are unchanged ("couple", "poly"), so exports and older copies still read the same. Solo sessions are back; they're never shared or sent for confirmation. Earlier Solo and Partnered sessions are no longer removed: Solo stays Solo, Partnered stays as "With a partner", and an import no longer skips them.
+
+Added
+- Pairing: Profile → Pair with a partner (also on Home). One tap makes a one-time code, shown as text and as a QR code, valid once for 48 hours. When your partner enters it you're connected straight away, with no approval step. Only a hash of the code is ever stored where others can read it.
+- Where sync or Social can't work, a clear fallback replaces "Not available in this view": send a session as a code ("Send as a code" on any session), and your partner adds it from the Pair page. A code carries the date, time, length, who was involved and the shared note, never private fields.
+- Passphrase encryption (Profile → Passphrase, blur and Discreet mode): everything VOUZ keeps in this browser, photos included, is encrypted with AES-256 using a key made from your passphrase (PBKDF2-SHA-256, 310,000 rounds). It asks for the passphrase each time VOUZ opens, or after 5 minutes in the background. It replaces the 4-digit passcode while it's on.
+- The screen blurs when VOUZ goes to the background (on by default, can be turned off).
+- Discreet mode: no "vouz." name anywhere in the app, and neutral words (Journal, Log, Today, Private log, Notes). The tab title becomes "Journal".
+- Export is now a .zip: the same JSON as before (memories now list their photo ids) plus your photos. Import takes the .zip or a JSON file, and now also brings back memories, plans and photos.
+- A gentle backup reminder on Home once 30 days pass without an export ("Remind me later" waits another 30 days).
+- "Add to calendar" (.ics) on every plan.
+
+Fixed
+- The welcome screen said "no location tracking". It now says Discover shares your location with Mapbox, Yelp and AllTrails only when you use it. The privacy page says the same.
+
+Hidden until they work: the Wearables page, the VOUZ Plus page and the typed-in heart rate fields. Heart rates you entered earlier are kept and still shown.
+
 ## 0.13.0 — 2026-11-21
 
 Added: 18+ gate and astrology.

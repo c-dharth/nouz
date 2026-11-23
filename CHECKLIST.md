@@ -11,7 +11,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 |---|---|---|---|
 | 1 | Authentication | Done (platform) | Signed-in Claude account via the artifact. Not Supabase Auth yet |
 | 2 | User profiles | Done | Handle, private/discoverable, connection codes |
-| 3 | Couple and Poly selection | Done | Couple = 2; Poly 3–20 with counter; Solo/Partnered removed on upgrade |
+| 3 | Session types | Done | Two of us = 2; More than two 3–20 with counter; Solo; earlier Partnered kept as "With a partner" |
 | 4 | Session logging | Done | Timer, quick log, manual, edit, delete, satisfaction, private and shared notes |
 | 5 | Participant confirmation | Done | Self-reported / Pending / Mutually confirmed; decline and step out |
 | 6 | Session history | Done | Intimacy → History |
@@ -19,7 +19,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 | 8 | Relationship spaces | Done | Encrypted; owner invites connections; join, leave, remove, delete |
 | 9 | Experience tracking | Done | Memories and plans; photos device-only |
 | 10 | Mutual Match | Done | Per space; reveals only ideas every member picked |
-| 11 | Privacy controls | Done | Private by default, Connections off by default, passcode, export, delete |
+| 11 | Privacy controls | Done | Private by default, Connections off by default, passphrase encryption (AES-256), blur in background, Discreet mode, passcode, zip export with photos, backup reminder, delete |
 
 ## Phase 2 and 3 — backlog
 
@@ -34,10 +34,12 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 | Smart reminders, push notifications | Not started; web page can't send push here |
 | Shared wishlists | Not started (plans in a space cover part of it) |
 | Photo sync between partners | Partly: photos and video posted to the feed are shared, encrypted for Friends/Private. Memory photos themselves are still device-only |
-| Rewards, badges, levels, challenges, shop | Done (device); server ledger in migration 0004, tested locally |
+| Rewards, badges, levels, challenges, shop | Done (device), off by default and hidden from Home until turned on; server ledger in migration 0004, tested locally |
 | Weekly streaks on screen | Logic only (`core/streaks.js`); intimacy is deliberately never part of a streak |
-| Apple Watch, HealthKit | Source only (`watch/`), never compiled |
-| Subscriptions | Logic only (`core/entitlements.js`); no purchase screen |
+| Apple Watch, HealthKit | Source only (`watch/`), never compiled. Wearables page and heart rate entry hidden in the app until this works |
+| Partner pairing | Done in the web app: one-time code and QR, single use, 48 hours. Fallback where sync isn't available: shared-session codes |
+| Add to calendar | Done: .ics on every plan and Discover day plan |
+| Subscriptions | Logic only (`core/entitlements.js`); VOUZ Plus page hidden in the app |
 | Supabase as the backend | Schema and policies tested locally (208 checks); not deployed; app not switched over |
 | iOS/Android builds | Blocked: no Capacitor packages, Android SDK or Xcode here |
 
@@ -71,7 +73,11 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 - **Self-declared age** is a gate, not proof. Age assurance beyond that (ID or face estimation, e.g. Yoti, Persona, Stripe Identity) needs an outside provider and your approval; not built.
 - **Astrology accuracy:** Sun and Moon within about 0.01° and 0.05° of Meeus's worked examples; planets from JPL's approximate elements (good to a fraction of a degree for 1800–2050). A planet within a fraction of a degree of a cusp could land in the neighbouring sign. Birth places need Mapbox to find coordinates for Rising.
 - **Cosmic connection with Poly partners** is pairwise only; there's no group chart.
-- **Photos** are on one device only. Clearing browser data deletes them.
+- **Photos** are on one device only. Clearing browser data deletes them; the .zip export is the backup.
+- **Pairing links:** the QR and the invite text carry the page's link and the code. The code isn't in the link itself: claude.ai passes only plain names in a link's #, and codes shouldn't travel in addresses. Your partner needs access to the page (you share it from claude.ai), then enters the code.
+- **Passphrase:** if it's forgotten, the copy in this browser can't be recovered (sync or an export can bring data back). A save made in the last instant before a tab is killed may not be written. With sync on, the account copy is protected by the account, not the passphrase.
+- **Blur in the background** relies on the browser's visibility and focus events; inside some apps the system snapshot may be taken before the blur is drawn.
+- **Downloads** (the .zip export, calendar files) need the page's download permission; where it's missing, export falls back to copyable JSON without photos.
 - **Poly matching** requires every member to pick before anything is revealed.
 - Confirmation invites aren't updated if the session is edited after sending.
 - Not tested: real signed-in accounts (multi-user checks use a stand-in database), real phones, screen readers.
