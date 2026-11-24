@@ -1,4 +1,4 @@
-# VOUZ feature checklist
+# nouz feature checklist (formerly VOUZ)
 
 **Done** = working and browser-tested. **Logic only** = code and tests, not on screen. **Source only** = written, never run.
 **Not started**. **Blocked** = needs something this environment doesn't have.

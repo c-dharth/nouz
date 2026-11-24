@@ -71,14 +71,15 @@ test("session codes: round trip, only shareable fields, no duplicates, Solo can'
   const m = SC(te, td, b64, ub64, cats.CAT_ALL, cats.convCat, S, () => "id" + (n++), () => {});
   const sess = { id: "s1", start: 1700000000000, durationSec: 1500, category: "poly", participants: 4, sharedNote: "hi", notes: "SECRET", title: "TITLE", mood: "Tender", satisfaction: 5 };
   const code = m.sessionCode(sess);
-  assert.ok(code.startsWith("VOUZ-S1:") && /^[A-Za-z0-9:_-]+$/.test(code.replace("VOUZ-S1:", "")));
+  assert.ok(code.startsWith("NOUZ-S1:") && /^[A-Za-z0-9:_-]+$/.test(code.replace("NOUZ-S1:", "")));
+  assert.deepEqual(m.readSessionCode(code.replace("NOUZ-", "VOUZ-")), m.readSessionCode(code), "codes made before the rename still work");
   const o = m.readSessionCode("Here you go: " + code + " ");
   assert.deepEqual(o, { v: 1, i: "s1", s: 1700000000000, d: 1500, c: "poly", p: 4, n: "hi" });
   assert.ok(!JSON.stringify(o).match(/SECRET|TITLE|Tender/));
   assert.equal(m.addFromCode(o), "ok"); assert.equal(m.addFromCode(o), "dup");
   assert.equal(S.sessions[0].participants, 4); assert.equal(S.sessions[0].notes, "");
   assert.equal(m.readSessionCode(m.sessionCode({ ...sess, category: "solo" })), null);
-  assert.equal(m.readSessionCode("VOUZ-S1:not-json"), null);
+  assert.equal(m.readSessionCode("NOUZ-S1:not-json"), null);
   assert.equal(m.readSessionCode(m.sessionCode({ ...sess, durationSec: 999999 })), null);
 });
 

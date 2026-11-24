@@ -139,6 +139,13 @@ with sync_playwright() as pw:
     a0=S(p); ok("new user: age record kept; astrology off until chosen in Profile",a0["age"]["dob"]=="1995-11-08" and a0["age"]["method"]=="self-declared" and a0["astro"]["on"] is False and "dob" not in a0["astro"])
     s=S(p); ok("onboarding: social off by default, local mode",s["onboarded"] and not s["settings"]["social"] and s["user"]["mode"]=="local")
     ok("nav: five tabs: Home, Sessions, Discover, Forecast, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Sessions","Discover","Forecast","Profile"])
+    ok("name: the app is called nouz",p.title()=="NOUZ" and "nouz." in p.inner_text("#app") and "vouz" not in p.inner_text("#app").lower())
+    p.evaluate("()=>{const V=window.__vouz,d=new Date(),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');V.S.fc.hist[k]={solo:{word:'WARM'}}}")
+    act(p,"tab",tab="insights"); p.wait_for_timeout(800); t=p.inner_text("#app")
+    ok("forecast: an incomplete saved forecast is rebuilt, never a blank tab","Today's energy".upper() in t.upper() and "Relationship pulse".upper() in t.upper())
+    p.evaluate("()=>{window.__vouz.S.fc.checkins=null}"); act(p,"tab",tab="home"); act(p,"tab",tab="insights"); t=p.inner_text("#app")
+    ok("forecast: if something does break, it says so with a way out",p.locator('[data-act="fcReset"]').count()==1 and "didn't load" in t)
+    p.evaluate("()=>{window.__vouz.S.fc.checkins={}}"); act(p,"fcReset"); p.wait_for_timeout(600); ok("forecast: rebuilding brings it back","Relationship pulse".upper() in p.inner_text("#app").upper()); act(p,"tab",tab="home")
     ok("home: no feed and no points, levels or badges by default",p.locator(".feedsec").count()==0 and p.locator(".prog2").count()==0 and "VP" not in p.inner_text(".scroll") and not S(p)["settings"]["games"])
     t=p.inner_text(".scroll"); ok("home: a new account gets one welcome card, no fabricated stats","Start your" in t and "story." in t and p.locator(".trio").count()==0 and p.locator(".sec").count()==0)
     ok("home: kept short",len(t.split())<=45,str(len(t.split())))
@@ -533,7 +540,7 @@ with sync_playwright() as pw:
     nav(p,"analytics"); act(p,"insRange",v="year"); cnt={}
     for cat in ("all","couple","poly","solo"): act(p,"insCat",v=cat); cnt[cat]=p.locator(".tile b").first.inner_text()
     ok("patterns: counts for All, Two of us, More than two and Solo",cnt=={"all":"12","couple":"4","poly":"4","solo":"2"},str(cnt))
-    act(p,"insCat",v="all"); t=p.inner_text(".scroll"); ok("insights: timed and estimated are kept apart","1 timed with VOUZ, 11 entered by hand" in t,t[t.find("timed")-40:t.find("timed")+60])
+    act(p,"insCat",v="all"); t=p.inner_text(".scroll"); ok("insights: timed and estimated are kept apart","1 timed with NOUZ, 11 entered by hand" in t,t[t.find("timed")-40:t.find("timed")+60])
     act(p,"insTab",v="patterns"); t=p.inner_text(".scroll"); ok("patterns: types compared, earlier unset sessions counted","WHO WAS INVOLVED" in t.upper() and "1 earlier session with no mode set" in t)
     sid=[x for x in S(p)["sessions"] if x.get("title")=="NEWPOLY"][0]["id"]
     card=p.evaluate("id=>JSON.stringify(window.__vouz.buildCard({kind:'recap',showCategory:true,showDuration:true,style:0},window.__vouz.S.sessions.find(s=>s.id===id)))",sid)
@@ -857,8 +864,8 @@ with sync_playwright() as pw:
     phid=[e for e in S(p)["exps"] if e["title"]=="PHOTOMEM"][0]["photos"][0]
     nav(p,"profile"); act(p,"exportData"); p.wait_for_function("window.__files.length===1",timeout=15000)
     f=p.evaluate("window.__files[0]"); z=_b64.b64decode(f["b64"]); zf=_zf.ZipFile(_io2.BytesIO(z)); names=zf.namelist()
-    ok("export: a .zip with the JSON and the photos, readable by standard tools",f["filename"].endswith(".zip") and "vouz-export.json" in names and any(n.startswith("photos/") for n in names) and zf.testzip() is None,str(names))
-    j=json.loads(zf.read("vouz-export.json"))
+    ok("export: a .zip with the JSON and the photos, readable by standard tools",f["filename"].endswith(".zip") and "nouz-export.json" in names and any(n.startswith("photos/") for n in names) and zf.testzip() is None,str(names))
+    j=json.loads(zf.read("nouz-export.json"))
     ok("export: the JSON keeps the earlier format, now with photo ids",j["app"]=="vouz" and isinstance(j["sessions"],list) and j["sessions"][0]["notes"]=="VAULTNOTE" and j["settings"]["pinHash"] is None and phid in j["exps"][0]["photos"] and j["photos"][0]["file"] in names and '"keys"' not in json.dumps(j))
     ok("export: photo bytes are the stored JPEG",zf.read(j["photos"][0]["file"])[:2]==b"\xff\xd8")
     ok("backup: the export is remembered",S(p)["lastBackup"]>0 and "Last export" in p.inner_text(".scroll"))
@@ -871,7 +878,7 @@ with sync_playwright() as pw:
     # shared-session code: the fallback when pairing isn't possible here
     nav(p,"history"); act(p,"openReplay",id=sid); ok("code: a session offers Send as a code when Connections aren't available",p.locator('[data-act="sessCode"]').count()==1 and "shared-session code" in p.inner_text(".scroll"))
     act(p,"sessCode"); code=p.input_value("#sc-out"); dec=p.evaluate("c=>JSON.stringify(window.__vouz.readSessionCode(c))",code)
-    ok("code: carries date, time, length and type, never private fields",code.startswith("VOUZ-S1:") and "VAULTNOTE" not in dec and "VAULTTITLE" not in dec and '"d":1500' in dec); act(p,"closeSheet")
+    ok("code: carries date, time, length and type, never private fields",code.startswith("NOUZ-S1:") and "VAULTNOTE" not in dec and "VAULTTITLE" not in dec and '"d":1500' in dec); act(p,"closeSheet")
     nav(q,"profile"); act(q,"page",page="pair"); t=q.inner_text(".scroll")
     ok("pair: without sync, a clear fallback instead of a dead end","pairing needs sync" in t.lower() and "export a shared-session code to send your partner" in t and "Not available in this view" not in t)
     n0=len(S(q)["sessions"]); q.fill("#sc-in",code); act(q,"codeAdd"); q.wait_for_timeout(200); x=S(q)["sessions"][-1]
@@ -898,8 +905,8 @@ with sync_playwright() as pw:
     ok("passphrase: can be turned off with the passphrase, data and photos back to plain",'"enc"' not in p.evaluate("localStorage.getItem('vouz.v1')") and p.evaluate("id=>window.__vouz.Photos.rawGet(id).then(v=>v instanceof Blob)",phid))
     # Discreet mode and blur
     act(p,"toggleDiscreet"); nav(p,"home")
-    ok("discreet: no VOUZ name, neutral labels",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Log","Discover","Today","Profile"] and "vouz." not in p.inner_text("#app").lower() and p.title()=="Journal" and "Private log" in p.inner_text(".scroll"))
-    nav(p,"profile"); act(p,"page",page="privacy"); act(p,"toggleDiscreet"); ok("discreet: turns off again",p.title()=="VOUZ")
+    ok("discreet: no app name, neutral labels",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Log","Discover","Today","Profile"] and "nouz." not in p.inner_text("#app").lower() and "vouz" not in p.inner_text("#app").lower() and p.title()=="Journal" and "Private log" in p.inner_text(".scroll"))
+    nav(p,"profile"); act(p,"page",page="privacy"); act(p,"toggleDiscreet"); ok("discreet: turns off again",p.title()=="NOUZ")
     p.evaluate("Object.defineProperty(document,'hidden',{value:true,configurable:true});document.dispatchEvent(new Event('visibilitychange'))")
     ok("blur: the screen is covered when VOUZ goes to the background",p.evaluate("document.body.classList.contains('veiled')"))
     p.evaluate("Object.defineProperty(document,'hidden',{value:false,configurable:true});document.dispatchEvent(new Event('visibilitychange'))"); p.wait_for_timeout(300)

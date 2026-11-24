@@ -1,4 +1,4 @@
-# VOUZ
+# nouz (formerly VOUZ)
 
 Relationship experiences, intimacy tracking and personal analytics for adults. "Less scrolling. More together."
 Private by default. Shared only by choice. No scores.
@@ -18,7 +18,7 @@ Working with an AI assistant? Start with [AGENTS.md](AGENTS.md): it holds the pr
 | `supabase/migrations/` | Database schema and row-level security | Tested on local Postgres, not deployed |
 | `supabase/functions/` | Account deletion, purchase verification | Written, never run |
 | `watch/` | Apple Watch app source and iPhone bridge | Written, never compiled |
-| `e2e/run.py` | Browser tests for the app, including simulated users and connector stand-ins | 392 checks |
+| `e2e/run.py` | Browser tests for the app, including simulated users and connector stand-ins | 396 checks |
 
 The Capacitor project (`ios/`, `android/`, `capacitor.config`) is **not** in this repository. See CHECKLIST.md.
 

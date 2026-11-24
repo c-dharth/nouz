@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.1 — 2026-11-23
+
+- The app is now called **nouz** (NOUZ in text). Stored data, the storage key, the export format and pairing are unchanged, so nothing needs migrating; session codes made as "VOUZ-S1:" still work.
+- Forecast could show nothing: a saved forecast that was incomplete (from an earlier version or a partial sync) stopped the tab from drawing. Incomplete forecasts are now rebuilt, today's on-device forecast shows straight away while a fuller one is made, and slow steps (partner, Claude, publishing) give up after a few seconds instead of hanging.
+- Any screen that hits an error now says so, with "Back to Home" (and "Rebuild today's forecast" on Forecast), instead of staying blank.
+- The background blur no longer triggers when the page merely loses focus to the Claude app around it, which could leave the screen blurred.
+
 ## 0.14.0 — 2026-11-23
 
 Changed: closer to the pitch, easier to pair, harder to lose or leak.
