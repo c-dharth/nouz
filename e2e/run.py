@@ -148,7 +148,7 @@ with sync_playwright() as pw:
     p.evaluate("()=>{window.__vouz.S.fc.checkins={}}"); act(p,"fcReset"); p.wait_for_timeout(600); ok("forecast: rebuilding brings it back","Relationship pulse".upper() in p.inner_text("#app").upper()); act(p,"tab",tab="home")
     ok("home: no feed and no points, levels or badges by default",p.locator(".feedsec").count()==0 and p.locator(".prog2").count()==0 and "VP" not in p.inner_text(".scroll") and not S(p)["settings"]["games"])
     t=p.inner_text(".scroll"); ok("home: a new account gets one welcome card, no fabricated stats","Start your" in t and "story." in t and p.locator(".trio").count()==0 and p.locator(".sec").count()==0)
-    ok("home: kept short",len(t.split())<=45,str(len(t.split())))
+    ok("home: kept short (Today card included)",len(t.split())<=60,str(len(t.split())))
     ok("brand: old tagline gone","cardio" not in p.content().lower())
     nav(p,"history"); ok("history: empty state, no fabricated stats",p.locator("text=Nothing logged yet").count()==1 and p.locator(".trio").count()==0)
     nav(p,"track"); qb=p.locator('[data-act="quick"]'); sb=p.locator('[data-act="start"]')
@@ -932,6 +932,24 @@ with sync_playwright() as pw:
     ok("pair: the code is used up and never stored readable",code.replace("-","") not in raw and STORE["links/pam"].get("pc")==[] and S(pa).get("pairInv") is None)
     nav(pa,"profile"); act(pa,"page",page="pair"); ok("pair: shows who you're paired with","patty" in pa.inner_text(".scroll"))
     cpa.close(); cpb.close()
+    # ---------- Home "Today" card ----------
+    ctx,p=newctx(b); p.goto(URL); p.wait_for_timeout(400); onboard(p); nav(p,"home")
+    tc=p.inner_text(".today")
+    ok("today: a new user sees the card with no plan and a way to find one","Nothing planned" in tc and p.locator('.today [data-act="tab"][data-tab="discover"]').count()==1)
+    ok("today: shows today's word from the forecast",p.locator(".today .tdword").count()==1 and len(p.inner_text(".today .tdword").strip())>0)
+    ok("today: no points, streaks or counts",not any(w in tc.lower() for w in ("streak","points"," vp","level")))
+    act(p,"homeCk",v="Calm"); p.wait_for_timeout(200)
+    ck=S(p)["fc"]["checkins"]; ok("today: one-tap check-in saves to the forecast check-ins",any(c["energy"]=="Calm" for c in ck.values()) and "Feeling Calm" in p.inner_text(".today"))
+    p.evaluate("""()=>{const V=window.__vouz,S=V.S,t=new Date();t.setDate(t.getDate()+1);t.setHours(19,30,0,0);const l=new Date();l.setDate(l.getDate()+5);l.setHours(12,0,0,0);
+      S.exps.push({id:'tp1',kind:'plan',title:'Later picnic',date:l.getTime(),cat:'other',location:'',favorite:'',mood:'',notes:'',sharedNote:'',space:null,anniv:false,photos:[],createdAt:Date.now(),updatedAt:Date.now()});
+      S.exps.push({id:'tp2',kind:'plan',title:'Ramen night',date:t.getTime(),cat:'other',location:'Mission',favorite:'',mood:'',notes:'',sharedNote:'',space:null,anniv:false,photos:[],createdAt:Date.now(),updatedAt:Date.now()});
+      S.exps.push({id:'tp3',kind:'plan',title:'Old plan',date:Date.now()-5*864e5,cat:'other',location:'',favorite:'',mood:'',notes:'',sharedNote:'',space:null,anniv:false,photos:[],asked:true,createdAt:Date.now(),updatedAt:Date.now()});V.save();V.render()}""")
+    p.wait_for_timeout(200); tc=p.inner_text(".today")
+    ok("today: shows the soonest upcoming plan with a friendly time","Ramen night" in tc and "Tomorrow" in tc and "7:30" in tc and "Mission" in tc and "Old plan" not in tc,tc[:200])
+    ok("today: next plan isn't repeated under Coming up","Ramen night" not in p.locator(".sec").first.inner_text() and "Later picnic" in p.inner_text(".scroll"))
+    ok("today: offers Add to calendar for the plan",p.locator('.today [data-act="planIcs"][data-id="tp2"]').count()==1)
+
+    ctx.close()
     ctx,p=newctx(b,motion="no-preference"); p.goto(URL); p.wait_for_timeout(700); p.screenshot(path=SH+"ob.png"); onboard(p); act(p,"loadDemo"); p.wait_for_timeout(600); p.screenshot(path=SH+"home.png"); nav(p,"history"); p.wait_for_timeout(1200)
     ok("count-up settles on the true value",p.locator(".trio b").first.inner_text()=="12")
     nav(p,"story"); p.screenshot(path=SH+"story.png"); nav(p,"ideas"); p.screenshot(path=SH+"ideas.png")

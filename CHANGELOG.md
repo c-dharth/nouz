@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.15.0 — 2026-11-25
+
+- Home has a calm **Today** card: your next plan (with a friendly time like "Tomorrow · 7:30pm" and Add to calendar), today's Forecast word, and an optional one-tap check-in. No counts, streaks or points. If nothing is planned it says so and links to Discover.
+- The one-tap check-in saves to the same check-ins Forecast uses; it's shared only if you've turned on a joint forecast.
+- "Coming up" no longer repeats the plan shown in the Today card.
+- Tests: 7 new browser checks. The "Home is short" limit for a brand-new account went from 45 to 60 words to make room for the card.
+
 ## 0.14.1 — 2026-11-23
 
 - The app is now called **nouz** (NOUZ in text). Stored data, the storage key, the export format and pairing are unchanged, so nothing needs migrating; session codes made as "VOUZ-S1:" still work.

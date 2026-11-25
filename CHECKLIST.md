@@ -19,6 +19,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 | 8 | Relationship spaces | Done | Encrypted; owner invites connections; join, leave, remove, delete |
 | 9 | Experience tracking | Done | Memories and plans; photos device-only |
 | 10 | Mutual Match | Done | Per space; reveals only ideas every member picked |
+| 9b | Home Today card | Done | Next plan, Forecast word, optional one-tap check-in; no counts or streaks. Browser-tested only |
 | 11 | Privacy controls | Done | Private by default, Connections off by default, passphrase encryption (AES-256), blur in background, Discreet mode, passcode, zip export with photos, backup reminder, delete |
 
 ## Phase 2 and 3 — backlog

@@ -369,6 +369,8 @@ body.th-champagne{--bg:#0E0C09;--surface:#1B1813;--surface2:#27221A;--line:#3A33
 .prog2 .grow{display:flex;flex-direction:column;gap:6px}.prog2 b{font-size:14px}.prog2 .bar.lv{height:6px}
 .lvd{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--wine);color:var(--text);flex:none}
 .vpn{font-variant-numeric:tabular-nums;font-weight:600;color:var(--pink);font-size:14px}
+.today{gap:14px}.today .tdrow{display:flex;flex-direction:column;gap:3px;text-align:left;background:none;border:0;padding:0;color:inherit;font:inherit}
+.today .tdrow+.tdrow,.today .link+.tdrow{border-top:1px solid var(--line,rgba(127,127,127,.18));padding-top:12px}.today .tdword{font-family:var(--display);font-size:24px;line-height:1.15}
 .ideal{display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:var(--r-sm);padding:10px 8px 10px 16px}
 .ideal .grow{display:flex;flex-direction:column;gap:2px}.ideal b{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.15}
 .veiled #app{filter:blur(22px) saturate(.6);transition:filter .12s}.veiled::after{content:"";position:fixed;inset:0;background:rgba(14,11,12,.55);z-index:99}
@@ -1587,9 +1589,22 @@ function homeRow(e){const plan=e.kind==="plan",t=new Date(e.date||Date.now()),ti
   const lead=plan?`<span class="badge on" aria-hidden="true">${ic("compass")}</span>`:e.photos&&e.photos[0]?`<span class="ph sm"><img data-photo="${esc(e.photos[0])}" alt=""></span>`:`<span class="d"><b>${t.getDate()}</b><span>${MO[t.getMonth()]}</span></span>`;
   const sub=(plan?(e.date?fmtDate(e.date)+(timed?" · "+fmtTime(e.date):""):"Unscheduled"):(XCATS[e.cat]||"Other"))+(e.a!=="me"?" · from "+esc(whoX(e)):"");
   return`<button class="sess" data-act="expOpen" data-id="${esc(e.id)}" data-a="${esc(e.a)}">${lead}<span class="grow"><span class="t" style="display:block">${esc(e.title)}</span><span class="sub small">${sub}</span></span></button>`}
+/* Home "Today": the next plan, today's word, and a one-tap check-in. No counts, streaks or points. */
+const HOME_ENERGY=["Calm","Playful","Tender","Tired","Curious","Restless"];
+function nextPlan(){const now=Date.now(),sod=new Date();sod.setHours(0,0,0,0);return allPlans().find(e=>e.date&&e.date>=sod.getTime()&&!(e.date<now-3*36e5))||null}
+function whenLabel(t){const a=new Date();a.setHours(0,0,0,0);const b=new Date(t);b.setHours(0,0,0,0);const d=Math.round((b-a)/DAY),h=new Date(t),timed=h.getHours()||h.getMinutes();
+  const day=d===0?(timed&&h.getHours()>=17?"Tonight":"Today"):d===1?"Tomorrow":d<7?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][h.getDay()]:fmtDate(t);return day+(timed?" · "+fmtTime(t):"")}
+function todayCard(){const np=nextPlan(),d=new Date();let fc=null;if(S.fc.on)try{fc=fcCurrent()||fcPreview()}catch(e){fc=null}
+  const ck=S.fc.on?S.fc.checkins[fcToday()]:null;
+  const plan=np?`<button class="tdrow" data-act="expOpen" data-id="${esc(np.id)}" data-a="${esc(np.a)}"><span class="tiny">Next up</span><b>${esc(np.title)}</b><span class="sub small">${whenLabel(np.date)}${np.location?" · "+esc(np.location):""}${np.a!=="me"?" · from "+esc(whoX(np)):""}</span></button>${np.a==="me"?`<button class="link small" style="align-self:flex-start" data-act="planIcs" data-id="${esc(np.id)}">Add to calendar</button>`:""}`
+   :`<div class="tdrow"><span class="tiny">Next up</span><b>Nothing planned</b><button class="link small" style="align-self:flex-start" data-act="tab" data-tab="discover">Find an idea</button></div>`;
+  const word=fc&&fc.word?`<button class="tdrow" data-act="tab" data-tab="insights" aria-label="${TL("Forecast")}: ${esc(fc.word)}"><span class="tiny">Today's word</span><b class="tdword">${esc(fc.word)}</b></button>`:"";
+  const chk=!S.fc.on?"":ck?`<div class="tdrow"><span class="tiny">Your check-in</span><span class="sub small">Feeling <b>${esc(ck.energy)}</b> today. <button class="link small" data-act="page" data-page="forecast">Change</button></span></div>`
+   :`<div class="tdrow"><span class="tiny">How do you feel? (optional)</span><div class="chips sm" role="group" aria-label="Quick check-in">${HOME_ENERGY.map(e=>`<button class="chip" data-act="homeCk" data-v="${e}">${e}</button>`).join("")}</div></div>`;
+  return`<section class="card today" aria-label="Today"><div class="row between"><h3>Today</h3><span class="tiny">${fmtDate(d.getTime())}</span></div>${plan}${word}${chk}</section>`}
 function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning":h<18?"Afternoon":"Evening";
   const head=`<div class="row between">${BRAND()}<div class="row" style="gap:2px">${feedIcons()}${S.settings.social?`<button class="ib" data-act="page" data-page="social" aria-label="Friends">${ic("people")}</button>`:""}<button class="ib" data-act="tab" data-tab="profile" aria-label="Privacy and settings">${ic("lock")}</button></div></div>`;
-  const plans=allPlans().slice(0,2),mem=storyItems("all").slice(0,2),ws=startOfWeek(Date.now()),wk=S.sessions.filter(s=>s.start>=ws).length,sug=suggestion(),fresh=!S.sessions.length&&!S.exps.length;
+  const np0=nextPlan(),plans=allPlans().filter(e=>!np0||e.id!==np0.id||e.a!==np0.a).slice(0,2),mem=storyItems("all").slice(0,2),ws=startOfWeek(Date.now()),wk=S.sessions.filter(s=>s.start>=ws).length,sug=suggestion(),fresh=!S.sessions.length&&!S.exps.length;
   const live=S.active?`<button class="card rowcard" data-act="tab" data-tab="track" aria-label="Return to your running session"><span class="badge on" aria-hidden="true">${ic(running()?"pause":"play")}</span><span class="grow"><b>Session ${running()?"running":"paused"}</b><span class="sub small" style="display:block" id="miniclock">${fmtClock(elapsed(S.active))}</span></span>${ic("next")}</button>`
     :S.draft&&S.draft.fromTimer?`<button class="card rowcard" data-act="resumeDraft"><span class="badge on" aria-hidden="true">${ic("edit")}</span><span class="grow"><b>Finish saving your session</b></span>${ic("next")}</button>`:"";
   const r=S.settings.games?R():null;
@@ -1597,7 +1612,7 @@ function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning
   const idea=sug?`<div class="ideal"><span class="grow"><span class="tiny">An idea</span><b>${esc(sug.t)}</b></span><button class="ib" data-act="sugNext" aria-label="Show another idea">${ic("next")}</button><button class="ib" data-act="ideaSave" data-v="${sug.id}" aria-label="Save ${esc(sug.t)} to plans">${ic("plus")}</button></div>`:"";
   const sec=(title,go,goLabel,body)=>`<div class="sec"><div class="row between"><h3>${title}</h3>${go}</div>${body}</div>`;
   return`<div class="scroll">${head}${demoBanner()}${invitesCard()}${spaceInvitesCard()}${consentCard()}
-   <h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1>${live}${S.settings.games?prog:""}${howWasCard()}
+   <h1>${greet}${S.user.name?", "+esc(S.user.name):""}.</h1>${live}${safeView(todayCard)}${S.settings.games?prog:""}${howWasCard()}
    <div class="qa"><button data-act="quick">${ic("heart")}<span>Quick log</span></button><button data-act="expNew" data-kind="done">${ic("book")}<span>Memory</span></button><button data-act="tab" data-tab="story">${ic("photo")}<span>${TL("Our Story")}</span></button><button data-act="page" data-page="pair">${ic("people")}<span>Pair</span></button></div>
    ${fresh?`<div class="card"><h2>Start your <em>story.</em></h2><p class="sub small">Everything stays private unless you choose to share it.</p><button class="link small" style="align-self:flex-start" data-act="loadDemo">See it with demo data</button></div>${idea}`
     :`${plans.length?sec("Coming up",`<button class="link small" data-act="discSeg" data-v="plans">All</button>`,"",`<div>${plans.map(homeRow).join("")}</div>`):idea}
@@ -3063,6 +3078,8 @@ Object.assign(A,{
   fcE(e){(ui.fc.ck=ui.fc.ck||{energy:null,close:null,wants:[]}).energy=e.dataset.v;render()},
   fcC(e){(ui.fc.ck=ui.fc.ck||{energy:null,close:null,wants:[]}).close=+e.dataset.v;render()},
   fcW(e){const c=ui.fc.ck=ui.fc.ck||{energy:null,close:null,wants:[]},v=e.dataset.v;c.wants=c.wants.includes(v)?c.wants.filter(x=>x!==v):c.wants.concat([v]).slice(0,3);render()},
+  homeCk(e){const v=e.dataset.v;if(!FC_ENERGY[v])return;S.fc.checkins[fcToday()]={energy:v,close:null,wants:[],at:Date.now()};ui.fc.pv=null;save();render();
+    if(Soc.ready()&&S.fc.together)fcShareCheckins().catch(()=>{});toast(S.fc.together?"Checked in. Shared with your joint forecast.":"Checked in. Only you see this.")},
   async fcCkSave(){const c=ui.fc.ck;if(!c||!FC_ENERGY[c.energy])return;S.fc.checkins[fcToday()]={energy:c.energy,close:c.close,wants:c.wants.filter(w=>FC_WANT_L[w]),at:Date.now()};
     const keep=Object.keys(S.fc.checkins).sort().slice(-60);S.fc.checkins=Object.fromEntries(keep.map(k=>[k,S.fc.checkins[k]]));ui.fc.ck=null;save();render();
     if(Soc.ready()&&S.fc.together)try{await fcShareCheckins()}catch(x){}toast("Checked in.")},
@@ -3611,7 +3628,7 @@ function bootRest(){normCats();normState();applyDiscreet();
     if(!typing())render()});
 }
 (function boot(){Vault.locked=ENC_AT_LOAD;if(Vault.locked){render();return}bootRest()})();
-window.__vouz={planIcs,QR,Vault,sessionCode,readSessionCode,zipMake,zipRead,crc32,pairNorm,Astro,shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+window.__vouz={save,render,nextPlan,planIcs,QR,Vault,sessionCode,readSessionCode,zipMake,zipRead,crc32,pairNorm,Astro,shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>
