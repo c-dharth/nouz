@@ -369,6 +369,7 @@ body.th-champagne{--bg:#0E0C09;--surface:#1B1813;--surface2:#27221A;--line:#3A33
 .prog2 .grow{display:flex;flex-direction:column;gap:6px}.prog2 b{font-size:14px}.prog2 .bar.lv{height:6px}
 .lvd{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--wine);color:var(--text);flex:none}
 .vpn{font-variant-numeric:tabular-nums;font-weight:600;color:var(--pink);font-size:14px}
+.tnbtn{justify-content:center}.tnr{gap:10px}
 .today{gap:14px}.today .tdrow{display:flex;flex-direction:column;gap:3px;text-align:left;background:none;border:0;padding:0;color:inherit;font:inherit}
 .today .tdrow+.tdrow,.today .link+.tdrow{border-top:1px solid var(--line,rgba(127,127,127,.18));padding-top:12px}.today .tdword{font-family:var(--display);font-size:24px;line-height:1.15}
 .ideal{display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:var(--r-sm);padding:10px 8px 10px 16px}
@@ -662,7 +663,7 @@ function summaryFor(s){const d=new Date(s.start),h=d.getHours();const part=h<5?"
   const m=Math.round(s.durationSec/60);return (m<1?"Under a minute":m+" minute"+(m===1?"":"s"))+" on a "+WDL[d.getDay()]+" "+part+"."}
 
 /* ============ ui state ============ */
-const ui={tab:"home",page:null,sheet:null,toast:null,gate:null,dobFix:null,astroF:null,cos:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null,m:"",d:"",y:""},
+const ui={tn:{until:22,kinds:["food","drinks"],busy:false,res:null,err:""},tab:"home",page:null,sheet:null,toast:null,gate:null,dobFix:null,astroF:null,cos:null,ob:{step:0,adult:false,mode:"local",name:"",social:false,restore:null,m:"",d:"",y:""},
   ins:{range:"month",cat:"all",from:"",to:"",tab:"overview"},she:null,fc:{view:null,busy:false,err:"",mode:null,started:false,moveOpen:false,ck:null,fix:false,month:null},fcs:null,guide:{q:"",msgs:[],busy:false,err:null,off:false},int:{seg:"track"},disc:{seg:"foryou",f:{}},dsc:{q:"",who:[],busy:false,ibusy:false,err:"",foryou:null,nearby:null,itin:null,need:null,locOpen:false,area:"",nk:null,nkm:5,nsort:null},plan:{q:"",budget:null,time:null,area:"",history:false,busy:false,res:null,err:null},story:{space:"all"},trackCat:"couple",trackP:3,soc:{seg:"people",q:""},feed:{seg:"explore",q:"",kind:"all",mode:"ranked",n:10,why:null,open:null},pc:null,me:null,cp:null,compose:null,locked:false,err:"",homeDay:null,rp:{scope:"all",seg:null},busy:false};
 const TABS=()=>[["home","Home","home"],["intimacy",TL("Sessions"),"heart"],["discover","Discover","compass"],["insights",TL("Forecast"),"spark"],["profile","Profile","user"]];
 /* Discreet mode: neutral words and no app name on screen. */
@@ -742,6 +743,7 @@ function render(resetScroll){
   else if(!S.age){ui.gate=ui.gate||{m:"",d:"",y:""};h=S.ageBlock?vBlocked():`<div class="ob">${vDob(ui.gate,(l,dis)=>`<button class="btn primary block" data-act="gateNext" ${dis?"disabled":""}>Continue</button>`,"gate")}</div>`}
   else{if(!ui.sheet&&legacySessions().length)ui.sheet={type:"legacy"}}
   if(ui.locked||!S.onboarded||!S.age);else if(ui.page){const f=({details:vDetails,replay:vReplay,history:vHistory,achievements:vAch,compose:vCompose,policy:vPolicy,plus:vPlus,wearables:vWear,rewards:vRewards,cardEdit:vCardEdit,social:()=>hdr("Friends")+vSocial(),fcShare:vFcShare,
+      tonight:vTonight,dataMap:vDataMap,
       forecast:()=>hdr(ui.fc.view&&ui.fc.view!==fcToday()?"Past forecast":"Today's forecast")+`<div class="scroll"><div class="fcwrap">${vForecast()}</div></div>`,
       fcCal:()=>hdr("Your words")+`<div class="scroll">${fcHistory()}</div>`,analytics:()=>{ui.page=null;ui.tab="intimacy";ui.int.seg="patterns";return vIntimacy()+vTabs()},
       guide:()=>hdr("Connection guide")+`<div class="scroll"><p class="sub small">A gentle read of your dates, memories and intimacy together. There's no right amount of anything.</p>${vGuide()}</div>`,
@@ -767,7 +769,11 @@ const sessRow=s=>{const d=new Date(s.start);return`<button class="sess" data-act
 const demoBanner=()=>hasDemo()?`<div class="banner"><span>Showing demo data</span><button class="link" data-act="removeDemo">Remove</button></div>`:"";
 
 /* ---- onboarding: three steps ---- */
-function vOnboard(){const o=ui.ob,n=3,i=Math.min(o.step,2);if(S.ageBlock)return vBlocked();
+function obFinish(){const o=ui.ob;
+    S.onboarded=true;S.user.name=o.name.trim();S.user.mode=o.mode==="account"&&Cloud.state==="ready"?"account":"local";S.user.createdAt=Date.now();save();ui.tab="home";render(true);
+    try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(e){}
+    if(o.social&&Cloud.state==="ready"&&K.ok){ui.err="";sheet({type:"socialOn",priv:true})}}
+function vOnboard(){const o=ui.ob,n=4,i=Math.min(o.step,3);if(S.ageBlock)return vBlocked();
   const nav=(label="Continue",dis=false)=>`<div class="row">${i>0?`<button class="btn ghost" data-act="obBack" aria-label="Back">${ic("back")}</button>`:""}<button class="btn primary grow" data-act="obNext" ${dis?"disabled":""}>${label}</button></div>`;
   const pages=[
    ()=>`<div class="mid"><div class="mark" style="font-size:84px">nouz<b>.</b></div><h1>Less scrolling. <em>More together.</em></h1><p class="sub">A private place for the time you spend together: intimacy you track for yourselves, experiences you plan, and the memories you keep.</p><ul class="plain"><li>${ic("check")}<span><b style="color:var(--text)">Private by default.</b> No ads and no analytics on what you log. Your location is used only when you search in Discover, and then it goes to Mapbox, Yelp and AllTrails.</span></li><li>${ic("check")}<span><b style="color:var(--text)">Together on your terms.</b> Partners confirm and share only what they choose.</span></li><li>${ic("check")}<span><b style="color:var(--text)">No scores.</b> No rankings, and no number that says how a relationship is doing.</span></li></ul></div>${nav("Get started")}`,
@@ -778,7 +784,15 @@ function vOnboard(){const o=ui.ob,n=3,i=Math.min(o.step,2);if(S.ageBlock)return 
      ${o.restore?`<div class="banner ok"><span>Found ${o.restore.sessions.length} synced session${o.restore.sessions.length===1?"":"s"} on your account.</span><button class="link" data-act="obRestore">Restore</button></div>`:""}
      ${Cloud.state==="ready"?sw("obSocial",o.social,"Turn on Social","Off by default. Everything else works the same without it."):`<p class="tiny">Pairing with a partner needs sync. Without it you can still send each other a session as a code, from any session's page.</p>`}
      <label class="f" for="ob-name">What should we call you? <em>Optional</em><input type="text" id="ob-name" data-bind="ob.name" maxlength="30" value="${esc(o.name)}" autocomplete="off"></label>
-     <p class="tiny">You can change all of this later in Profile, where you'll also find a passphrase, Discreet mode and optional astrology.</p></div>${nav("Enter NOUZ")}`];
+     <p class="tiny">You can change all of this later in Profile, where you'll also find Discreet mode and optional astrology.</p></div>${nav()}`,
+   ()=>`<div class="mid"><h3>One more thing</h3><h1>Lock it <em>with a passphrase.</em></h1>
+     <p class="sub">Recommended. Everything nouz keeps in this browser, photos included, is encrypted with a passphrase only you know. You'll type it each time nouz opens.</p>
+     <label class="f" for="ob-pp1">Passphrase <em>at least 8 characters</em><input type="password" id="ob-pp1" autocomplete="new-password" minlength="8"></label>
+     <label class="f" for="ob-pp2">Again<input type="password" id="ob-pp2" autocomplete="new-password"></label>
+     ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}
+     <p class="tiny">nouz can't recover a forgotten passphrase: what's in this browser would be gone, so keep an export too.${o.mode==="account"&&Cloud.state==="ready"?" Your synced copy is protected by your Claude account, not by this passphrase.":""}</p>
+     <div class="row"><button class="btn ghost" data-act="obBack" aria-label="Back">${ic("back")}</button><button class="btn primary grow ${ui.obBusy?"busy":""}" data-act="obPass" ${ui.obBusy?"disabled":""}>Encrypt and enter</button></div>
+     <button class="link small" style="align-self:center" data-act="obNext">Skip for now</button></div>`];
   return`<div class="ob"><div class="steps" role="progressbar" aria-valuemin="1" aria-valuemax="${n}" aria-valuenow="${i+1}" aria-label="Step ${i+1} of ${n}">${Array.from({length:n},(_,k)=>`<i class="${k<=i?"on":""}"></i>`).join("")}</div>${pages[i]()}</div>`}
 
 /* ---- home ---- */
@@ -1096,10 +1110,10 @@ const A={
   confirmYes(){const f=ui.sheet.fn;ui.sheet=null;f()},
   /* onboarding */
   obNext(){const o=ui.ob;if(o.step===1){const r=ageDecide(o);if(r==="none")return;render(true);if(r==="blocked")return;o.step=2;render(true);return}
-    if(o.step<2){o.step++;render(true);return}
-    S.onboarded=true;S.user.name=o.name.trim();S.user.mode=o.mode==="account"&&Cloud.state==="ready"?"account":"local";S.user.createdAt=Date.now();save();ui.tab="home";render(true);
-    try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(e){}
-    if(o.social&&Cloud.state==="ready"&&K.ok){ui.err="";sheet({type:"socialOn",priv:true})}},
+    if(o.step<3){o.step++;ui.err="";render(true);return}
+    obFinish()},
+  async obPass(){const a=($("#ob-pp1")||{}).value||"",b=($("#ob-pp2")||{}).value||"";if(a.length<8){ui.err="Use at least 8 characters.";return render()}if(a!==b){ui.err="Those don't match.";return render()}
+    ui.err="";ui.obBusy=true;render();try{await Vault.turnOn(a)}catch(e){ui.obBusy=false;ui.err="Encryption isn't available in this browser. You can skip and try later in Profile.";return render()}ui.obBusy=false;obFinish();toast("Encrypted. You'll need the passphrase next time nouz opens.")},
   obBack(){ui.ob.step=Math.max(0,ui.ob.step-1);render(true)},
   obAdult(){ui.ob.adult=!ui.ob.adult;render()},
   async obMode(e){ui.ob.mode=e.dataset.mode;ui.ob.restore=null;render();if(e.dataset.mode==="account"){const v=await Cloud.readVault();if(v&&ui.ob.mode==="account"&&!S.onboarded){ui.ob.restore=v;render()}}},
@@ -1591,6 +1605,31 @@ function homeRow(e){const plan=e.kind==="plan",t=new Date(e.date||Date.now()),ti
   const lead=plan?`<span class="badge on" aria-hidden="true">${ic("compass")}</span>`:e.photos&&e.photos[0]?`<span class="ph sm"><img data-photo="${esc(e.photos[0])}" alt=""></span>`:`<span class="d"><b>${t.getDate()}</b><span>${MO[t.getMonth()]}</span></span>`;
   const sub=(plan?(e.date?fmtDate(e.date)+(timed?" · "+fmtTime(e.date):""):"Unscheduled"):(XCATS[e.cat]||"Other"))+(e.a!=="me"?" · from "+esc(whoX(e)):"");
   return`<button class="sess" data-act="expOpen" data-id="${esc(e.id)}" data-a="${esc(e.a)}">${lead}<span class="grow"><span class="t" style="display:block">${esc(e.title)}</span><span class="sub small">${sub}</span></span></button>`}
+/* Tonight: places open right now near you that fit a time window. Hours are shown only as the source gives them. */
+const TN_KINDS=[["food","Dinner"],["drinks","Drinks"],["coffee","Coffee & dessert"],["culture","Something to do"],["music","Live music"],["outdoors","Outside"]];
+const TN_UNTIL=[[21,"Until 9"],[22,"Until 10"],[23,"Until 11"],[24,"Late"]];
+function tnEnd(u){const d=new Date();d.setHours(0,0,0,0);d.setTime(d.getTime()+u*36e5);return d}
+function tnFit(v,now,end){if(v.demo)return{ok:true,rank:3,t:"Demo place, not real"};
+  if(v.hours){const a=hoursAt(v.hours,now),b=hoursAt(v.hours,new Date(Math.max(now.getTime(),end.getTime()-30*6e4)));
+    if(a===false)return null;if(a&&b)return{ok:true,rank:0,t:"Open through your window"+(v.hoursText?" · "+v.hoursText:"")+" (hours from Mapbox)"};
+    if(a&&b===false)return{ok:true,rank:2,t:"Open now, may close before then"+(v.hoursText?" · "+v.hoursText:"")};}
+  if(v.openNow===true)return{ok:true,rank:1,t:"Open now (Yelp) · closing time not verified"};
+  if(v.openNow===false)return null;
+  return{ok:true,rank:4,t:"Hours not verified · check before you go"}}
+function nextSlot(){const d=new Date(Date.now()+20*6e4),m=d.getMinutes();d.setMinutes(m<=30?30:60,0,0);return d.getTime()}
+function vTonight(){const t=ui.tn,loc=S.disc.loc,until=t.until;
+  const res=t.res?`${t.res.demo?`<div class="banner"><span>These are demo places, not real ones. ${t.res.liveErr?"The place search didn't respond.":"Connect Yelp or Mapbox to see what's really open."}</span></div>`:""}
+    ${t.res.items.length?`<div>${t.res.items.map(r=>`<div class="card tnr"><div class="row between"><div class="grow"><b>${esc(r.v.name)}</b><p class="sub small">${[r.v.distKm!=null?(r.v.distKm*0.621).toFixed(1)+" mi":"",r.v.cats&&r.v.cats[0]?esc(String(r.v.cats[0])):""].filter(Boolean).join(" · ")}</p><p class="tiny">${esc(r.f.t)}</p></div></div>
+      <div class="row"><button class="btn primary grow" data-act="tnPlan" data-i="${r.i}">${ic("plus")} Plan it for ${fmtTime(nextSlot())}</button>${r.v.url&&!r.v.demo?`<a class="btn ghost" href="${esc(r.v.url)}" target="_blank" rel="noopener noreferrer">Details</a>`:""}</div></div>`).join("")}</div>
+      <p class="tiny">From ${esc((t.res.used||[]).join(", ")||"demo data")}. Not booked: nouz doesn't make reservations.</p>`
+     :`<div class="card line"><p class="sub small">Nothing that's clearly open came back for this. Try another kind of place, or widen the area in Discover.</p></div>`}`:"";
+  return hdr("Tonight")+`<div class="scroll"><div><h1>What's open <em>right now.</em></h1><p class="sub">For when you're tired and want something easy. Pick how late, pick a kind of place.</p></div>
+   <div class="card"><h3>Area</h3>${loc?`<p class="row between"><span>${esc(loc.label)}</span><button class="link small" data-act="tnArea">Change</button></p>`:`<p class="sub small">Set an area first. Only the area you type, or your location if you allow it, goes to Mapbox, Yelp and AllTrails for this search.</p>`}
+    ${!loc||ui.dsc.locOpen?`<label class="f" for="d-area">Neighborhood or city<input type="text" id="d-area" maxlength="60" value="${esc(ui.dsc.area||"")}" autocomplete="off"></label>${ui.dsc.locErr?`<p class="err" role="alert">${esc(ui.dsc.locErr)}</p>`:""}<div class="row"><button class="btn grow" data-act="dLocSet">Use this area</button><button class="btn ghost" data-act="dLocGPS">Near me</button></div>`:""}</div>
+   <div><h3>How late?</h3><div class="chips" role="group" aria-label="How late">${TN_UNTIL.map(([h,l])=>`<button class="chip" data-act="tnUntil" data-v="${h}" aria-pressed="${until===h}">${l}</button>`).join("")}</div></div>
+   <div><h3>What kind of place?</h3><div class="chips" role="group" aria-label="Kind of place">${TN_KINDS.map(([k,l])=>`<button class="chip" data-act="tnKind" data-v="${k}" aria-pressed="${t.kinds.includes(k)}">${l}</button>`).join("")}</div></div>
+   <button class="btn primary block ${t.busy?"busy":""}" data-act="tnGo" ${!loc||!t.kinds.length||t.busy?"disabled":""}>${t.busy?"Looking…":"Show what's open"}</button>
+   ${t.err?`<p class="err" role="alert">${esc(t.err)}</p>`:""}${res}</div>`}
 /* Home "Today": the next plan, today's word, and a one-tap check-in. No counts, streaks or points. */
 const HOME_ENERGY=["Calm","Playful","Tender","Tired","Curious","Restless"];
 function nextPlan(){const now=Date.now(),sod=new Date();sod.setHours(0,0,0,0);return allPlans().find(e=>e.date&&e.date>=sod.getTime()&&!(e.date<now-3*36e5))||null}
@@ -1598,12 +1637,13 @@ function whenLabel(t){const a=new Date();a.setHours(0,0,0,0);const b=new Date(t)
   const day=d===0?(timed&&h.getHours()>=17?"Tonight":"Today"):d===1?"Tomorrow":d<7?["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][h.getDay()]:fmtDate(t);return day+(timed?" · "+fmtTime(t):"")}
 function todayCard(){const np=nextPlan(),d=new Date();let fc=null;if(S.fc.on)try{fc=fcCurrent()||fcPreview()}catch(e){fc=null}
   const ck=S.fc.on?S.fc.checkins[fcToday()]:null;
+  const tonight=`<button class="btn block tnbtn" data-act="page" data-page="tonight">${ic("compass")} What's open tonight</button>`;
   const plan=np?`<button class="tdrow" data-act="expOpen" data-id="${esc(np.id)}" data-a="${esc(np.a)}"><span class="tiny">Next up</span><b>${esc(np.title)}</b><span class="sub small">${whenLabel(np.date)}${np.location?" · "+esc(np.location):""}${np.a!=="me"?" · from "+esc(whoX(np)):""}</span></button>${np.a==="me"?`<button class="link small" style="align-self:flex-start" data-act="planIcs" data-id="${esc(np.id)}">Add to calendar</button>`:""}`
-   :`<div class="tdrow"><span class="tiny">Next up</span><b>Nothing planned</b><button class="link small" style="align-self:flex-start" data-act="tab" data-tab="discover">Find an idea</button></div>`;
+   :`<div class="tdrow"><span class="tiny">Next up</span><b>Nothing planned</b></div>`;
   const word=fc&&fc.word?`<button class="tdrow" data-act="tab" data-tab="insights" aria-label="${TL("Forecast")}: ${esc(fc.word)}"><span class="tiny">Today's word</span><b class="tdword">${esc(fc.word)}</b></button>`:"";
   const chk=!S.fc.on?"":ck?`<div class="tdrow"><span class="tiny">Your check-in</span><span class="sub small">Feeling <b>${esc(ck.energy)}</b> today. <button class="link small" data-act="page" data-page="forecast">Change</button></span></div>`
    :`<div class="tdrow"><span class="tiny">How do you feel? (optional)</span><div class="chips sm" role="group" aria-label="Quick check-in">${HOME_ENERGY.map(e=>`<button class="chip" data-act="homeCk" data-v="${e}">${e}</button>`).join("")}</div></div>`;
-  return`<section class="card today" aria-label="Today"><div class="row between"><h3>Today</h3><span class="tiny">${fmtDate(d.getTime())}</span></div>${plan}${word}${chk}</section>`}
+  return`<section class="card today" aria-label="Today"><div class="row between"><h3>Today</h3><span class="tiny">${fmtDate(d.getTime())}</span></div>${plan}${tonight}${word}${chk}</section>`}
 function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning":h<18?"Afternoon":"Evening";
   const head=`<div class="row between">${BRAND()}<div class="row" style="gap:2px">${feedIcons()}${S.settings.social?`<button class="ib" data-act="page" data-page="social" aria-label="Friends">${ic("people")}</button>`:""}<button class="ib" data-act="panic" aria-label="Quick hide: cover the screen now">${ic("hide")}</button><button class="ib" data-act="tab" data-tab="profile" aria-label="Privacy and settings">${ic("lock")}</button></div></div>`;
   const np0=nextPlan(),plans=allPlans().filter(e=>!np0||e.id!==np0.id||e.a!==np0.a).slice(0,2),mem=storyItems("all").slice(0,2),ws=startOfWeek(Date.now()),wk=S.sessions.filter(s=>s.start>=ws).length,sug=suggestion(),fresh=!S.sessions.length&&!S.exps.length;
@@ -3080,6 +3120,17 @@ Object.assign(A,{
   fcE(e){(ui.fc.ck=ui.fc.ck||{energy:null,close:null,wants:[]}).energy=e.dataset.v;render()},
   fcC(e){(ui.fc.ck=ui.fc.ck||{energy:null,close:null,wants:[]}).close=+e.dataset.v;render()},
   fcW(e){const c=ui.fc.ck=ui.fc.ck||{energy:null,close:null,wants:[]},v=e.dataset.v;c.wants=c.wants.includes(v)?c.wants.filter(x=>x!==v):c.wants.concat([v]).slice(0,3);render()},
+  tnUntil(e){ui.tn.until=+e.dataset.v;ui.tn.res=null;render()},
+  tnKind(e){const k=e.dataset.v,t=ui.tn;t.kinds=t.kinds.includes(k)?t.kinds.filter(x=>x!==k):t.kinds.concat([k]).slice(-3);t.res=null;render()},
+  tnArea(){ui.dsc.locOpen=!ui.dsc.locOpen;render()},
+  async tnGo(){const t=ui.tn;if(t.busy||!S.disc.loc||!t.kinds.length)return;t.busy=true;t.err="";t.res=null;render();
+    try{const r=await Disc.places({kinds:t.kinds.slice(0,3),km:Math.min(S.disc.maxKm||8,8),now:true,raw:""}),now=new Date(),end=tnEnd(t.until);
+      const items=r.list.filter(v=>!r.demo||t.kinds.includes(v.kind)).map(v=>({v,f:tnFit(v,now,end)})).filter(x=>x.f).sort((a,b)=>a.f.rank-b.f.rank||(a.v.distKm??99)-(b.v.distKm??99)).slice(0,8).map((x,i)=>({...x,i}));
+      t.res={items,demo:r.demo,liveErr:r.liveErr,used:r.used,at:Date.now()}}catch(e){t.err="That search didn't work. Try again."}
+    t.busy=false;render()},
+  tnPlan(e){const t=ui.tn,r=t.res&&t.res.items[+e.dataset.i];if(!r)return;const v=r.v,now=Date.now(),at=nextSlot();
+    S.exps.push({id:uid(),kind:"plan",title:v.name.slice(0,80),date:at,cat:{food:"dinner",drinks:"romantic",coffee:"dinner",outdoors:"adventure",music:"celebration",culture:"other"}[v.kind]||"other",location:v.demo?"":String(v.addr||"").slice(0,80),favorite:"",mood:"",notes:v.demo?"Demo place, not real.":"From "+v.src+". Not booked: check hours before you go.",sharedNote:"",space:null,anniv:false,photos:[],idea:null,venue:snapV(v),createdAt:now,updatedAt:now});
+    save();const x=S.exps[S.exps.length-1];ui.page=null;ui.tab="home";render(true);A.planIcs({dataset:{id:x.id}})},
   homeCk(e){const v=e.dataset.v;if(!FC_ENERGY[v])return;S.fc.checkins[fcToday()]={energy:v,close:null,wants:[],at:Date.now()};ui.fc.pv=null;save();render();
     if(Soc.ready()&&S.fc.together)fcShareCheckins().catch(()=>{});toast(S.fc.together?"Checked in. Shared with your joint forecast.":"Checked in. Only you see this.")},
   async fcCkSave(){const c=ui.fc.ck;if(!c||!FC_ENERGY[c.energy])return;S.fc.checkins[fcToday()]={energy:c.energy,close:c.close,wants:c.wants.filter(w=>FC_WANT_L[w]),at:Date.now()};
@@ -3562,6 +3613,16 @@ function vPair(){const st=pairState(),inv=S.pairInv&&S.pairInv.exp>Date.now()?S.
    <div class="card line"><h3>Shared-session codes</h3><p class="sub small">Works anywhere, no account needed. Open a session and choose “Send as a code”. It carries the date, time, length, who was involved and the shared note. Never your private notes, mood, rating or title.</p>
     <label class="f" for="sc-in">Add a session from a code<textarea id="sc-in" data-bind="pair.sc" rows="3" placeholder="NOUZ-S1:…">${esc(pp.sc)}</textarea></label><button class="btn block" data-act="codeAdd">Add to my log</button></div></div>`}
 
+const REPO_URL="https://github.com/c-dharth/nouz";
+function vDataMap(){const enc=!!Vault.key,acct=S.user.mode==="account",row=(h,b)=>`<div class="card line"><h3>${h}</h3>${b}</div>`;
+  return hdr("Where your data lives")+`<div class="scroll"><div><h1>Where your data <em>lives.</em></h1><p class="sub">Plain answers you can check, not promises.</p></div>
+   ${row("On this phone or browser",`<p class="sub small">Everything you log, plan and save. Photos are kept only here, in this browser's storage.</p><p class="sub small"><b>${enc?"Encrypted with your passphrase (AES-256).":"Not encrypted right now."}</b> ${enc?"nouz never stores the passphrase; without it, this copy can't be read.":"Anyone with this browser unlocked could read it."}</p>${enc?"":`<button class="btn sm" style="align-self:flex-start" data-act="togglePass">Encrypt it with a passphrase</button>`}`)}
+   ${row("Account sync",acct?`<p class="sub small"><b>On.</b> A copy without photos is kept in this page's private storage, tied to your signed-in Claude account, so it follows you to other devices. Other nouz users can't read it. It is <b>not</b> protected by your passphrase; it's protected by your account.</p>`:`<p class="sub small"><b>Off.</b> Nothing you log leaves this browser.</p>`)}
+   ${row("Shared with a partner",`<p class="sub small">Only what you choose to share: a session they confirm, a shared space, a plan. Items in shared spaces and between paired partners are encrypted with keys only the members hold.</p>`)}
+   ${row("Leaves nouz only when you use it",`<ul class="plain small"><li><b>Discover and Tonight:</b> the area you typed (or your location, if you allow it) and the kind of place go to Mapbox, Yelp and AllTrails; the area name goes to AccuWeather. Not your log.</li><li><b>Claude features</b> (Planner, Guide, Forecast with Claude): off until you turn them on. They send the request and short summaries, never your private notes.</li><li><b>Calendar files</b> you download hold the plan's title, time and place.</li></ul>`)}
+   ${row("Never",`<ul class="plain small"><li>No ads, no analytics on what you log, no selling data.</li><li>Nothing is posted anywhere unless you post it.</li></ul>`)}
+   ${row("Check it yourself",`<p class="sub small">nouz's code is public. Anyone can read how storage, encryption and sharing work.</p><a class="btn sm" style="align-self:flex-start" href="${REPO_URL}" target="_blank" rel="noopener noreferrer">${ic("lock")} Read the code on GitHub</a>`)}
+   ${row("Take it with you",`<p class="sub small">Export everything, photos included, as a .zip any time.</p><button class="btn sm" style="align-self:flex-start" data-act="exportData">Export my data</button>`)}</div>`}
 function vPrivacy(){const s=S.settings,enc=!!Vault.key;
   return hdr("Privacy and security")+`<div class="scroll"><div><h1>Locked <em>your way.</em></h1></div>
    <div class="card"><h3>On this device</h3>
@@ -3571,6 +3632,7 @@ function vPrivacy(){const s=S.settings,enc=!!Vault.key;
     ${sw("togglePanicKey",s.panicKey!==false,"Quick hide shortcut","Press Esc twice on a keyboard to cover the screen with a plain Notes page. The Hide button on Home always works. Tap the Notes page three times to come back.")}
     ${sw("toggleDiscreet",!!s.discreet,"Discreet mode","Hides the NOUZ name and uses neutral words like Journal, Log and Entry.")}
     <p class="tiny">${enc?"If you forget the passphrase, what's in this browser can't be recovered. Keep an export somewhere safe, or turn on sync."+(S.user.mode==="account"?" Your synced copy is protected by your account, not by this passphrase.":""):"Without a passphrase, NOUZ's data sits in this browser's storage unencrypted, readable by anyone with technical access to the device."}</p></div>
+   <button class="card rowcard" data-act="page" data-page="dataMap"><span class="badge" aria-hidden="true">${ic("lock")}</span><span class="grow"><b>Where your data lives</b><span class="sub small" style="display:block">What stays here, what syncs, what leaves</span></span>${ic("next")}</button>
    <div class="card line"><h3>Location</h3><p class="sub small">NOUZ doesn't track where you are. When you search in Discover, the area you type or your current location goes to Mapbox, Yelp and AllTrails to find places, and the weather area to AccuWeather. Only then, only for that search.</p></div></div>`}
 
 /* ============ sheets added in 0.14 ============ */
@@ -3646,7 +3708,7 @@ function bootRest(){normCats();normState();applyDiscreet();
     if(!typing())render()});
 }
 (function boot(){try{if(sessionStorage.getItem(COVER_KEY)==='1')ui.cover=true}catch(e){}Vault.locked=ENC_AT_LOAD;if(Vault.locked){render();return}bootRest()})();
-window.__vouz={panic,uncover,save,render,nextPlan,planIcs,QR,Vault,sessionCode,readSessionCode,zipMake,zipRead,crc32,pairNorm,Astro,shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+window.__vouz={tnFit,tnEnd,nextSlot,panic,uncover,save,render,nextPlan,planIcs,QR,Vault,sessionCode,readSessionCode,zipMake,zipRead,crc32,pairNorm,Astro,shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.0 — 2026-11-25
+
+Changes from the founder-pack feedback (simulated buyers said: "we're tired, not short of ideas" and "I don't trust an app with intimate details unless I can check it").
+- **Tonight mode.** "What's open tonight" on the Today card: pick how late (until 9, 10, 11, late) and up to three kinds of place; see what's open now near your area. Opening hours are only claimed when Mapbox gives them; Yelp's "open now" is labelled with "closing time not verified"; anything else says "hours not verified". Demo places are labelled. "Plan it" saves a timed plan (next half hour) and offers the calendar file. No reservations.
+- **Passphrase during setup.** Onboarding has a fourth step that recommends encrypting everything in this browser with a passphrase, with "Skip for now". The warning about forgotten passphrases and (with sync) that the synced copy isn't passphrase-protected is shown before you choose. Existing users are unchanged.
+- **Where your data lives.** A plain page (Profile → Privacy) saying what's on the device and whether it's encrypted, what account sync keeps, what's shared, what goes to Mapbox, Yelp, AllTrails, AccuWeather and Claude features, and a link to the public code on GitHub, plus Export.
+- Today card: "Find an idea" replaced by the Tonight button. Tests: 431 browser checks.
+
 ## 0.16.0 — 2026-11-25
 
 - **Quick hide.** A Hide button on Home (and pressing Esc twice on a keyboard) replaces the whole screen with a plain "Notes" page. Three quick taps on it bring NOUZ back to Home, never to the page you were on.
