@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.0 — 2026-11-25
+
+- **Quick hide.** A Hide button on Home (and pressing Esc twice on a keyboard) replaces the whole screen with a plain "Notes" page. Three quick taps on it bring NOUZ back to Home, never to the page you were on.
+- With a passcode on, coming back asks for the passcode. With a passphrase on, hiding re-locks the encrypted copy and the passphrase is asked for after the cover. The cover survives a reload of the same tab.
+- Privacy page: "Quick hide shortcut" switch for the Esc-Esc shortcut. The Hide button always works.
+- Toasts are held back while the cover is up. Tests: 13 new browser checks (416 total).
+
 ## 0.15.0 — 2026-11-25
 
 - Home has a calm **Today** card: your next plan (with a friendly time like "Tomorrow · 7:30pm" and Add to calendar), today's Forecast word, and an optional one-tap check-in. No counts, streaks or points. If nothing is planned it says so and links to Discover.

@@ -373,6 +373,7 @@ body.th-champagne{--bg:#0E0C09;--surface:#1B1813;--surface2:#27221A;--line:#3A33
 .today .tdrow+.tdrow,.today .link+.tdrow{border-top:1px solid var(--line,rgba(127,127,127,.18));padding-top:12px}.today .tdword{font-family:var(--display);font-size:24px;line-height:1.15}
 .ideal{display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:var(--r-sm);padding:10px 8px 10px 16px}
 .ideal .grow{display:flex;flex-direction:column;gap:2px}.ideal b{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.15}
+.cover{min-height:100%;background:#f6f4ef;color:#2b2b2b;padding:64px 28px;font-family:-apple-system,system-ui,sans-serif;cursor:default;user-select:none;-webkit-user-select:none}.cover h1{font:700 32px/1.1 -apple-system,system-ui,sans-serif;margin:0 0 14px;color:#2b2b2b}.cover p{color:#8a8780;font-size:16px;margin:0}body:has(.cover){background:#f6f4ef}
 .veiled #app{filter:blur(22px) saturate(.6);transition:filter .12s}.veiled::after{content:"";position:fixed;inset:0;background:rgba(14,11,12,.55);z-index:99}
 .mark.neutral{font-style:normal;font-family:var(--body,inherit);font-weight:700;letter-spacing:.02em;font-size:24px}
 .qrbox{background:#fff;border-radius:14px;padding:10px;align-self:center;width:min(240px,70vw)}.qr{display:block;width:100%;height:auto}
@@ -405,7 +406,7 @@ const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 const reduced=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return true}};
 const PARTS=["Morning","Afternoon","Evening","Night"],PARTH=["5am to noon","noon to 5pm","5pm to 10pm","10pm to 5am"];
 const partOf=h=>h>=5&&h<12?0:h>=12&&h<17?1:h>=17&&h<22?2:3;
-const IC={heart:'<path d="M12 20s-7.5-4.6-9.2-9.3C1.7 7.5 3.8 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.2 0 5.3 3 4.2 6.2C19.5 15.4 12 20 12 20z"/>',compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>',photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',track:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.6 5.2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>',play:'<path d="M8 4.5v15l12-7.5z" fill="currentColor"/>',pause:'<path d="M8 5v14M16 5v14"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="M15 5l-7 7 7 7"/>',next:'<path d="M9 5l7 7-7 7"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',edit:'<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',share:'<path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',dots:'<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>',watch:'<rect x="6.5" y="6" width="11" height="12" rx="3"/><path d="M9 6l.6-3.5h4.8L15 6M9 18l.6 3.5h4.8L15 18"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',pin:'<path d="M12 21s-6.5-6.1-6.5-11a6.5 6.5 0 0 1 13 0c0 4.9-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',chat:'<path d="M4 5h16v11H9l-5 4z"/>',bookmark:'<path d="M6 3h12v18l-6-4.5L6 21z"/>',bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',feed:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'};
+const IC={heart:'<path d="M12 20s-7.5-4.6-9.2-9.3C1.7 7.5 3.8 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.2 0 5.3 3 4.2 6.2C19.5 15.4 12 20 12 20z"/>',compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',book:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>',photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',track:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.6 5.2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>',play:'<path d="M8 4.5v15l12-7.5z" fill="currentColor"/>',pause:'<path d="M8 5v14M16 5v14"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="M15 5l-7 7 7 7"/>',next:'<path d="M9 5l7 7-7 7"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',edit:'<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/>',hide:'<path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.6"/><path d="M4 4l16 16"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',share:'<path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',dots:'<circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/>',watch:'<rect x="6.5" y="6" width="11" height="12" rx="3"/><path d="M9 6l.6-3.5h4.8L15 6M9 18l.6 3.5h4.8L15 18"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',pin:'<path d="M12 21s-6.5-6.1-6.5-11a6.5 6.5 0 0 1 13 0c0 4.9-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',chat:'<path d="M4 5h16v11H9l-5 4z"/>',bookmark:'<path d="M6 3h12v18l-6-4.5L6 21z"/>',bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',feed:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'};
 const ic=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>';
 
 /* ============ private store (this device, not encrypted by NOUZ) ============ */
@@ -670,7 +671,7 @@ function TL(w){return S&&S.settings&&S.settings.discreet&&DISCREET[w]||w}
 const BRAND=(size)=>S.settings&&S.settings.discreet?`<div class="mark neutral"${size?` style="font-size:${Math.round(size*.6)}px"`:""}>Journal</div>`:`<div class="mark"${size?` style="font-size:${size}px"`:""}>nouz<b>.</b></div>`;
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA")}
 function toast(m){ui.toast=m;paintToast();clearTimeout(toast.t);toast.t=setTimeout(()=>{ui.toast=null;paintToast()},3200)}
-function paintToast(){let t=$(".toast");if(!ui.toast){t&&t.remove();return}if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");$("#app").appendChild(t)}t.textContent=ui.toast}
+function paintToast(){let t=$(".toast");if(ui.cover){t&&t.remove();return}if(!ui.toast){t&&t.remove();return}if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");$("#app").appendChild(t)}t.textContent=ui.toast}
 /* Older names still work: Track and History live in Sessions; Discover and Our Story open from Home; Friends is a page. */
 function go(tab){if(tab==="analytics")tab="patterns";if(["track","history","patterns"].includes(tab)){ui.int.seg=tab;tab="intimacy"}
   if(tab==="forecast")tab="insights";
@@ -734,6 +735,7 @@ function render(resetScroll){
   const app=$("#app"),sc=$(".scroll"),key=(Vault.locked?"vault":ui.locked?"lock":!S.age&&S.onboarded?"gate":S.onboarded?ui.tab+(ui.tab==="intimacy"?ui.int.seg:""):"ob"+ui.ob.step)+"|"+(ui.page?ui.page.type+(ui.page.id||""):"");
   const changed=key!==lastKey,keep=sc&&!resetScroll&&!changed?sc.scrollTop:0;lastKey=key;
   let h;
+  if(ui.cover){app.innerHTML=vCover();document.title="Notes";return}
   if(Vault.locked){app.innerHTML=vVaultLock()+(ui.sheet?vSheet(ui.sheet!==lastSheet):"");lastSheet=ui.sheet;const f=$("#vault-in");f&&!ui.sheet&&f.focus({preventScroll:true});return}
   if(ui.locked)h=vLock();
   else if(!S.onboarded)h=vOnboard();
@@ -1603,7 +1605,7 @@ function todayCard(){const np=nextPlan(),d=new Date();let fc=null;if(S.fc.on)try
    :`<div class="tdrow"><span class="tiny">How do you feel? (optional)</span><div class="chips sm" role="group" aria-label="Quick check-in">${HOME_ENERGY.map(e=>`<button class="chip" data-act="homeCk" data-v="${e}">${e}</button>`).join("")}</div></div>`;
   return`<section class="card today" aria-label="Today"><div class="row between"><h3>Today</h3><span class="tiny">${fmtDate(d.getTime())}</span></div>${plan}${word}${chk}</section>`}
 function vHome(){const h=new Date().getHours(),greet=h<5?"Up late":h<12?"Morning":h<18?"Afternoon":"Evening";
-  const head=`<div class="row between">${BRAND()}<div class="row" style="gap:2px">${feedIcons()}${S.settings.social?`<button class="ib" data-act="page" data-page="social" aria-label="Friends">${ic("people")}</button>`:""}<button class="ib" data-act="tab" data-tab="profile" aria-label="Privacy and settings">${ic("lock")}</button></div></div>`;
+  const head=`<div class="row between">${BRAND()}<div class="row" style="gap:2px">${feedIcons()}${S.settings.social?`<button class="ib" data-act="page" data-page="social" aria-label="Friends">${ic("people")}</button>`:""}<button class="ib" data-act="panic" aria-label="Quick hide: cover the screen now">${ic("hide")}</button><button class="ib" data-act="tab" data-tab="profile" aria-label="Privacy and settings">${ic("lock")}</button></div></div>`;
   const np0=nextPlan(),plans=allPlans().filter(e=>!np0||e.id!==np0.id||e.a!==np0.a).slice(0,2),mem=storyItems("all").slice(0,2),ws=startOfWeek(Date.now()),wk=S.sessions.filter(s=>s.start>=ws).length,sug=suggestion(),fresh=!S.sessions.length&&!S.exps.length;
   const live=S.active?`<button class="card rowcard" data-act="tab" data-tab="track" aria-label="Return to your running session"><span class="badge on" aria-hidden="true">${ic(running()?"pause":"play")}</span><span class="grow"><b>Session ${running()?"running":"paused"}</b><span class="sub small" style="display:block" id="miniclock">${fmtClock(elapsed(S.active))}</span></span>${ic("next")}</button>`
     :S.draft&&S.draft.fromTimer?`<button class="card rowcard" data-act="resumeDraft"><span class="badge on" aria-hidden="true">${ic("edit")}</span><span class="grow"><b>Finish saving your session</b></span>${ic("next")}</button>`:"";
@@ -3566,6 +3568,7 @@ function vPrivacy(){const s=S.settings,enc=!!Vault.key;
     ${sw("togglePass",enc,"Passphrase encryption",enc?"On. Everything NOUZ keeps in this browser, photos included, is encrypted. Asked for each time NOUZ opens.":"Encrypt everything NOUZ keeps in this browser with a passphrase only you know.")}
     ${enc?"":sw("togglePin",!!s.pinHash,"Passcode lock",s.pinHash?"On. Asked for when you open or return to NOUZ.":"A 4-digit screen lock. It doesn't encrypt anything.")}
     ${sw("toggleVeil",s.veil!==false,"Blur when in the background","Covers the screen when you switch apps, so previews stay private.")}
+    ${sw("togglePanicKey",s.panicKey!==false,"Quick hide shortcut","Press Esc twice on a keyboard to cover the screen with a plain Notes page. The Hide button on Home always works. Tap the Notes page three times to come back.")}
     ${sw("toggleDiscreet",!!s.discreet,"Discreet mode","Hides the NOUZ name and uses neutral words like Journal, Log and Entry.")}
     <p class="tiny">${enc?"If you forget the passphrase, what's in this browser can't be recovered. Keep an export somewhere safe, or turn on sync."+(S.user.mode==="account"?" Your synced copy is protected by your account, not by this passphrase.":""):"Without a passphrase, NOUZ's data sits in this browser's storage unencrypted, readable by anyone with technical access to the device."}</p></div>
    <div class="card line"><h3>Location</h3><p class="sub small">NOUZ doesn't track where you are. When you search in Discover, the area you type or your current location goes to Mapbox, Yelp and AllTrails to find places, and the weather area to AccuWeather. Only then, only for that search.</p></div></div>`}
@@ -3580,6 +3583,18 @@ const SHEETS={
   passOff:(s,close)=>`<h2>Turn off encryption?</h2><p class="sub small">Enter your passphrase to confirm. Your data will be stored in this browser without encryption.</p><label class="f" for="pp-off">Passphrase<input type="password" id="pp-off" autocomplete="current-password"></label>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}<button class="btn danger block" data-act="passOffYes">Turn off</button>${close}`,
   vaultForgot:(s,close)=>`<h2>Start over on this device?</h2><p class="sub">Without the passphrase, the encrypted copy here can't be opened. Erasing removes it and its photos from this browser. If you used sync or kept an export, you can bring your data back after.</p><button class="btn danger block" data-act="vaultErase">Erase this device's copy</button>${close}`};
 
+/* Quick hide: a plain Notes page replaces the screen at once. Three quick taps bring NOUZ back.
+   With a passcode on it also locks; with a passphrase on it re-locks the encrypted copy (the page reloads to the passphrase screen). */
+const COVER_KEY="nouz.cover";
+function vCover(){return`<div class="cover" data-act="coverTap" role="button" aria-label="Notes"><h1>Notes</h1><p>Nothing here yet.</p></div>`}
+function panic(){if(ui.cover)return;ui.sheet=null;ui.page=null;ui.tab="home";ui.err="";ui.cover=true;ui.coverTaps=[];veil(false);
+  ui.toast=null;paintToast();
+  try{sessionStorage.setItem(COVER_KEY,"1")}catch(e){}
+  if(S.onboarded&&S.settings.pinHash&&!Vault.key)ui.locked=true;
+  if(Vault.key){Vault.write().then(()=>location.reload());document.title="Notes";return}
+  render(true)}
+function uncover(){ui.cover=false;ui.coverTaps=[];try{sessionStorage.removeItem(COVER_KEY)}catch(e){}applyDiscreet();render(true)}
+let lastEsc=0;document.addEventListener("keydown",e=>{if(e.key!=="Escape"||ui.cover||!S.onboarded||S.settings.panicKey===false)return;const n=Date.now();if(n-lastEsc<600){lastEsc=0;panic()}else lastEsc=n});
 function vVaultLock(){return`<div class="ob"><div class="mid" style="align-items:center;text-align:center">${BRAND(56)}<p class="sub">Enter your passphrase</p>
   <input type="password" id="vault-in" autocomplete="current-password" aria-label="Passphrase" style="max-width:280px" ${ui.vbusy?"disabled":""}>${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}
   <button class="btn primary" data-act="vaultUnlock" ${ui.vbusy?"disabled":""}>${ui.vbusy?"Unlocking…":"Unlock"}</button><button class="link small" data-act="sheet" data-s="vaultForgot">Forgot it?</button></div></div>`}
@@ -3603,6 +3618,9 @@ Object.assign(A,{
     try{const o=await Vault.open(p);S=Object.assign(fresh(),o,{settings:Object.assign(fresh().settings,o.settings)});Vault.locked=false;ui.vbusy=false;bootRest()}
     catch(e){ui.vbusy=false;ui.err="That's not it. Try again.";render();buzz([30,40,30])}},
   async vaultErase(){try{localStorage.removeItem(LS)}catch(e){}await Photos.clear();Vault.key=null;Vault.locked=false;S=fresh();ui.sheet=null;ui.err="";ui.ob.step=0;bootRest()},
+  panic(){panic()},
+  coverTap(){const n=Date.now();ui.coverTaps=(ui.coverTaps||[]).filter(t=>n-t<1200).concat([n]);if(ui.coverTaps.length>=3)uncover()},
+  togglePanicKey(){S.settings.panicKey=S.settings.panicKey===false;save();render()},
   toggleVeil(){S.settings.veil=S.settings.veil===false;save();render()},
   toggleDiscreet(){S.settings.discreet=!S.settings.discreet;save();applyDiscreet();render(true);toast(S.settings.discreet?"Discreet mode is on.":"Discreet mode is off.")},
   async planIcs(e){const x=S.exps.find(y=>y.id===e.dataset.id);if(!x)return;if(!x.date)return toast("Give the plan a date first.");
@@ -3627,8 +3645,8 @@ function bootRest(){normCats();normState();applyDiscreet();
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 }
-(function boot(){Vault.locked=ENC_AT_LOAD;if(Vault.locked){render();return}bootRest()})();
-window.__vouz={save,render,nextPlan,planIcs,QR,Vault,sessionCode,readSessionCode,zipMake,zipRead,crc32,pairNorm,Astro,shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+(function boot(){try{if(sessionStorage.getItem(COVER_KEY)==='1')ui.cover=true}catch(e){}Vault.locked=ENC_AT_LOAD;if(Vault.locked){render();return}bootRest()})();
+window.__vouz={panic,uncover,save,render,nextPlan,planIcs,QR,Vault,sessionCode,readSessionCode,zipMake,zipRead,crc32,pairNorm,Astro,shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>
