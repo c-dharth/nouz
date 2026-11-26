@@ -142,6 +142,7 @@ with sync_playwright() as pw:
     a0=S(p); ok("new user: age record kept; astrology off until chosen in Profile",a0["age"]["dob"]=="1995-11-08" and a0["age"]["method"]=="self-declared" and a0["astro"]["on"] is False and "dob" not in a0["astro"])
     s=S(p); ok("onboarding: social off by default, local mode",s["onboarded"] and not s["settings"]["social"] and s["user"]["mode"]=="local")
     ok("nav: five tabs: Home, Sessions, Discover, Forecast, Profile",[x.inner_text().strip() for x in p.locator(".tab").all()]==["Home","Sessions","Discover","Forecast","Profile"])
+    src=open(os.path.join(WEB,"index.html")).read(); ok("name: share cards and drawn images say nouz, not vouz",'fillText("vouz"' not in src and 'fillText("VOUZ"' not in src)
     ok("name: the app is called nouz",p.title()=="NOUZ" and "nouz." in p.inner_text("#app") and "vouz" not in p.inner_text("#app").lower())
     p.evaluate("()=>{const V=window.__vouz,d=new Date(),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');V.S.fc.hist[k]={solo:{word:'WARM'}}}")
     act(p,"tab",tab="insights"); p.wait_for_timeout(800); t=p.inner_text("#app")

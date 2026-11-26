@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.1 — 2026-11-26
+
+- Share cards drew the old "vouz." wordmark in the corner; they now say "nouz.". Test added (432 browser checks).
+
 ## 0.17.0 — 2026-11-25
 
 Changes from the founder-pack feedback (simulated buyers said: "we're tired, not short of ideas" and "I don't trust an app with intimate details unless I can check it").

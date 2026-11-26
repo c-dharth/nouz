@@ -2006,7 +2006,7 @@ function textBlock(ctx,c,th,x,y,maxW,u,align="left",big=96){ctx.textAlign=align;
   if(c.caption){ctx.font=`italic 400 ${44*u}px ${CARD_FONT.d}`;ctx.fillStyle=th.fg;for(const l of wrapLines(ctx,c.caption,maxW,4)){yy+=54*u;ctx.fillText(l,x,yy)}}
   return yy}
 function brand(ctx,c,th,W,H,u,light){if(!c.brand)return;ctx.textAlign="right";ctx.textBaseline="alphabetic";ctx.font=`italic 400 ${40*u}px ${CARD_FONT.d}`;ctx.fillStyle=light||th.fg;ctx.globalAlpha=.78;
-  ctx.fillText("vouz",W-64*u-14*u,H-56*u);ctx.fillStyle=th.ac;ctx.fillText(".",W-64*u,H-56*u);ctx.globalAlpha=1}
+  ctx.fillText("nouz",W-64*u-14*u,H-56*u);ctx.fillStyle=th.ac;ctx.fillText(".",W-64*u,H-56*u);ctx.globalAlpha=1}
 async function loadBitmaps(ids){const out=[];for(const id of ids.slice(0,3)){try{const b=await Photos.get(id);if(b)out.push(await createImageBitmap(b))}catch(e){}}return out}
 async function renderCard(mc,e){const[W,H]=CARD_FMT[mc.fmt]||CARD_FMT.portrait,u=Math.min(W,H)/1080,th=CARD_BG[mc.bg]||CARD_BG.wine,c=cardContent(mc,e),port=H>W,land=W>H;
   const cv=document.createElement("canvas");cv.width=W;cv.height=H;const ctx=cv.getContext("2d");
