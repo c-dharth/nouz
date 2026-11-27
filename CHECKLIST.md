@@ -98,15 +98,15 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 5. When to fund the backend for events (Ticketmaster key, Claude API with web search).
 6. Phone app: your app ID, and whether the phone app waits for Supabase (sync, pairing) before a store release.
 
-## Commands once Xcode is installed
+## Commands once Xcode or Android Studio is installed
 
-From the Capacitor project root, after copying `web/` into its web directory:
+Full steps in `mobile/README.md`. Short version, after setting your app ID in `mobile/capacitor.config.json`:
 
 ```
+cd mobile
 npm install
-npx cap sync ios
-npx cap open ios
+npx cap add ios && npx cap add android
+npm run ios        # or: npm run android
 ```
 
-Android, once Android Studio is installed: `npx cap sync android && cd android && ./gradlew assembleDebug`.
 Backend, only after you approve: `supabase link --project-ref <ref> && supabase db push`.
