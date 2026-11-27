@@ -21,7 +21,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 | 10 | Mutual Match | Done | Per space; reveals only ideas every member picked |
 | 9c | Tonight mode | Done | Open-now places for a time window; hours only as sources give them. Tested with demo and stand-in data, not live connectors |
 | 9b | Home Today card | Done | Next plan, Forecast word, optional one-tap check-in; no counts or streaks. Browser-tested only |
-| 11 | Privacy controls | Done | Passphrase offered in setup, "Where your data lives" page with link to the code, Quick hide (Hide button, Esc twice, plain Notes cover, locks with passcode or passphrase), Private by default, Connections off by default, passphrase encryption (AES-256), blur in background, Discreet mode, passcode, zip export with photos, backup reminder, delete |
+| 11 | Privacy controls | Done | Passphrase encryption on by default in setup (skipping asks first and says what's exposed), "Where your data lives" page with link to the code, Quick hide (Hide button, Esc twice, plain Notes cover, locks with passcode or passphrase), Private by default, Connections off by default, passphrase encryption (AES-256), blur in background, Discreet mode, passcode, zip export with photos, backup reminder, delete |
 
 ## Phase 2 and 3 — backlog
 
@@ -43,7 +43,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 | Add to calendar | Done: .ics on every plan and Discover day plan |
 | Subscriptions | Logic only (`core/entitlements.js`); VOUZ Plus page hidden in the app |
 | Supabase as the backend | Schema and policies tested locally (208 checks); not deployed; app not switched over |
-| iOS/Android builds | Blocked: no Capacitor packages, Android SDK or Xcode here |
+| iOS/Android app | Source only: Capacitor 8 shell in `mobile/` (config, copy script, icons, build steps); native hooks in the web app checked in Chromium (`e2e/mobile.py`, 23 checks). Never built or run on a phone: needs Xcode / Android Studio on your machine. In the phone app: no sync, pairing or Social (need Supabase), Discover is demo only (connectors need a server), export untested |
 
 | Social feed: Explore & Friends | Done in the web app: posts with media, visibility, likes, comments, saves, share, edit, report, block, profiles, couple profiles, notifications, moderation. Server version in migration 0005, tested locally, not deployed |
 | 18+ gate and astrology | Done in the web app: birthday gate in onboarding and for existing accounts, Sun/Moon/Rising/Venus/Mars, Cosmic Connection, cosmic forecast and cards. Server-side 18+ check in migration 0008, tested locally, not deployed |
@@ -78,6 +78,8 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 - **Photos** are on one device only. Clearing browser data deletes them; the .zip export is the backup.
 - **Pairing links:** the QR and the invite text carry the page's link and the code. The code isn't in the link itself: claude.ai passes only plain names in a link's #, and codes shouldn't travel in addresses. Your partner needs access to the page (you share it from claude.ai), then enters the code.
 - **Passphrase:** if it's forgotten, the copy in this browser can't be recovered (sync or an export can bring data back). A save made in the last instant before a tab is killed may not be written. With sync on, the account copy is protected by the account, not the passphrase.
+- **Phone app:** not built or run on a device. Its app ID (`app.nouz.mobile`) is a placeholder to replace before the first build. Without claude.ai it has no sync, pairing, Social or live connectors; downloads (export, calendar, cards) need Capacitor's Filesystem and Share plugins, not added.
+- **Encryption by default** can still be declined in setup, after a warning. Existing accounts without a passphrase aren't prompted.
 - **Passphrase in setup** covers this browser only. Account sync keeps a copy that is protected by the Claude account, not the passphrase; encrypting the synced copy too is a separate decision.
 - **Tonight** can only say a place is open for your whole window when Mapbox returns hours; Yelp gives "open now" without a closing time. Not tested against live Yelp/Mapbox inside the artifact.
 - **Quick hide** covers the screen in the page only: it can't hide the app switcher preview on every phone, and there's no shake gesture (browsers need a permission prompt for motion). With no passcode or passphrase, three taps return without a lock.
@@ -94,6 +96,7 @@ Codebase: the single-file web app in `web/` (your choice, 18 Nov). Accounts: the
 3. Explore ranking weights (recency 40, engagement 25, interests 15, detail 10, repeat author −12) are first guesses.
 4. Who moderates, and the community rules they enforce, before any real public launch.
 5. When to fund the backend for events (Ticketmaster key, Claude API with web search).
+6. Phone app: your app ID, and whether the phone app waits for Supabase (sync, pairing) before a store release.
 
 ## Commands once Xcode is installed
 

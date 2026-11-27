@@ -9,3 +9,6 @@ ios/App/Pods/
 android/.gradle/
 android/app/build/
 e2e/shots/
+mobile/www/
+mobile/ios/App/build/
+mobile/android/app/release/

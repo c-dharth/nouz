@@ -19,6 +19,8 @@ story) plus private intimacy tracking. Tagline: "Less scrolling. More together."
 | `supabase/tests/` | Policy tests run on a throwaway local Postgres |
 | `test/` | Node unit tests; some extract code straight from `web/index.html` between marker comments |
 | `e2e/run.py` | Playwright browser tests with a stand-in multi-user database |
+| `mobile/` | Capacitor 8 shell for iOS/Android; copies `web/index.html` into `www/`. Source only, never built |
+| `e2e/mobile.py` | The app as the phone shell runs it (no claude.ai, stand-in Capacitor) |
 | `watch/` | Apple Watch source, never compiled |
 | `CHECKLIST.md` | What's done, what isn't, known limits, open decisions. Update it when you change state |
 | `CHANGELOG.md` | One entry per version |
@@ -34,6 +36,7 @@ Encryption helpers are in `K` (WebCrypto).
 npm test            # unit tests (Node 20+)
 npm run test:db     # database policy tests (needs initdb/psql)
 npm run test:ui     # browser tests (Python + Playwright + Chrome)
+npm run test:mobile # phone-shell checks (config + Chromium with a stand-in Capacitor)
 ```
 
 Never report a test as passing unless you ran it and saw it pass. Don't weaken a test to make it pass.

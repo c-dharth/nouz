@@ -1,0 +1,13 @@
+{
+  "name": "vouz",
+  "private": true,
+  "version": "0.18.0",
+  "type": "module",
+  "description": "VOUZ core logic, backend schema and tests. No runtime dependencies.",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:db": "bash supabase/tests/run.sh",
+    "test:ui": "python3 e2e/run.py",
+    "test:mobile": "node mobile/scripts/check.mjs && python3 e2e/mobile.py"
+  }
+}

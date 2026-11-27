@@ -1,0 +1,25 @@
+{
+  "name": "nouz-mobile",
+  "private": true,
+  "version": "0.18.0",
+  "type": "module",
+  "description": "nouz for iOS and Android: a Capacitor shell around web/index.html. Source only until built on a Mac or with Android Studio.",
+  "scripts": {
+    "copy": "node scripts/copy-web.mjs",
+    "check": "node scripts/check.mjs",
+    "sync": "npm run copy && npx cap sync",
+    "ios": "npm run sync && npx cap open ios",
+    "android": "npm run sync && npx cap open android",
+    "icons": "npx @capacitor/assets generate --iconBackgroundColor '#0e0b0c' --splashBackgroundColor '#0e0b0c'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.0"
+  }
+}

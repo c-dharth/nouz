@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.18.0 — 2026-11-27
+
+- **Encryption on by default in setup.** The last setup step now encrypts with a passphrase unless you choose otherwise. "Continue without encryption" asks first and says what that leaves readable ("Anyone who can open this browser could read your sessions, notes and photos"), with "Use a passphrase" to go back. Existing users are unchanged.
+- **Phone app shell (source only).** `mobile/` is a Capacitor 8 project around `web/index.html`: config, a copy script, icon and splash sources, a config check and build steps. It has not been built or run on a phone.
+- **Native hooks in the web app**, active only inside the phone app: platform detection, Android back button (sheet, then page, then Home, then leave; back during setup goes to the previous step; never past Quick hide or the lock), and onboarding wording that says sync isn't in the phone app yet.
+- Notch and home-bar support: `viewport-fit=cover` and a top safe-area inset.
+- Restored `README.md` and `package.json`, which were committed empty in 0.17.1.
+- Tests: 434 browser checks; new `e2e/mobile.py` with 23 phone-shell checks in Chromium; `npm run test:mobile`.
+
 ## 0.17.1 — 2026-11-26
 
 - Share cards drew the old "vouz." wordmark in the corner; they now say "nouz.". Test added (432 browser checks).

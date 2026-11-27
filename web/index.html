@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NOUZ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:8px}
 .scroll:focus{outline:none}
-#app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;position:relative;background:var(--bg);overflow:hidden}
+#app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;position:relative;background:var(--bg);overflow:hidden;padding-top:env(safe-area-inset-top)}
 @media(min-width:520px){body{background:#08080b}#app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 18px 28px;display:flex;flex-direction:column;gap:18px}
 .tabs{display:flex;border-top:1px solid var(--line);background:rgba(14,11,12,.96);padding:0 6px env(safe-area-inset-bottom)}
@@ -780,19 +780,21 @@ function vOnboard(){const o=ui.ob,n=4,i=Math.min(o.step,3);if(S.ageBlock)return 
    ()=>vDob(o,nav,"ob"),
    ()=>`<div class="mid"><h3>Set it up your way</h3><h1>Your moments, <em>your rules.</em></h1>
      <div class="col"><button class="opt" data-act="obMode" data-mode="local" aria-pressed="${o.mode==="local"}"><span class="grow"><b>Keep it on this device</b><span class="sub small">Stored in this browser only. Export a backup when you like.</span></span></button>
-     <button class="opt" data-act="obMode" data-mode="account" aria-pressed="${o.mode==="account"}" ${Cloud.state!=="ready"?"disabled":""}><span class="grow"><b>Private account sync</b><span class="sub small">${Cloud.state==="ready"?"Also kept in a private space tied to your signed-in Claude account, so it follows you between devices. Other NOUZ users can't read it.":Cloud.state==="checking"?"Checking whether sync is available…":"Sync needs a signed-in account with editor access to this page. Until then, use Export in Profile to keep a backup, and send your partner a session as a code."}</span></span></button></div>
+     <button class="opt" data-act="obMode" data-mode="account" aria-pressed="${o.mode==="account"}" ${Cloud.state!=="ready"?"disabled":""}><span class="grow"><b>Private account sync</b><span class="sub small">${Cloud.state==="ready"?"Also kept in a private space tied to your signed-in Claude account, so it follows you between devices. Other NOUZ users can't read it.":Cloud.state==="checking"?"Checking whether sync is available…":Native.on?"Not in the phone app yet. Use Export in Profile to keep a backup.":"Sync needs a signed-in account with editor access to this page. Until then, use Export in Profile to keep a backup, and send your partner a session as a code."}</span></span></button></div>
      ${o.restore?`<div class="banner ok"><span>Found ${o.restore.sessions.length} synced session${o.restore.sessions.length===1?"":"s"} on your account.</span><button class="link" data-act="obRestore">Restore</button></div>`:""}
      ${Cloud.state==="ready"?sw("obSocial",o.social,"Turn on Social","Off by default. Everything else works the same without it."):`<p class="tiny">Pairing with a partner needs sync. Without it you can still send each other a session as a code, from any session's page.</p>`}
      <label class="f" for="ob-name">What should we call you? <em>Optional</em><input type="text" id="ob-name" data-bind="ob.name" maxlength="30" value="${esc(o.name)}" autocomplete="off"></label>
      <p class="tiny">You can change all of this later in Profile, where you'll also find Discreet mode and optional astrology.</p></div>${nav()}`,
    ()=>`<div class="mid"><h3>One more thing</h3><h1>Lock it <em>with a passphrase.</em></h1>
-     <p class="sub">Recommended. Everything nouz keeps in this browser, photos included, is encrypted with a passphrase only you know. You'll type it each time nouz opens.</p>
+     <p class="sub">On by default. Everything nouz keeps on this device, photos included, is encrypted with a passphrase only you know. You'll type it each time nouz opens.</p>
      <label class="f" for="ob-pp1">Passphrase <em>at least 8 characters</em><input type="password" id="ob-pp1" autocomplete="new-password" minlength="8"></label>
      <label class="f" for="ob-pp2">Again<input type="password" id="ob-pp2" autocomplete="new-password"></label>
      ${ui.err?`<p class="err" role="alert">${esc(ui.err)}</p>`:""}
      <p class="tiny">nouz can't recover a forgotten passphrase: what's in this browser would be gone, so keep an export too.${o.mode==="account"&&Cloud.state==="ready"?" Your synced copy is protected by your Claude account, not by this passphrase.":""}</p>
      <div class="row"><button class="btn ghost" data-act="obBack" aria-label="Back">${ic("back")}</button><button class="btn primary grow ${ui.obBusy?"busy":""}" data-act="obPass" ${ui.obBusy?"disabled":""}>Encrypt and enter</button></div>
-     <button class="link small" style="align-self:center" data-act="obNext">Skip for now</button></div>`];
+     ${o.skipAsk?`<div class="banner warn" role="alert"><span><b>Keep it unencrypted?</b> Anyone who can open this browser could read your sessions, notes and photos. You can turn encryption on later in Profile → Privacy.</span></div>
+     <div class="row"><button class="btn ghost grow" data-act="obSkipNo">Use a passphrase</button><button class="btn grow" data-act="obSkipYes">Continue unencrypted</button></div>`
+     :`<button class="link small" style="align-self:center" data-act="obSkip">Continue without encryption</button>`}</div>`];
   return`<div class="ob"><div class="steps" role="progressbar" aria-valuemin="1" aria-valuemax="${n}" aria-valuenow="${i+1}" aria-label="Step ${i+1} of ${n}">${Array.from({length:n},(_,k)=>`<i class="${k<=i?"on":""}"></i>`).join("")}</div>${pages[i]()}</div>`}
 
 /* ---- home ---- */
@@ -1113,8 +1115,11 @@ const A={
     if(o.step<3){o.step++;ui.err="";render(true);return}
     obFinish()},
   async obPass(){const a=($("#ob-pp1")||{}).value||"",b=($("#ob-pp2")||{}).value||"";if(a.length<8){ui.err="Use at least 8 characters.";return render()}if(a!==b){ui.err="Those don't match.";return render()}
-    ui.err="";ui.obBusy=true;render();try{await Vault.turnOn(a)}catch(e){ui.obBusy=false;ui.err="Encryption isn't available in this browser. You can skip and try later in Profile.";return render()}ui.obBusy=false;obFinish();toast("Encrypted. You'll need the passphrase next time nouz opens.")},
-  obBack(){ui.ob.step=Math.max(0,ui.ob.step-1);render(true)},
+    ui.err="";ui.obBusy=true;render();try{await Vault.turnOn(a)}catch(e){ui.obBusy=false;ui.err="Encryption isn't available in this browser. Continue without it and try later in Profile.";return render()}ui.obBusy=false;obFinish();toast("Encrypted. You'll need the passphrase next time nouz opens.")},
+  obSkip(){ui.ob.skipAsk=true;ui.err="";render()},
+  obSkipNo(){ui.ob.skipAsk=false;render();const f=$("#ob-pp1");f&&f.focus()},
+  obSkipYes(){ui.ob.skipAsk=false;obFinish()},
+  obBack(){ui.ob.skipAsk=false;ui.ob.step=Math.max(0,ui.ob.step-1);render(true)},
   obAdult(){ui.ob.adult=!ui.ob.adult;render()},
   async obMode(e){ui.ob.mode=e.dataset.mode;ui.ob.restore=null;render();if(e.dataset.mode==="account"){const v=await Cloud.readVault();if(v&&ui.ob.mode==="account"&&!S.onboarded){ui.ob.restore=v;render()}}},
   obRestore(){const v=ui.ob.restore;S=Object.assign(fresh(),{onboarded:true,stamp:v.stamp||0,user:Object.assign({},v.user,{mode:"account"}),settings:Object.assign(fresh().settings,v.settings),sessions:v.sessions||[],deleted:v.deleted||{},blocks:v.blocks||[],ignored:v.ignored||[],exps:v.exps||[],picks:v.picks||{},psi:v.psi||{},rewards:v.rewards||fresh().rewards,consent:v.consent||fresh().consent||{req:[],ans:{}},
@@ -3696,6 +3701,19 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden){Vault.hidd
 /* Not on window blur: inside the Claude app the page loses focus to the app around it, and the blur would stay on. */
 window.addEventListener("pagehide",()=>veil(true));
 
+/* Native shell (Capacitor). Runs only inside the phone app, never in the artifact. Not yet run on a device. */
+const Native={on:!!(window.Capacitor&&typeof window.Capacitor.isNativePlatform==="function"&&window.Capacitor.isNativePlatform()),
+  plat(){try{return window.Capacitor.getPlatform()}catch(e){return"web"}},
+  init(){if(!this.on)return;document.documentElement.classList.add("native","native-"+this.plat());
+    const App=window.Capacitor.Plugins&&window.Capacitor.Plugins.App;if(!App||!App.addListener)return;
+    /* Android back: close what's open first, then go Home, then leave the app. Never past the lock or the cover. */
+    App.addListener("backButton",()=>{if(ui.cover||ui.locked||Vault.locked)return;
+      if(ui.sheet){ui.sheet=null;render();return}
+      if(!S.onboarded){if(ui.ob&&ui.ob.step>0){A.obBack();return}if(App.minimizeApp)App.minimizeApp();return}
+      if(ui.page){A.back();return}
+      if(S.onboarded&&ui.tab!=="home"){go("home");return}
+      if(App.minimizeApp)App.minimizeApp()})}};
+
 /* ============ boot ============ */
 function bootRest(){normCats();normState();applyDiscreet();
   try{if(window.claude&&window.claude.use)window.claude.use("sample").then(f=>{SAMPLE=f||null;if(ui.tab==="discover"&&!typing())render()}).catch(()=>{})}catch(e){}const t=location.hash.slice(1);if(S.onboarded&&TABS().some(x=>x[0]===t))ui.tab=t;
@@ -3707,8 +3725,8 @@ function bootRest(){normCats();normState();applyDiscreet();
     if(Cloud.state==="ready"&&S.onboarded&&S.settings.social)await Soc.start();
     if(!typing())render()});
 }
-(function boot(){try{if(sessionStorage.getItem(COVER_KEY)==='1')ui.cover=true}catch(e){}Vault.locked=ENC_AT_LOAD;if(Vault.locked){render();return}bootRest()})();
-window.__vouz={tnFit,tnEnd,nextSlot,panic,uncover,save,render,nextPlan,planIcs,QR,Vault,sessionCode,readSessionCode,zipMake,zipRead,crc32,pairNorm,Astro,shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
+(function boot(){try{Native.init()}catch(e){}try{if(sessionStorage.getItem(COVER_KEY)==='1')ui.cover=true}catch(e){}Vault.locked=ENC_AT_LOAD;if(Vault.locked){render();return}bootRest()})();
+window.__vouz={Native,tnFit,tnEnd,nextSlot,panic,uncover,save,render,nextPlan,planIcs,QR,Vault,sessionCode,readSessionCode,zipMake,zipRead,crc32,pairNorm,Astro,shRender,shData,shAvailable,fcBuild,fcDims,fcWord,fcSeed,fcClean,fcSafe,FC_WORDS,Disc,Conn,parseAsk,scoreVenue,fromMapbox,fromYelp,fromTrail,mergeVenues,hoursAt,parseLoose,myTaste,Media,scrubVideo,scorePost,buildCard,get S(){return S},Soc,Cloud,K,Photos,RW,R,cardContent,renderCard};
 </script>
 </body>
 </html>
